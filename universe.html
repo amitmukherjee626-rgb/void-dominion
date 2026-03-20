@@ -4,877 +4,717 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>VOID DOMINION — Universe</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-:root {
-  --bg:#00010a; --cyan:#00e5ff; --purple:#7c3aed;
-  --red:#ff1744; --gold:#ffc400; --green:#00e676;
+:root{
+  --bg:#00010a;--cyan:#00e5ff;--purple:#7c3aed;
+  --red:#ff1744;--gold:#ffc400;--green:#00e676;
   --border:rgba(0,229,255,0.15);
-  --fh:'Orbitron',monospace; --fb:'Exo 2',sans-serif;
+  --fh:'Orbitron',monospace;--fb:'Exo 2',sans-serif;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:var(--bg);color:#d0eeff;font-family:var(--fb);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;font-family:var(--fb);color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
 
-/* ── CANVAS ── */
-#universe-canvas{position:fixed;inset:0;z-index:1;cursor:grab;}
-#universe-canvas.dragging{cursor:grabbing;}
+/* CANVAS */
+#cv{position:fixed;inset:0;z-index:1;touch-action:none;}
 
-/* ── TOP HUD ── */
-#top-hud{
-  position:fixed;top:0;left:0;right:0;height:54px;z-index:20;
-  background:linear-gradient(180deg,rgba(0,1,10,0.97) 0%,rgba(0,1,10,0.7) 100%);
+/* TOP HUD - compact for mobile */
+#hud{
+  position:fixed;top:0;left:0;right:0;z-index:20;
+  height:48px;
+  background:linear-gradient(180deg,rgba(0,1,10,.97) 0%,rgba(0,1,10,.75) 100%);
   border-bottom:1px solid var(--border);
-  backdrop-filter:blur(14px);
-  display:flex;align-items:center;padding:0 0.8rem;gap:0.5rem;
+  backdrop-filter:blur(12px);
+  display:flex;align-items:center;
+  padding:0 10px;gap:8px;
 }
-.hud-logo{
-  font-family:var(--fh);font-size:0.75rem;font-weight:900;
-  letter-spacing:0.15em;color:var(--cyan);
-  text-shadow:0 0 10px rgba(0,229,255,0.5);
-  padding-right:0.8rem;border-right:1px solid var(--border);
-  flex-shrink:0;
-}
-.hud-player{
-  display:flex;align-items:center;gap:0.5rem;
-  padding:0 0.8rem;border-right:1px solid var(--border);
-  flex-shrink:0;
-}
-.hud-avatar{
-  width:30px;height:30px;border:1px solid var(--border);
-  border-radius:2px;background:rgba(0,229,255,0.07);
-  display:flex;align-items:center;justify-content:center;
-  font-size:1rem;
-}
-.hud-uname{font-family:var(--fh);font-size:0.65rem;font-weight:700;color:#fff;}
-.hud-tag{font-size:0.55rem;color:rgba(0,229,255,0.4);letter-spacing:0.1em;}
+.hl{font-family:var(--fh);font-size:11px;font-weight:900;letter-spacing:2px;color:var(--cyan);text-shadow:0 0 10px rgba(0,229,255,.5);padding-right:8px;border-right:1px solid var(--border);flex-shrink:0;}
+.hav{width:28px;height:28px;border:1px solid var(--border);border-radius:2px;background:rgba(0,229,255,.07);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;}
+.hun{display:flex;flex-direction:column;padding-right:8px;border-right:1px solid var(--border);flex-shrink:0;}
+.hun-n{font-family:var(--fh);font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;}
+.hun-t{font-size:8px;color:rgba(0,229,255,.4);letter-spacing:1px;}
+.hres{display:flex;gap:6px;padding-right:8px;border-right:1px solid var(--border);}
+.hr{display:flex;flex-direction:column;align-items:center;}
+.hr-l{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);text-transform:uppercase;}
+.hr-v{font-family:var(--fh);font-size:10px;font-weight:700;}
+.hr-v.c{color:var(--gold);}
+.hr-v.m{color:#78909c;}
+.hr-v.e{color:#80cbc4;}
+.hvl{font-family:var(--fh);font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.3);text-transform:uppercase;}
+.hright{margin-left:auto;display:flex;gap:5px;}
+.hb{padding:4px 8px;font-family:var(--fh);font-size:8px;letter-spacing:1px;border-radius:2px;border:1px solid var(--border);background:transparent;color:var(--cyan);cursor:pointer;transition:all .2s;text-transform:uppercase;}
+.hb:hover,.hb:active{background:rgba(0,229,255,.08);}
+.hb.r{border-color:rgba(255,23,68,.3);color:var(--red);}
 
-.hud-res{
-  display:flex;align-items:center;gap:0.6rem;
-  padding:0 0.8rem;border-right:1px solid var(--border);
-  flex-shrink:0;
-}
-.res-item{display:flex;flex-direction:column;align-items:center;}
-.res-lbl{font-size:0.44rem;letter-spacing:0.2em;color:rgba(255,255,255,0.3);text-transform:uppercase;}
-.res-val{font-family:var(--fh);font-size:0.72rem;font-weight:700;}
-.res-val.cr{color:var(--gold);}
-.res-val.mn{color:#78909c;}
-.res-val.en{color:#80cbc4;}
+/* ZOOM CONTROLS - right side */
+#zc{position:fixed;right:10px;bottom:60px;z-index:20;display:flex;flex-direction:column;gap:6px;}
+.zb{width:40px;height:40px;background:rgba(0,1,10,.92);border:1px solid var(--border);border-radius:2px;color:var(--cyan);font-size:18px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .18s;font-family:var(--fh);}
+.zb:active{background:rgba(0,229,255,.12);transform:scale(.93);}
+.zb.fit{font-size:9px;letter-spacing:1px;}
 
-.hud-view-label{
-  font-family:var(--fh);font-size:0.55rem;letter-spacing:0.3em;
-  color:rgba(0,229,255,0.35);text-transform:uppercase;
-  padding:0 0.8rem;
-}
-.hud-right{margin-left:auto;display:flex;align-items:center;gap:0.4rem;}
-.hbtn{
-  padding:0.28rem 0.65rem;font-family:var(--fh);font-size:0.52rem;
-  letter-spacing:0.12em;border-radius:2px;
-  border:1px solid var(--border);background:transparent;
-  color:var(--cyan);cursor:pointer;transition:all 0.2s;text-transform:uppercase;
-}
-.hbtn:hover{background:rgba(0,229,255,0.08);}
-.hbtn.red{border-color:rgba(255,23,68,0.3);color:var(--red);}
-.hbtn.red:hover{background:rgba(255,23,68,0.07);}
-
-/* ── ZOOM CONTROLS ── */
-#zoom-ctrl{
-  position:fixed;right:1rem;bottom:5rem;z-index:20;
-  display:flex;flex-direction:column;gap:0.4rem;
-}
-.zbtn{
-  width:38px;height:38px;
-  background:rgba(0,1,10,0.9);border:1px solid var(--border);
-  border-radius:2px;color:var(--cyan);font-size:1.2rem;
-  cursor:pointer;display:flex;align-items:center;justify-content:center;
-  backdrop-filter:blur(8px);transition:all 0.2s;
-  font-family:var(--fh);font-weight:700;
-}
-.zbtn:hover{background:rgba(0,229,255,0.1);border-color:var(--cyan);}
-.zbtn:active{transform:scale(0.93);}
-
-/* ── BOTTOM INFO BAR ── */
-#bottom-bar{
-  position:fixed;bottom:0;left:0;right:0;height:44px;z-index:20;
-  background:linear-gradient(0deg,rgba(0,1,10,0.97) 0%,rgba(0,1,10,0.7) 100%);
+/* BOTTOM BAR */
+#bb{
+  position:fixed;bottom:0;left:0;right:0;z-index:20;height:42px;
+  background:linear-gradient(0deg,rgba(0,1,10,.97) 0%,rgba(0,1,10,.75) 100%);
   border-top:1px solid var(--border);
-  backdrop-filter:blur(14px);
-  display:flex;align-items:center;padding:0 1rem;gap:1rem;
-}
-.bb-item{
-  display:flex;align-items:center;gap:0.4rem;
-  font-size:0.65rem;color:rgba(255,255,255,0.35);
-}
-.bb-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
-.bb-zoom{
-  margin-left:auto;font-family:var(--fh);font-size:0.58rem;
-  color:rgba(0,229,255,0.35);letter-spacing:0.1em;
-}
-
-/* ── GALAXY TOOLTIP ── */
-#galaxy-tip{
-  position:fixed;z-index:30;
-  background:rgba(0,1,15,0.95);
-  border:1px solid var(--border);
-  border-radius:2px;padding:0.6rem 0.9rem;
-  pointer-events:none;display:none;
   backdrop-filter:blur(12px);
-  min-width:150px;
+  display:flex;align-items:center;padding:0 10px;gap:10px;
 }
-.gt-name{font-family:var(--fh);font-size:0.72rem;font-weight:700;color:#fff;margin-bottom:0.2rem;}
-.gt-type{font-size:0.6rem;color:rgba(0,229,255,0.45);letter-spacing:0.15em;text-transform:uppercase;margin-bottom:0.3rem;}
-.gt-systems{font-size:0.65rem;color:rgba(255,255,255,0.4);}
-.gt-status{font-size:0.6rem;margin-top:0.3rem;}
-.gt-status.home{color:var(--gold);}
-.gt-status.explored{color:var(--green);}
-.gt-status.unknown{color:rgba(255,255,255,0.25);}
+.bb-i{display:flex;align-items:center;gap:4px;font-size:9px;color:rgba(255,255,255,.35);}
+.bb-d{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.bb-z{margin-left:auto;font-family:var(--fh);font-size:9px;color:rgba(0,229,255,.35);letter-spacing:1px;}
 
-/* ── GALAXY ENTER PROMPT ── */
-#enter-prompt{
-  position:fixed;bottom:54px;left:50%;transform:translateX(-50%);
-  z-index:25;
-  background:rgba(0,1,15,0.92);
-  border:1px solid rgba(0,229,255,0.3);
-  border-radius:2px;padding:0.5rem 1.2rem;
-  font-family:var(--fh);font-size:0.65rem;letter-spacing:0.2em;
-  color:var(--cyan);text-transform:uppercase;
-  display:none;
+/* MINIMAP */
+#mm{
+  position:fixed;left:10px;bottom:52px;z-index:20;
+  width:110px;height:85px;
+  background:rgba(0,1,10,.9);border:1px solid var(--border);border-radius:2px;overflow:hidden;
+}
+#mmc{width:100%;height:100%;display:block;}
+.mml{position:absolute;top:3px;left:4px;font-family:var(--fh);font-size:7px;letter-spacing:1px;color:rgba(0,229,255,.3);text-transform:uppercase;}
+
+/* GALAXY ENTER PROMPT */
+#ep{
+  position:fixed;bottom:52px;left:50%;transform:translateX(-50%);z-index:25;
+  background:rgba(0,1,15,.95);border:1px solid rgba(0,229,255,.4);border-radius:2px;
+  padding:8px 16px;font-family:var(--fh);font-size:10px;letter-spacing:2px;
+  color:var(--cyan);text-transform:uppercase;display:none;cursor:pointer;
+  animation:epPulse 1.5s ease-in-out infinite;white-space:nowrap;
+}
+@keyframes epPulse{0%,100%{border-color:rgba(0,229,255,.3);opacity:.8;}50%{border-color:rgba(0,229,255,.9);opacity:1;}}
+
+/* TOOLTIP */
+#tip{
+  position:fixed;z-index:30;background:rgba(0,1,15,.96);
+  border:1px solid var(--border);border-radius:2px;padding:8px 12px;
+  pointer-events:none;display:none;min-width:140px;
   backdrop-filter:blur(12px);
-  animation:promptPulse 1.5s ease-in-out infinite;
-  cursor:pointer;
-  text-align:center;
 }
-@keyframes promptPulse{0%,100%{opacity:0.7;border-color:rgba(0,229,255,0.3);}50%{opacity:1;border-color:rgba(0,229,255,0.8);}}
+.tip-n{font-family:var(--fh);font-size:11px;font-weight:700;color:#fff;margin-bottom:3px;}
+.tip-t{font-size:9px;color:rgba(0,229,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:3px;}
+.tip-s{font-size:10px;color:rgba(255,255,255,.4);}
+.tip-st{font-size:9px;margin-top:3px;}
+.tip-st.h{color:var(--gold);}
+.tip-st.e{color:var(--green);}
+.tip-st.u{color:rgba(255,255,255,.25);}
 
-/* ── MINIMAP ── */
-#minimap{
-  position:fixed;left:0.8rem;bottom:54px;z-index:20;
-  width:130px;height:100px;
-  background:rgba(0,1,10,0.88);
-  border:1px solid var(--border);border-radius:2px;
-  overflow:hidden;backdrop-filter:blur(8px);
+/* LOADING */
+#load{
+  position:fixed;inset:0;z-index:100;background:var(--bg);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
 }
-#minimap-canvas{width:100%;height:100%;display:block;}
-.minimap-label{
-  position:absolute;top:3px;left:5px;
-  font-family:var(--fh);font-size:0.42rem;letter-spacing:0.2em;
-  color:rgba(0,229,255,0.3);text-transform:uppercase;
-}
+.load-t{font-family:var(--fh);font-size:clamp(28px,8vw,48px);font-weight:900;letter-spacing:4px;color:var(--cyan);text-shadow:0 0 30px rgba(0,229,255,.7);animation:lp 2s ease-in-out infinite;}
+@keyframes lp{0%,100%{opacity:.7;}50%{opacity:1;}}
+.load-bw{width:180px;height:3px;background:rgba(0,229,255,.1);border-radius:2px;overflow:hidden;}
+.load-b{height:100%;width:0%;background:linear-gradient(90deg,var(--cyan),var(--purple));transition:width .3s;border-radius:2px;}
+.load-tx{font-family:var(--fh);font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.4);text-transform:uppercase;}
 
-/* ── LOADING SCREEN ── */
-#loading{
-  position:fixed;inset:0;z-index:100;
-  background:var(--bg);
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem;
-}
-.load-logo{
-  font-family:var(--fh);font-size:clamp(2rem,8vw,4rem);font-weight:900;
-  letter-spacing:0.2em;color:var(--cyan);
-  text-shadow:0 0 30px rgba(0,229,255,0.7);
-  animation:loadPulse 2s ease-in-out infinite;
-}
-@keyframes loadPulse{0%,100%{opacity:0.7}50%{opacity:1}}
-.load-bar-wrap{width:200px;height:3px;background:rgba(0,229,255,0.1);border-radius:2px;overflow:hidden;}
-.load-bar{height:100%;background:linear-gradient(90deg,var(--cyan),var(--purple));width:0%;transition:width 0.3s ease;border-radius:2px;}
-.load-text{font-family:var(--fh);font-size:0.6rem;letter-spacing:0.3em;color:rgba(0,229,255,0.4);text-transform:uppercase;}
+/* TOASTS */
+#ts{position:fixed;top:56px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:5px;pointer-events:none;}
+.t{padding:6px 14px;background:rgba(0,1,15,.96);border:1px solid var(--border);border-radius:2px;font-family:var(--fh);font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tI .22s ease,tO .28s ease 2.4s forwards;}
+.t.ok{border-color:rgba(0,230,118,.4);color:var(--green);}
+.t.err{border-color:rgba(255,23,68,.4);color:var(--red);}
+.t.inf{border-color:rgba(0,229,255,.35);color:var(--cyan);}
+@keyframes tI{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tO{from{opacity:1}to{opacity:0}}
 
-/* ── TOAST ── */
-#toasts{position:fixed;top:62px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:0.4rem;pointer-events:none;}
-.tst{padding:0.48rem 1rem;background:rgba(0,1,15,0.95);border:1px solid var(--border);border-radius:2px;font-family:var(--fh);font-size:0.62rem;letter-spacing:0.12em;backdrop-filter:blur(14px);white-space:nowrap;animation:tIn .22s ease,tOut .28s ease 2.4s forwards;}
-.tst.ok{border-color:rgba(0,230,118,.38);color:var(--green);}
-.tst.err{border-color:rgba(255,23,68,.38);color:var(--red);}
-.tst.inf{border-color:rgba(0,229,255,.32);color:var(--cyan);}
-@keyframes tIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes tOut{from{opacity:1}to{opacity:0}}
-
-/* ── GALAXY ZOOM TRANSITION ── */
-#zoom-transition{
-  position:fixed;inset:0;z-index:90;
-  background:radial-gradient(circle at 50% 50%, rgba(0,229,255,0.3) 0%, rgba(0,1,10,1) 70%);
-  opacity:0;pointer-events:none;
-  transition:opacity 0.5s ease;
-}
-#zoom-transition.active{opacity:1;pointer-events:all;}
+/* TRANSITION */
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.25) 0%,rgba(0,1,10,1) 70%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.on{opacity:1;pointer-events:all;}
 </style>
 </head>
 <body>
 
-<!-- Loading Screen -->
-<div id="loading">
-  <div class="load-logo">VOID DOMINION</div>
-  <div class="load-bar-wrap"><div class="load-bar" id="load-bar"></div></div>
-  <div class="load-text" id="load-text">Initializing universe...</div>
+<div id="load">
+  <div class="load-t">VOID DOMINION</div>
+  <div class="load-bw"><div class="load-b" id="lb"></div></div>
+  <div class="load-tx" id="lt">Initializing universe...</div>
 </div>
 
-<!-- Universe Canvas -->
-<canvas id="universe-canvas"></canvas>
+<canvas id="cv"></canvas>
+<div id="zt"></div>
 
-<!-- Zoom Transition -->
-<div id="zoom-transition"></div>
-
-<!-- Top HUD -->
-<div id="top-hud">
-  <div class="hud-logo">VD</div>
-  <div class="hud-player">
-    <div class="hud-avatar" id="hud-avatar">&#128737;</div>
-    <div>
-      <div class="hud-uname" id="hud-uname">-</div>
-      <div class="hud-tag" id="hud-tag">-</div>
-    </div>
+<!-- HUD -->
+<div id="hud">
+  <div class="hl">VD</div>
+  <div class="hav" id="hav">&#128737;</div>
+  <div class="hun"><div class="hun-n" id="hun">-</div><div class="hun-t" id="htag">-</div></div>
+  <div class="hres">
+    <div class="hr"><div class="hr-l">CR</div><div class="hr-v c" id="hcr">0</div></div>
+    <div class="hr"><div class="hr-l">MIN</div><div class="hr-v m" id="hmn">0</div></div>
+    <div class="hr"><div class="hr-l">ENE</div><div class="hr-v e" id="hen">0</div></div>
   </div>
-  <div class="hud-res">
-    <div class="res-item"><div class="res-lbl">Credits</div><div class="res-val cr" id="res-cr">0</div></div>
-    <div class="res-item"><div class="res-lbl">Minerals</div><div class="res-val mn" id="res-mn">0</div></div>
-    <div class="res-item"><div class="res-lbl">Energy</div><div class="res-val en" id="res-en">0</div></div>
-  </div>
-  <div class="hud-view-label">Universe View</div>
-  <div class="hud-right">
-    <button class="hbtn" id="btn-profile" onclick="goProfile()">Profile</button>
-    <button class="hbtn red" onclick="doLogout()">Logout</button>
+  <div class="hvl">Universe</div>
+  <div class="hright">
+    <button class="hb r" onclick="doLogout()">Exit</button>
   </div>
 </div>
 
 <!-- Galaxy Tooltip -->
-<div id="galaxy-tip">
-  <div class="gt-name" id="gt-name">-</div>
-  <div class="gt-type" id="gt-type">-</div>
-  <div class="gt-systems" id="gt-systems">-</div>
-  <div class="gt-status" id="gt-status">-</div>
+<div id="tip">
+  <div class="tip-n" id="tn">-</div>
+  <div class="tip-t" id="tt">-</div>
+  <div class="tip-s" id="ts2">-</div>
+  <div class="tip-st" id="tst">-</div>
 </div>
 
 <!-- Enter Prompt -->
-<div id="enter-prompt" onclick="enterSelectedGalaxy()">
-  TAP TO ENTER GALAXY
-</div>
+<div id="ep" onclick="enterGalaxy()">TAP TO ENTER</div>
 
 <!-- Bottom Bar -->
-<div id="bottom-bar">
-  <div class="bb-item"><div class="bb-dot" style="background:var(--gold);box-shadow:0 0 5px var(--gold)"></div>Home Galaxy</div>
-  <div class="bb-item"><div class="bb-dot" style="background:var(--green);box-shadow:0 0 5px var(--green)"></div>Explored</div>
-  <div class="bb-item"><div class="bb-dot" style="background:rgba(255,255,255,0.2)"></div>Unknown</div>
-  <div class="bb-zoom" id="bb-zoom">ZOOM: 1.0x</div>
+<div id="bb">
+  <div class="bb-i"><div class="bb-d" style="background:var(--gold);box-shadow:0 0 5px var(--gold)"></div>Home</div>
+  <div class="bb-i"><div class="bb-d" style="background:var(--green)"></div>Explored</div>
+  <div class="bb-i"><div class="bb-d" style="background:rgba(255,255,255,.2)"></div>Unknown</div>
+  <div class="bb-z" id="bzoom">1.00x</div>
 </div>
 
 <!-- Zoom Controls -->
-<div id="zoom-ctrl">
-  <button class="zbtn" id="btn-zin">+</button>
-  <button class="zbtn" id="btn-zout">-</button>
-  <button class="zbtn" id="btn-zreset" style="font-size:0.5rem;">FIT</button>
+<div id="zc">
+  <button class="zb" id="zin">+</button>
+  <button class="zb" id="zout">-</button>
+  <button class="zb fit" id="zfit">FIT</button>
 </div>
 
 <!-- Minimap -->
-<div id="minimap">
-  <canvas id="minimap-canvas"></canvas>
-  <div class="minimap-label">Universe</div>
+<div id="mm">
+  <canvas id="mmc"></canvas>
+  <div class="mml">UNIVERSE</div>
 </div>
 
 <!-- Toasts -->
-<div id="toasts"></div>
+<div id="ts"></div>
 
 <script type="module">
 import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const sb = createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
 
-const SUPA_URL = 'https://xeetrcygnlpjzkkwpnvf.supabase.co';
-const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o';
-const sb = createClient(SUPA_URL, SUPA_KEY);
-
-// ── AVATARS ──
+// ═══ CONSTANTS ═══
 const AVATARS = ['&#128737;','&#128125;','&#129302;','&#128123;','&#129330;','&#128520;','&#129351;','&#128081;'];
-const GALAXY_TYPES = ['Spiral','Elliptical','Irregular','Barred Spiral','Lenticular','Dwarf'];
-const GALAXY_NAMES_A = ['Andromeda','Orion','Cygnus','Lyra','Perseus','Aquila','Vega','Rigel','Sirius','Altair','Deneb','Arcturus','Spica','Antares','Aldebaran','Pollux','Castor','Regulus','Elnath','Mirach'];
-const GALAXY_NAMES_B = ['Nexus','Prime','Deep','Core','Reach','Fringe','Expanse','Void','Drift','Surge','Pulse','Echo','Shadow','Blaze','Storm','Edge','Haven','Sanctum','Domain','Empire'];
+const G_TYPES = ['Spiral','Elliptical','Irregular','Barred Spiral','Lenticular','Dwarf'];
+const NA = ['Andromeda','Orion','Cygnus','Lyra','Perseus','Aquila','Vega','Rigel','Sirius','Altair','Deneb','Arcturus','Spica','Antares','Aldebaran','Pollux','Castor','Regulus','Elnath','Mirach'];
+const NB = ['Nexus','Prime','Deep','Core','Reach','Fringe','Expanse','Void','Drift','Surge','Pulse','Echo','Shadow','Blaze','Storm','Edge','Haven','Sanctum','Domain','Empire'];
+const GCOLS = [
+  [100,180,255],[255,220,150],[180,120,255],
+  [100,255,180],[255,160,100],[200,200,255]
+];
 
-// ── STATE ──
-let player = null;
+// ═══ STATE ═══
+let cv, cx, mc, mx2;
+let W, H;
+let cam = { x:0, y:0, s:1 };
+let UW = 3000, UH = 2400; // universe dimensions
 let galaxies = [];
-let universe = { width:4000, height:3000 };
-let cam = { x:0, y:0, scale:1 };
-let drag = { active:false, sx:0, sy:0, cx:0, cy:0 };
-let selectedGalaxy = null;
-let homeGalaxyId = null;
-let canvas, ctx, mmCanvas, mmCtx;
-let rafId = null, lastT = 0;
-let animT = 0;
+let selG = null;
+let drag = { on:false, sx:0, sy:0, ox:0, oy:0 };
+let raf = null;
+let profile = null;
+let homeIdx = 0;
 
-// ── UTILS ──
-const $ = id => document.getElementById(id);
-const rnd = (a,b) => a + Math.random()*(b-a);
-const rndInt = (a,b) => Math.floor(rnd(a,b+1));
-const lerp = (a,b,t) => a+(b-a)*t;
-
+// ═══ UTILS ═══
+const $  = id => document.getElementById(id);
+function seededRng(seed){
+  let s = (seed < 0 ? -seed : seed) % 2147483647;
+  if(s === 0) s = 1;
+  return ()=>{ s = s*16807 % 2147483647; return (s-1)/2147483646; };
+}
+function hash(str){
+  let h=5381;
+  for(let i=0;i<str.length;i++) h=(h*33^str.charCodeAt(i))>>>0;
+  return h;
+}
 function toast(msg,type='inf'){
   const t=document.createElement('div');
-  t.className='tst '+type; t.textContent=msg;
-  $('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3200);
+  t.className='t '+type; t.textContent=msg;
+  $('ts').appendChild(t);
+  setTimeout(()=>t.remove(),3000);
+}
+function setLoad(p,txt){
+  $('lb').style.width=p+'%';
+  $('lt').textContent=txt;
+}
+function fmt(n){
+  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
+  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
+  return ''+n;
 }
 
-function setLoad(pct, text){
-  $('load-bar').style.width = pct+'%';
-  $('load-text').textContent = text;
-}
-
-// ── GALAXY GENERATION ──
-function generateUniverse(seed){
+// ═══ GENERATE GALAXIES ═══
+function buildGalaxies(seed){
   const rng = seededRng(seed);
-  galaxies = [];
-  const count = 220 + Math.floor(rng()*80); // 220-300
-
-  // Place galaxies with spacing
-  let attempts = 0;
-  while(galaxies.length < count && attempts < count*20){
-    attempts++;
-    const x = 100 + rng()*(universe.width-200);
-    const y = 100 + rng()*(universe.height-200);
-    const minDist = 80 + rng()*40;
-
-    // Check spacing
+  const list = [];
+  const N = 240;
+  let tries = 0;
+  while(list.length < N && tries < N*30){
+    tries++;
+    const x = 80 + rng()*(UW-160);
+    const y = 80 + rng()*(UH-160);
+    // min spacing
     let ok = true;
-    for(const g of galaxies){
-      if(Math.hypot(g.x-x,g.y-y) < minDist){ ok=false; break; }
+    for(const g of list){
+      if(Math.hypot(g.x-x,g.y-y) < 70){ ok=false; break; }
     }
     if(!ok) continue;
-
-    const typeIdx = Math.floor(rng()*GALAXY_TYPES.length);
-    const nameA = GALAXY_NAMES_A[Math.floor(rng()*GALAXY_NAMES_A.length)];
-    const nameB = GALAXY_NAMES_B[Math.floor(rng()*GALAXY_NAMES_B.length)];
-    const systems = 280 + Math.floor(rng()*120);
-    const size = 22 + rng()*28;
-
-    // Color based on type
-    const colors = [
-      {r:100,g:180,b:255}, // Spiral - blue
-      {r:255,g:220,b:150}, // Elliptical - yellow
-      {r:180,g:120,b:255}, // Irregular - purple
-      {r:100,g:255,b:180}, // Barred - green
-      {r:255,g:160,b:100}, // Lenticular - orange
-      {r:200,g:200,b:255}, // Dwarf - white-blue
-    ];
-    const col = colors[typeIdx];
-
-    galaxies.push({
-      id: galaxies.length,
-      x, y, size,
-      name: nameA+' '+nameB,
-      type: GALAXY_TYPES[typeIdx],
-      systems,
-      color: col,
+    const ti = Math.floor(rng()*G_TYPES.length);
+    const col = GCOLS[ti];
+    list.push({
+      id:list.length,
+      x, y,
+      size: 18+rng()*22,
+      name: NA[Math.floor(rng()*NA.length)]+' '+NB[Math.floor(rng()*NB.length)],
+      type: G_TYPES[ti],
+      systems: 280+Math.floor(rng()*120),
+      cr: col[0], cg: col[1], cb: col[2],
+      arms: (ti===0||ti===3)?2+Math.floor(rng()*2):0,
+      rot: rng()*Math.PI*2,
+      rotsp: (rng()-.5)*0.0003,
+      twink: rng()*Math.PI*2,
+      bright: 0.55+rng()*0.45,
       explored: false,
       isHome: false,
-      // Visual properties
-      rotation: rng()*Math.PI*2,
-      rotSpeed: (rng()-0.5)*0.0003,
-      arms: typeIdx===0||typeIdx===3 ? (2+Math.floor(rng()*3)) : 0,
-      brightness: 0.5 + rng()*0.5,
-      twinkle: rng()*Math.PI*2,
     });
   }
-
-  return galaxies;
+  return list;
 }
 
-function seededRng(seed){
-  let s = seed;
-  return function(){
-    s = (s*9301+49297)%233280;
-    return s/233280;
-  };
-}
-
-// ── CAMERA ──
+// ═══ CAMERA ═══
 function fitView(){
-  if(!canvas) return;
-  const pw = canvas.width - 160;  // leave minimap space
-  const ph = canvas.height - 100;
-  cam.scale = Math.min(pw/universe.width, ph/universe.height)*0.92;
-  cam.x = (canvas.width - universe.width*cam.scale)/2;
-  cam.y = (canvas.height - universe.height*cam.scale)/2 + 27;
-  clampCam();
+  if(!cv) return;
+  const pad = 60;
+  const sw = cv.width - pad*2;
+  const sh = cv.height - 100; // account for HUD + bottom bar
+  cam.s = Math.min(sw/UW, sh/UH)*0.92;
+  cam.x = (cv.width - UW*cam.s)/2;
+  cam.y = 48 + (sh - UH*cam.s)/2; // below HUD
+  clamp();
 }
-
-function clampCam(){
-  const minS = 0.15, maxS = 4.0;
-  cam.scale = Math.max(minS, Math.min(maxS, cam.scale));
-  // Clamp pan
-  const mw = universe.width*cam.scale;
-  const mh = universe.height*cam.scale;
-  const maxX = 80, maxY = 80;
-  cam.x = Math.min(maxX, Math.max(canvas.width - mw - maxX, cam.x));
-  cam.y = Math.min(maxY+54, Math.max(canvas.height - mh - maxY - 44, cam.y));
+function clamp(){
+  cam.s = Math.max(0.12, Math.min(3.5, cam.s));
 }
+function w2s(wx,wy){ return {x:wx*cam.s+cam.x, y:wy*cam.s+cam.y}; }
+function s2w(sx,sy){ return {x:(sx-cam.x)/cam.s, y:(sy-cam.y)/cam.s}; }
 
-function worldToScreen(wx,wy){ return {x:wx*cam.scale+cam.x, y:wy*cam.scale+cam.y}; }
-function screenToWorld(sx,sy){ return {x:(sx-cam.x)/cam.scale, y:(sy-cam.y)/cam.scale}; }
-
-// ── RENDER ──
+// ═══ RENDER ═══
 function startRender(){
-  if(rafId) return;
+  if(raf) return;
   (function loop(t){
-    rafId=requestAnimationFrame(loop);
-    if(t-lastT<25) return; lastT=t; animT=t;
-    drawUniverse(t);
-    drawMinimap();
+    raf = requestAnimationFrame(loop);
+    render(t);
+    renderMini();
   })();
 }
 
-function drawUniverse(t){
-  if(!ctx) return;
-  const W=canvas.width, H=canvas.height;
-  ctx.clearRect(0,0,W,H);
+function render(t){
+  if(!cx||!galaxies.length) return;
+  cx.clearRect(0,0,W,H);
+  cx.fillStyle='#00010a';
+  cx.fillRect(0,0,W,H);
 
-  // Deep space bg
-  ctx.fillStyle='#00010a';
-  ctx.fillRect(0,0,W,H);
+  // Nebula background
+  drawNebula();
 
-  // Bg nebula
-  drawNebulaBg(ctx,W,H,t);
+  cx.save();
+  cx.translate(cam.x, cam.y);
+  cx.scale(cam.s, cam.s);
 
-  ctx.save();
-  ctx.translate(cam.x, cam.y);
-  ctx.scale(cam.scale, cam.scale);
+  // Draw all galaxies
+  for(const g of galaxies) drawG(cx, g, t);
 
-  // Draw galaxies
-  galaxies.forEach(g => drawGalaxy(ctx,g,t));
-
-  // Draw connections between nearby explored galaxies
-  if(cam.scale > 0.3){
-    ctx.save();
-    galaxies.forEach(g=>{
-      if(!g.explored&&!g.isHome) return;
-      galaxies.forEach(g2=>{
-        if(g2.id<=g.id) return;
-        if(!g2.explored&&!g2.isHome) return;
-        const d=Math.hypot(g.x-g2.x,g.y-g2.y);
-        if(d>350) return;
-        ctx.beginPath();
-        ctx.moveTo(g.x,g.y); ctx.lineTo(g2.x,g2.y);
-        ctx.strokeStyle=`rgba(0,229,255,${0.04*(1-d/350)})`;
-        ctx.lineWidth=0.5/cam.scale;
-        ctx.stroke();
-      });
-    });
-    ctx.restore();
+  // Connection lines between explored
+  if(cam.s > 0.25){
+    for(let i=0;i<galaxies.length;i++){
+      const a=galaxies[i];
+      if(!a.explored&&!a.isHome) continue;
+      for(let j=i+1;j<galaxies.length;j++){
+        const b=galaxies[j];
+        if(!b.explored&&!b.isHome) continue;
+        const d=Math.hypot(a.x-b.x,a.y-b.y);
+        if(d>320) continue;
+        cx.beginPath();
+        cx.moveTo(a.x,a.y);cx.lineTo(b.x,b.y);
+        cx.strokeStyle=`rgba(0,229,255,${0.05*(1-d/320)})`;
+        cx.lineWidth=0.8/cam.s;
+        cx.stroke();
+      }
+    }
   }
 
-  ctx.restore();
-
-  // HUD zoom display
-  $('bb-zoom').textContent = 'ZOOM: '+cam.scale.toFixed(2)+'x';
+  cx.restore();
+  $('bzoom').textContent=cam.s.toFixed(2)+'x';
 }
 
-function drawNebulaBg(ctx,W,H,t){
-  const tt = t*0.0001;
-  // Subtle nebula clouds
-  const grad1 = ctx.createRadialGradient(W*0.2,H*0.3,0,W*0.2,H*0.3,W*0.4);
-  grad1.addColorStop(0,'rgba(124,58,237,0.06)');
-  grad1.addColorStop(1,'transparent');
-  ctx.fillStyle=grad1; ctx.fillRect(0,0,W,H);
-
-  const grad2 = ctx.createRadialGradient(W*0.8,H*0.7,0,W*0.8,H*0.7,W*0.35);
-  grad2.addColorStop(0,'rgba(0,229,255,0.04)');
-  grad2.addColorStop(1,'transparent');
-  ctx.fillStyle=grad2; ctx.fillRect(0,0,W,H);
-
-  const grad3 = ctx.createRadialGradient(W*0.5,H*0.5,0,W*0.5,H*0.5,W*0.25);
-  grad3.addColorStop(0,'rgba(255,23,68,0.03)');
-  grad3.addColorStop(1,'transparent');
-  ctx.fillStyle=grad3; ctx.fillRect(0,0,W,H);
+function drawNebula(){
+  const g1=cx.createRadialGradient(W*.2,H*.3,0,W*.2,H*.3,W*.4);
+  g1.addColorStop(0,'rgba(124,58,237,0.07)');g1.addColorStop(1,'transparent');
+  cx.fillStyle=g1;cx.fillRect(0,0,W,H);
+  const g2=cx.createRadialGradient(W*.8,H*.7,0,W*.8,H*.7,W*.3);
+  g2.addColorStop(0,'rgba(0,229,255,0.05)');g2.addColorStop(1,'transparent');
+  cx.fillStyle=g2;cx.fillRect(0,0,W,H);
 }
 
-function drawGalaxy(ctx, g, t){
-  const pulse = 0.5+0.5*Math.sin(t*0.001+g.twinkle);
-  const cr=g.color.r, cg=g.color.g, cb=g.color.b;
-
-  ctx.save();
-  ctx.translate(g.x, g.y);
+function drawG(cx, g, t){
+  const p = 0.5+0.5*Math.sin(t*.001+g.twink);
+  const s = g.size;
+  cx.save();
+  cx.translate(g.x, g.y);
 
   if(!g.explored && !g.isHome){
-    // Unknown galaxy — dim, grayscale
-    drawGalaxyShape(ctx, g, t, 0.18, 0.08+pulse*0.06, true);
+    // Unknown — very dim
+    const grd=cx.createRadialGradient(0,0,0,0,0,s*2);
+    grd.addColorStop(0,`rgba(150,150,200,${0.07+p*.04})`);
+    grd.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=grd;
+    cx.beginPath();cx.arc(0,0,s*2,0,Math.PI*2);cx.fill();
+    // Tiny dim core
+    const core=cx.createRadialGradient(0,0,0,0,0,s*.35);
+    core.addColorStop(0,`rgba(180,180,210,${0.2+p*.08})`);
+    core.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=core;
+    cx.beginPath();cx.arc(0,0,s*.35,0,Math.PI*2);cx.fill();
   } else {
-    // Known galaxy
-    drawGalaxyShape(ctx, g, t, g.brightness, 0.4+pulse*0.3, false);
+    // Explored / home — full color
+    const col=`${g.cr},${g.cg},${g.cb}`;
+    const glowA=0.35+p*.25;
+
+    // Outer halo
+    const halo=cx.createRadialGradient(0,0,0,0,0,s*2.5);
+    halo.addColorStop(0,`rgba(${col},${glowA*.5})`);
+    halo.addColorStop(0.5,`rgba(${col},${glowA*.2})`);
+    halo.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=halo;
+    cx.beginPath();cx.arc(0,0,s*2.5,0,Math.PI*2);cx.fill();
+
+    // Main glow
+    const grd=cx.createRadialGradient(0,0,0,0,0,s*1.5);
+    grd.addColorStop(0,`rgba(${col},${glowA})`);
+    grd.addColorStop(0.6,`rgba(${col},${glowA*.3})`);
+    grd.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=grd;
+    cx.beginPath();cx.arc(0,0,s*1.5,0,Math.PI*2);cx.fill();
+
+    // Bright core
+    const core=cx.createRadialGradient(0,0,0,0,0,s*.55);
+    core.addColorStop(0,`rgba(255,255,255,${g.bright*.85})`);
+    core.addColorStop(0.4,`rgba(${col},${g.bright*.7})`);
+    core.addColorStop(1,'rgba(0,0,0,0)');
+    cx.fillStyle=core;
+    cx.beginPath();cx.arc(0,0,s*.55,0,Math.PI*2);cx.fill();
+
+    // Spiral arms
+    if(g.arms>0){
+      cx.save();
+      cx.rotate(g.rot + t*g.rotsp);
+      for(let arm=0;arm<g.arms;arm++){
+        cx.save();
+        cx.rotate((Math.PI*2/g.arms)*arm);
+        for(let i=0;i<18;i++){
+          const f=i/18;
+          const ang=f*Math.PI*1.7;
+          const r2=s*.3+f*s*.85;
+          cx.beginPath();
+          cx.arc(Math.cos(ang)*r2,Math.sin(ang)*r2,(1-f)*s*.17+.5,0,Math.PI*2);
+          cx.fillStyle=`rgba(${col},${g.bright*(.55-f*.35)})`;
+          cx.fill();
+        }
+        cx.restore();
+      }
+      cx.restore();
+    }
+
+    // Star sparkles
+    for(let i=0;i<6;i++){
+      const a2=(i/6)*Math.PI*2+g.rot;
+      const d=s*(.25+Math.abs(Math.sin(i*1.7))*.45);
+      cx.beginPath();
+      cx.arc(Math.cos(a2)*d,Math.sin(a2)*d,s*.055,0,Math.PI*2);
+      cx.fillStyle=`rgba(255,255,255,${g.bright*.5})`;
+      cx.fill();
+    }
   }
 
-  // Home galaxy ring
+  // Home ring
   if(g.isHome){
-    const ringR = g.size*1.8;
-    ctx.beginPath();
-    ctx.arc(0,0,ringR,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,196,0,${0.3+pulse*0.25})`;
-    ctx.lineWidth=1.5/cam.scale;
-    ctx.stroke();
-
-    // Outer ring
-    ctx.beginPath();
-    ctx.arc(0,0,ringR*1.3,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,196,0,${0.12+pulse*0.1})`;
-    ctx.lineWidth=0.8/cam.scale;
-    ctx.stroke();
+    cx.beginPath();cx.arc(0,0,s*1.9,0,Math.PI*2);
+    cx.strokeStyle=`rgba(255,196,0,${.35+p*.25})`;
+    cx.lineWidth=1.8/cam.s;cx.stroke();
+    cx.beginPath();cx.arc(0,0,s*2.4,0,Math.PI*2);
+    cx.strokeStyle=`rgba(255,196,0,${.12+p*.1})`;
+    cx.lineWidth=.8/cam.s;cx.stroke();
   }
 
   // Selected ring
-  if(selectedGalaxy && selectedGalaxy.id === g.id){
-    const selR = g.size*1.6;
-    ctx.beginPath();
-    ctx.arc(0,0,selR,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,255,255,${0.4+pulse*0.3})`;
-    ctx.lineWidth=1.2/cam.scale;
-    ctx.stroke();
-
-    // Dashed outer
-    ctx.setLineDash([3/cam.scale,3/cam.scale]);
-    ctx.beginPath();
-    ctx.arc(0,0,selR*1.4,0,Math.PI*2);
-    ctx.strokeStyle=`rgba(255,255,255,${0.15+pulse*0.1})`;
-    ctx.lineWidth=0.6/cam.scale;
-    ctx.stroke();
-    ctx.setLineDash([]);
+  if(selG && selG.id===g.id){
+    cx.beginPath();cx.arc(0,0,s*1.7,0,Math.PI*2);
+    cx.strokeStyle=`rgba(255,255,255,${.5+p*.3})`;
+    cx.lineWidth=1.5/cam.s;cx.stroke();
+    cx.setLineDash([4/cam.s,3/cam.s]);
+    cx.beginPath();cx.arc(0,0,s*2.1,0,Math.PI*2);
+    cx.strokeStyle=`rgba(255,255,255,${.18+p*.1})`;
+    cx.lineWidth=.7/cam.s;cx.stroke();
+    cx.setLineDash([]);
   }
 
-  // Label (only at certain zoom levels)
-  if(cam.scale > 0.5 && (g.explored || g.isHome)){
-    ctx.textAlign='center';
-    ctx.textBaseline='top';
-    ctx.font=`${Math.min(11,9/cam.scale)}px Orbitron,monospace`;
-    ctx.fillStyle=g.isHome?`rgba(255,196,0,${0.7+pulse*0.2})`:`rgba(255,255,255,${0.45+pulse*0.15})`;
-    ctx.fillText(g.name, 0, g.size*1.1+2/cam.scale);
+  // Label
+  if(cam.s>0.45 && (g.explored||g.isHome)){
+    cx.textAlign='center';cx.textBaseline='top';
+    cx.font=`bold ${Math.min(12,10/cam.s)}px Orbitron,monospace`;
+    cx.fillStyle=g.isHome?`rgba(255,196,0,${.75+p*.2})`:`rgba(255,255,255,${.5+p*.15})`;
+    cx.fillText(g.name,0,s*1.15+3/cam.s);
   }
 
-  ctx.restore();
+  cx.restore();
 }
 
-function drawGalaxyShape(ctx, g, t, brightness, glowA, dim){
-  const s = g.size;
-  const cr=g.color.r, cg=g.color.g, cb=g.color.b;
-  const col = dim ? "150,150,180" : `${cr},${cg},${cb}`;
-
-  // Outer glow
-  const grd = ctx.createRadialGradient(0,0,0,0,0,s*2.2);
-  grd.addColorStop(0,`rgba(${col},${glowA})`);
-  grd.addColorStop(0.4,`rgba(${col},${glowA*0.4})`);
-  grd.addColorStop(1,'rgba(0,0,0,0)');
-  ctx.fillStyle=grd;
-  ctx.beginPath(); ctx.arc(0,0,s*2.2,0,Math.PI*2); ctx.fill();
-
-  // Core
-  const core = ctx.createRadialGradient(0,0,0,0,0,s*0.5);
-  core.addColorStop(0,`rgba(255,255,255,${brightness*0.9})`);
-  core.addColorStop(0.3,`rgba(${col},${brightness*0.7})`);
-  core.addColorStop(1,`rgba(${col},0)`);
-  ctx.fillStyle=core;
-  ctx.beginPath(); ctx.arc(0,0,s*0.5,0,Math.PI*2); ctx.fill();
-
-  // Spiral arms (for spiral types)
-  if(g.arms > 0 && !dim){
-    ctx.save();
-    ctx.rotate(g.rotation + t*g.rotSpeed);
-    for(let arm=0;arm<g.arms;arm++){
-      ctx.save();
-      ctx.rotate((Math.PI*2/g.arms)*arm);
-      for(let i=0;i<20;i++){
-        const tt = i/20;
-        const angle = tt*Math.PI*1.8;
-        const r2 = s*0.3+tt*s*0.9;
-        const px = Math.cos(angle)*r2;
-        const py = Math.sin(angle)*r2;
-        const dotS = (1-tt)*s*0.18+0.5;
-        ctx.beginPath();
-        ctx.arc(px,py,dotS,0,Math.PI*2);
-        ctx.fillStyle=`rgba(${col},${brightness*(0.6-tt*0.4)})`;
-        ctx.fill();
-      }
-      ctx.restore();
-    }
-    ctx.restore();
+function renderMini(){
+  if(!mx2) return;
+  const MW=110,MH=85;
+  mx2.clearRect(0,0,MW,MH);
+  mx2.fillStyle='rgba(0,1,10,.92)';mx2.fillRect(0,0,MW,MH);
+  const sx=MW/UW, sy=MH/UH;
+  for(const g of galaxies){
+    mx2.beginPath();
+    mx2.arc(g.x*sx, g.y*sy, g.isHome?2.8:1.6, 0, Math.PI*2);
+    if(g.isHome) mx2.fillStyle='rgba(255,196,0,.9)';
+    else if(g.explored) mx2.fillStyle=`rgba(${g.cr},${g.cg},${g.cb},.6)`;
+    else mx2.fillStyle='rgba(90,90,110,.2)';
+    mx2.fill();
   }
-
-  // Star dots (random pattern)
-  if(!dim){
-    for(let i=0;i<8;i++){
-      const angle = (i/8)*Math.PI*2 + g.rotation;
-      const dist = s*(0.3+Math.sin(i*2.3)*0.4);
-      const sx2 = Math.cos(angle)*dist;
-      const sy2 = Math.sin(angle)*dist;
-      ctx.beginPath();
-      ctx.arc(sx2,sy2,s*0.06,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,255,255,${brightness*0.5})`;
-      ctx.fill();
-    }
+  // Viewport
+  if(cv){
+    const vx=(-cam.x/cam.s)*sx, vy=(-cam.y/cam.s)*sy;
+    const vw=(cv.width/cam.s)*sx, vh=(cv.height/cam.s)*sy;
+    mx2.strokeStyle='rgba(0,229,255,.4)';mx2.lineWidth=1;
+    mx2.strokeRect(vx,vy,vw,vh);
   }
 }
 
-function drawMinimap(){
-  if(!mmCtx) return;
-  const W=130,H=100;
-  mmCtx.clearRect(0,0,W,H);
-  mmCtx.fillStyle='rgba(0,1,10,0.92)'; mmCtx.fillRect(0,0,W,H);
-
-  const scx=W/universe.width, scy=H/universe.height;
-
-  galaxies.forEach(g=>{
-    const mx=g.x*scx, my=g.y*scy;
-    mmCtx.beginPath();
-    mmCtx.arc(mx,my,g.isHome?2.5:1.5,0,Math.PI*2);
-    if(g.isHome) mmCtx.fillStyle='rgba(255,196,0,0.9)';
-    else if(g.explored) mmCtx.fillStyle=`rgba(${g.color.r},${g.color.g},${g.color.b},0.6)`;
-    else mmCtx.fillStyle='rgba(100,100,120,0.25)';
-    mmCtx.fill();
-  });
-
-  // Viewport rect
-  const vx=(-cam.x/cam.scale)*scx, vy=(-cam.y/cam.scale)*scy;
-  if(canvas){
-    const vw=(canvas.width/cam.scale)*scx, vh=(canvas.height/cam.scale)*scy;
-    mmCtx.strokeStyle='rgba(0,229,255,0.4)'; mmCtx.lineWidth=1;
-    mmCtx.strokeRect(vx,vy,vw,vh);
-  }
-}
-
-// ── INPUT ──
-function initInput(){
-  // Mouse
-  canvas.addEventListener('mousedown',e=>{
-    drag.active=true; drag.sx=e.clientX; drag.sy=e.clientY;
-    drag.cx=cam.x; drag.cy=cam.y;
-    canvas.classList.add('dragging');
-  });
-  canvas.addEventListener('mousemove',e=>{
-    if(drag.active){
-      cam.x=drag.cx+(e.clientX-drag.sx);
-      cam.y=drag.cy+(e.clientY-drag.sy);
-      clampCam();
-    }
-    // Hover tooltip
-    const w=screenToWorld(e.clientX,e.clientY);
-    const g=galaxyAt(w.x,w.y);
-    showTooltip(g,e.clientX,e.clientY);
-  });
-  canvas.addEventListener('mouseup',e=>{
-    const moved=Math.abs(e.clientX-drag.sx)+Math.abs(e.clientY-drag.sy);
-    if(moved<5){
-      const w=screenToWorld(e.clientX,e.clientY);
-      const g=galaxyAt(w.x,w.y);
-      if(g) onGalaxyClick(g);
-      else { selectedGalaxy=null; $('enter-prompt').style.display='none'; }
-    }
-    drag.active=false; canvas.classList.remove('dragging');
-  });
-  canvas.addEventListener('mouseleave',()=>{ drag.active=false; canvas.classList.remove('dragging'); hideTooltip(); });
-
-  // Touch
-  let touches={}, pinchDist=0;
-  canvas.addEventListener('touchstart',e=>{
-    e.preventDefault();
-    if(e.touches.length===1){
-      drag.active=true;
-      drag.sx=e.touches[0].clientX; drag.sy=e.touches[0].clientY;
-      drag.cx=cam.x; drag.cy=cam.y;
-    }
-    if(e.touches.length===2){
-      drag.active=false;
-      pinchDist=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
-    }
-  },{passive:false});
-  canvas.addEventListener('touchmove',e=>{
-    e.preventDefault();
-    if(e.touches.length===1&&drag.active){
-      cam.x=drag.cx+(e.touches[0].clientX-drag.sx);
-      cam.y=drag.cy+(e.touches[0].clientY-drag.sy);
-      clampCam();
-    }
-  },{passive:false});
-  canvas.addEventListener('touchend',e=>{
-    e.preventDefault();
-    if(drag.active && e.changedTouches.length===1){
-      const dx=e.changedTouches[0].clientX-drag.sx;
-      const dy=e.changedTouches[0].clientY-drag.sy;
-      if(Math.abs(dx)+Math.abs(dy)<8){
-        const w=screenToWorld(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
-        const g=galaxyAt(w.x,w.y);
-        if(g) onGalaxyClick(g);
-        else { selectedGalaxy=null; $('enter-prompt').style.display='none'; }
-      }
-    }
-    drag.active=false;
-  },{passive:false});
-
-  // Zoom buttons
-  $('btn-zin').onclick  = ()=>{ zoomBy(1.3); };
-  $('btn-zout').onclick = ()=>{ zoomBy(0.77); };
-  $('btn-zreset').onclick = fitView;
-}
-
-function zoomBy(factor){
-  const cx=canvas.width/2, cy=canvas.height/2;
-  const wBefore=screenToWorld(cx,cy);
-  cam.scale*=factor;
-  clampCam();
-  const wAfter=screenToWorld(cx,cy);
-  cam.x+=( wAfter.x-wBefore.x)*cam.scale;
-  cam.y+=( wAfter.y-wBefore.y)*cam.scale;
-  clampCam();
-}
-
+// ═══ GALAXY AT POSITION ═══
 function galaxyAt(wx,wy){
   let best=null, bd=Infinity;
-  galaxies.forEach(g=>{
+  for(const g of galaxies){
     const d=Math.hypot(g.x-wx,g.y-wy);
-    const hitR=Math.max(g.size*2.5, 30/cam.scale);
-    if(d<hitR&&d<bd){ bd=d; best=g; }
-  });
+    const hit=Math.max(g.size*2.5, 35/cam.s);
+    if(d<hit&&d<bd){bd=d;best=g;}
+  }
   return best;
 }
 
-// ── TOOLTIP ──
-function showTooltip(g,mx,my){
-  if(!g){ hideTooltip(); return; }
-  const tip=$('galaxy-tip');
-  $('gt-name').textContent=g.name;
-  $('gt-type').textContent=g.type+' Galaxy';
-  $('gt-systems').textContent=(g.explored||g.isHome)?`${g.systems} Solar Systems`:'??? Solar Systems';
-  const st=$('gt-status');
-  if(g.isHome){ st.textContent='HOME GALAXY'; st.className='gt-status home'; }
-  else if(g.explored){ st.textContent='EXPLORED'; st.className='gt-status explored'; }
-  else { st.textContent='UNKNOWN'; st.className='gt-status unknown'; }
+// ═══ TOOLTIP ═══
+function showTip(g,sx,sy){
+  if(!g){$('tip').style.display='none';return;}
+  $('tn').textContent=g.name;
+  $('tt').textContent=g.type+' Galaxy';
+  $('ts2').textContent=(g.explored||g.isHome)?g.systems+' Solar Systems':'??? Solar Systems';
+  const st=$('tst');
+  if(g.isHome){st.textContent='HOME GALAXY';st.className='tip-st h';}
+  else if(g.explored){st.textContent='EXPLORED';st.className='tip-st e';}
+  else{st.textContent='UNKNOWN';st.className='tip-st u';}
+  const tip=$('tip');
   tip.style.display='block';
-  tip.style.left=Math.min(mx+12, window.innerWidth-165)+'px';
-  tip.style.top=Math.max(60, Math.min(my-30, window.innerHeight-120))+'px';
-}
-function hideTooltip(){ $('galaxy-tip').style.display='none'; }
-
-// ── GALAXY CLICK ──
-function onGalaxyClick(g){
-  selectedGalaxy=g;
-  $('enter-prompt').style.display='block';
-  $('enter-prompt').textContent='TAP TO ENTER: '+g.name.toUpperCase();
-  toast(g.name + (g.explored||g.isHome?' — Tap to enter':' — Unknown territory'),'inf');
+  tip.style.left=Math.min(sx+14,W-160)+'px';
+  tip.style.top=Math.max(55,Math.min(sy-30,H-120))+'px';
 }
 
-window.enterSelectedGalaxy = function(){
-  if(!selectedGalaxy) return;
-  // Zoom-in transition animation
-  const zt=$('zoom-transition');
-  zt.classList.add('active');
+// ═══ TAP / CLICK ═══
+function onTap(sx,sy){
+  const w=s2w(sx,sy);
+  const g=galaxyAt(w.x,w.y);
+  if(g){
+    selG=g;
+    $('ep').style.display='block';
+    $('ep').textContent='ENTER: '+g.name.toUpperCase();
+    showTip(g,sx,sy);
+    toast(g.name+(g.isHome?' — HOME':(g.explored?' — Explored':' — Unknown')),'inf');
+  } else {
+    selG=null;
+    $('ep').style.display='none';
+    $('tip').style.display='none';
+  }
+}
+
+window.enterGalaxy=function(){
+  if(!selG) return;
+  $('zt').classList.add('on');
   setTimeout(()=>{
-    toast('Entering '+selectedGalaxy.name+'... (Galaxy view coming soon!)','ok');
-    zt.classList.remove('active');
-    // TODO: Navigate to galaxy view
-    // Mark as explored
-    selectedGalaxy.explored=true;
-    $('enter-prompt').style.display='none';
-    selectedGalaxy=null;
+    selG.explored=true;
+    toast('Entering '+selG.name+' — Galaxy view coming soon!','ok');
+    $('zt').classList.remove('on');
+    $('ep').style.display='none';
+    selG=null;
   },600);
 };
 
-// ── PROFILE / LOGOUT ──
-window.goProfile = function(){
-  window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';
-};
-window.doLogout = async function(){
+// ═══ INPUT ═══
+function initInput(){
+  // Mouse
+  cv.addEventListener('mousedown',e=>{
+    drag.on=true;drag.sx=e.clientX;drag.sy=e.clientY;drag.ox=cam.x;drag.oy=cam.y;
+  });
+  cv.addEventListener('mousemove',e=>{
+    if(drag.on){
+      cam.x=drag.ox+(e.clientX-drag.sx);
+      cam.y=drag.oy+(e.clientY-drag.sy);
+      clamp();
+    } else {
+      const w=s2w(e.clientX,e.clientY);
+      showTip(galaxyAt(w.x,w.y),e.clientX,e.clientY);
+    }
+  });
+  cv.addEventListener('mouseup',e=>{
+    const moved=Math.abs(e.clientX-drag.sx)+Math.abs(e.clientY-drag.sy);
+    if(moved<5) onTap(e.clientX,e.clientY);
+    drag.on=false;
+  });
+
+  // Touch
+  let tp=null, pinchD=0;
+  cv.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===1){
+      drag.on=true;
+      drag.sx=e.touches[0].clientX;drag.sy=e.touches[0].clientY;
+      drag.ox=cam.x;drag.oy=cam.y;
+      tp={x:e.touches[0].clientX,y:e.touches[0].clientY};
+    }
+    if(e.touches.length===2){
+      drag.on=false;
+      pinchD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);
+    }
+  },{passive:false});
+  cv.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(e.touches.length===1&&drag.on){
+      cam.x=drag.ox+(e.touches[0].clientX-drag.sx);
+      cam.y=drag.oy+(e.touches[0].clientY-drag.sy);
+      clamp();
+    }
+  },{passive:false});
+  cv.addEventListener('touchend',e=>{
+    e.preventDefault();
+    if(drag.on&&e.changedTouches.length===1&&tp){
+      const dx=Math.abs(e.changedTouches[0].clientX-tp.x);
+      const dy=Math.abs(e.changedTouches[0].clientY-tp.y);
+      if(dx+dy<10) onTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    }
+    drag.on=false;tp=null;
+  },{passive:false});
+
+  // Zoom buttons
+  $('zin').onclick=()=>zoomAt(1.3);
+  $('zout').onclick=()=>zoomAt(0.77);
+  $('zfit').onclick=()=>{ fitView(); centerHome(); };
+}
+
+function zoomAt(factor){
+  const cx2=cv.width/2, cy2=cv.height/2;
+  const wx=(cx2-cam.x)/cam.s, wy=(cy2-cam.y)/cam.s;
+  cam.s*=factor;clamp();
+  cam.x=cx2-wx*cam.s;cam.y=cy2-wy*cam.s;
+}
+
+function centerHome(){
+  const hg=galaxies[homeIdx];
+  if(!hg) return;
+  cam.x=cv.width/2-hg.x*cam.s;
+  cam.y=cv.height/2-hg.y*cam.s;
+}
+
+// ═══ RESIZE ═══
+function resize(){
+  W=cv.width=window.innerWidth;
+  H=cv.height=window.innerHeight;
+  mc.width=110;mc.height=85;
+}
+
+// ═══ LOGOUT ═══
+window.doLogout=async function(){
   if(!confirm('Logout?')) return;
   await sb.auth.signOut();
   window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';
 };
 
-// ── INIT ──
+// ═══ INIT ═══
 async function init(){
-  // Load bar animation
-  setLoad(10,'Connecting to void...');
-  await new Promise(r=>setTimeout(r,300));
+  setLoad(10,'Connecting...');
+  await new Promise(r=>setTimeout(r,200));
 
-  // Check auth
-  setLoad(25,'Authenticating commander...');
-  const {data:{session}} = await sb.auth.getSession();
+  setLoad(25,'Authenticating...');
+  let session;
+  try{
+    const res=await sb.auth.getSession();
+    session=res.data.session;
+  }catch(e){
+    window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';
+    return;
+  }
   if(!session?.user){
     window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';
     return;
   }
 
-  setLoad(45,'Loading commander profile...');
-  const {data:profile} = await sb.from('players').select('*').eq('id',session.user.id).maybeSingle();
-  player = { ...session.user, profile };
+  setLoad(45,'Loading profile...');
+  const {data:prof}=await sb.from('players').select('*').eq('id',session.user.id).maybeSingle();
+  profile=prof;
 
-  // Update HUD
-  const avIdx = (profile?.avatar_id||1)-1;
-  $('hud-avatar').innerHTML = AVATARS[avIdx]||AVATARS[0];
-  $('hud-uname').textContent = profile?.username||'Commander';
-  $('hud-tag').textContent = profile?.player_tag||'#VD-00000';
-  $('res-cr').textContent = formatNum(profile?.credits||0);
-  $('res-mn').textContent = formatNum(profile?.minerals||0);
-  $('res-en').textContent = formatNum(profile?.energy||0);
+  // HUD
+  const ai=(prof?.avatar_id||1)-1;
+  $('hav').innerHTML=AVATARS[ai]||AVATARS[0];
+  $('hun').textContent=prof?.username||'Commander';
+  $('htag').textContent=prof?.player_tag||'#VD-00000';
+  $('hcr').textContent=fmt(prof?.credits||0);
+  $('hmn').textContent=fmt(prof?.minerals||0);
+  $('hen').textContent=fmt(prof?.energy||0);
 
   setLoad(65,'Generating universe...');
-  await new Promise(r=>setTimeout(r,200));
+  await new Promise(r=>setTimeout(r,150));
+  const seed=hash(session.user.id);
+  galaxies=buildGalaxies(seed);
 
-  // Generate universe with player-based seed
-  const seed = hashCode(session.user.id);
-  generateUniverse(seed);
-
-  // Assign home galaxy
-  setLoad(80,'Locating home galaxy...');
-  await new Promise(r=>setTimeout(r,200));
-
-  // Home galaxy = first galaxy (consistent for player)
-  const homeIdx = Math.abs(seed) % galaxies.length;
-  galaxies[homeIdx].isHome = true;
-  galaxies[homeIdx].explored = true;
-  homeGalaxyId = homeIdx;
-
-  // Explore a few nearby galaxies
-  let explored = 0;
-  galaxies.forEach((g,i)=>{
-    if(i===homeIdx) return;
-    const d=Math.hypot(g.x-galaxies[homeIdx].x, g.y-galaxies[homeIdx].y);
-    if(d<300 && explored<4){ g.explored=true; explored++; }
-  });
-
-  // Init canvas
-  setLoad(92,'Rendering universe...');
-  canvas=$('universe-canvas'); ctx=canvas.getContext('2d');
-  mmCanvas=$('minimap-canvas'); mmCtx=mmCanvas.getContext('2d');
-  mmCanvas.width=130; mmCanvas.height=100;
-
-  function resize(){
-    canvas.width=window.innerWidth; canvas.height=window.innerHeight;
+  setLoad(80,'Locating home system...');
+  await new Promise(r=>setTimeout(r,150));
+  homeIdx=seed%galaxies.length;
+  galaxies[homeIdx].isHome=true;
+  galaxies[homeIdx].explored=true;
+  // Explore nearby
+  let ex=0;
+  for(const g of galaxies){
+    if(g.id===homeIdx) continue;
+    if(Math.hypot(g.x-galaxies[homeIdx].x,g.y-galaxies[homeIdx].y)<280&&ex<5){
+      g.explored=true;ex++;
+    }
   }
-  window.addEventListener('resize',()=>{ resize(); fitView(); });
-  resize();
 
-  // Fit full universe first
+  setLoad(92,'Rendering...');
+  await new Promise(r=>setTimeout(r,100));
+
+  // Canvas setup
+  cv=$('cv');cx=cv.getContext('2d');
+  mc=$('mmc');mx2=mc.getContext('2d');
+
+  resize();
+  window.addEventListener('resize',()=>{ resize(); });
+
+  // Fit and center home
   fitView();
+  cam.s=0.4;
+  centerHome();
 
   initInput();
 
-  // Center on home galaxy
-  const hg=galaxies[homeIdx];
-  cam.scale = 0.45;
-  cam.x = canvas.width/2 - hg.x*cam.scale;
-  cam.y = canvas.height/2 - hg.y*cam.scale;
-  clampCam();
-
   setLoad(100,'Universe ready!');
-  await new Promise(r=>setTimeout(r,400));
+  await new Promise(r=>setTimeout(r,350));
 
   // Hide loading
-  $('loading').style.opacity='0';
-  $('loading').style.transition='opacity 0.5s';
-  setTimeout(()=>{ $('loading').style.display='none'; },500);
+  const ld=$('load');
+  ld.style.transition='opacity .5s';
+  ld.style.opacity='0';
+  setTimeout(()=>ld.style.display='none',500);
 
   startRender();
-  toast('Welcome, '+( profile?.username||'Commander')+'! Your home galaxy is highlighted in gold.','ok');
-}
-
-function formatNum(n){
-  if(n>=1e9) return (n/1e9).toFixed(1)+'B';
-  if(n>=1e6) return (n/1e6).toFixed(1)+'M';
-  if(n>=1e3) return (n/1e3).toFixed(1)+'K';
-  return n.toString();
-}
-
-function hashCode(str){
-  let h=0;
-  for(let i=0;i<str.length;i++){ h=Math.imul(31,h)+str.charCodeAt(i)|0; }
-  return h;
+  toast('Welcome '+(prof?.username||'Commander')+'! Gold ring = Home Galaxy','ok');
 }
 
 init();
