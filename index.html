@@ -4,1185 +4,1432 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 <title>VOID DOMINION</title>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
-/* ══════════════════════════════════════════════
-   CORE
-══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════
+   CORE VARIABLES
+═══════════════════════════════════════════ */
 :root {
-  --bg:#00020c; --deep:#010a1e;
-  --c1:#00e5ff; --c2:#7c3aed; --c3:#ff1744;
-  --gold:#ffc400; --green:#00e676; --orange:#ff6d00;
-  --line:rgba(0,229,255,0.14);
-  --glass:rgba(0,5,20,0.88);
-  --fh:'Orbitron',monospace;
-  --fb:'Exo 2',sans-serif;
+  --bg:      #00010a;
+  --deep:    #00040f;
+  --cyan:    #00e5ff;
+  --purple:  #7c3aed;
+  --red:     #ff1744;
+  --gold:    #ffc400;
+  --green:   #00e676;
+  --dim:     rgba(0,229,255,0.08);
+  --border:  rgba(0,229,255,0.15);
+  --fh:      'Orbitron', monospace;
+  --fb:      'Exo 2', sans-serif;
 }
-*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
-html,body{width:100%;height:100%;background:var(--bg);color:#d0eeff;font-family:var(--fb);overflow:hidden;-webkit-tap-highlight-color:transparent;user-select:none;}
-canvas{display:block;}
 
-/* ══════════════════════════════════════════════
-   STARFIELD
-══════════════════════════════════════════════ */
-#stars{position:fixed;inset:0;z-index:0;pointer-events:none;}
-.nebula{position:fixed;inset:0;z-index:0;pointer-events:none;
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  width:100%; min-height:100%;
+  background:var(--bg);
+  color:#d0eeff;
+  font-family:var(--fb);
+  overflow-x:hidden;
+  -webkit-tap-highlight-color:transparent;
+}
+
+/* ═══════════════════════════════════════════
+   ANIMATED BACKGROUND
+═══════════════════════════════════════════ */
+#bg-canvas {
+  position:fixed; inset:0; z-index:0;
+  pointer-events:none;
+}
+
+.nebula-layer {
+  position:fixed; inset:0; z-index:0; pointer-events:none;
   background:
-    radial-gradient(ellipse 55% 35% at 15% 25%,rgba(124,58,237,.09) 0%,transparent 65%),
-    radial-gradient(ellipse 45% 30% at 85% 65%,rgba(0,229,255,.07) 0%,transparent 65%),
-    radial-gradient(ellipse 35% 55% at 55% 10%,rgba(255,23,68,.05) 0%,transparent 65%),
-    radial-gradient(ellipse 40% 40% at 40% 90%,rgba(0,230,118,.04) 0%,transparent 65%);
+    radial-gradient(ellipse 60% 40% at 10% 20%, rgba(124,58,237,0.12) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 90% 80%, rgba(0,229,255,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 40% 50% at 50% 50%, rgba(255,23,68,0.05) 0%, transparent 60%);
+  animation:nebShift 20s ease-in-out infinite alternate;
+}
+@keyframes nebShift {
+  0%   { opacity:0.6; transform:scale(1); }
+  100% { opacity:1;   transform:scale(1.05); }
 }
 
-/* ══════════════════════════════════════════════
-   SCREENS
-══════════════════════════════════════════════ */
-.scr{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1rem;}
-.scr.off{display:none!important;}
-
-/* ══════════════════════════════════════════════
-   MENU
-══════════════════════════════════════════════ */
-.logo-wrap{text-align:center;margin-bottom:0.3rem;}
-.logo-void{
-  font-family:var(--fh);font-size:clamp(3.5rem,12vw,7rem);font-weight:900;
-  letter-spacing:0.18em;line-height:1;display:block;
-  color:var(--c1);text-shadow:0 0 40px rgba(0,229,255,.7),0 0 100px rgba(0,229,255,.3);
-  animation:vPulse 4s ease-in-out infinite;
+/* ═══════════════════════════════════════════
+   LAYOUT WRAPPER
+═══════════════════════════════════════════ */
+.page {
+  position:relative; z-index:10;
+  min-height:100vh;
+  display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  padding:2rem 1rem;
 }
-@keyframes vPulse{0%,100%{text-shadow:0 0 40px rgba(0,229,255,.7),0 0 100px rgba(0,229,255,.3)}50%{text-shadow:0 0 60px rgba(0,229,255,.9),0 0 140px rgba(0,229,255,.5)}}
-.logo-dom{
-  font-family:var(--fh);font-size:clamp(1.6rem,5.5vw,3.2rem);font-weight:900;
-  letter-spacing:0.35em;display:block;
+
+/* ═══════════════════════════════════════════
+   LOGO
+═══════════════════════════════════════════ */
+.logo-block {
+  text-align:center;
+  margin-bottom:2rem;
+  animation:fadeDown 0.8s ease both;
+}
+@keyframes fadeDown {
+  from { opacity:0; transform:translateY(-20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+.logo-void {
+  display:block;
+  font-family:var(--fh);
+  font-size:clamp(3rem,10vw,6rem);
+  font-weight:900;
+  letter-spacing:0.22em;
+  color:var(--cyan);
+  text-shadow:
+    0 0 30px rgba(0,229,255,0.8),
+    0 0 80px rgba(0,229,255,0.4),
+    0 0 120px rgba(0,229,255,0.2);
+  animation:voidPulse 3s ease-in-out infinite;
+}
+@keyframes voidPulse {
+  0%,100% { text-shadow: 0 0 30px rgba(0,229,255,0.8), 0 0 80px rgba(0,229,255,0.4); }
+  50%     { text-shadow: 0 0 50px rgba(0,229,255,1),   0 0 120px rgba(0,229,255,0.6); }
+}
+
+.logo-dominion {
+  display:block;
+  font-family:var(--fh);
+  font-size:clamp(1.2rem,4vw,2.2rem);
+  font-weight:900;
+  letter-spacing:0.45em;
   color:transparent;
-  background:linear-gradient(90deg,#7c3aed,#ff1744,#7c3aed);
-  background-size:200%;-webkit-background-clip:text;background-clip:text;
-  animation:domShift 5s linear infinite;
+  background:linear-gradient(90deg, #7c3aed, #ff1744, #7c3aed);
+  background-size:200%;
+  -webkit-background-clip:text; background-clip:text;
+  animation:domFlow 5s linear infinite;
+  margin-top:-0.3rem;
 }
-@keyframes domShift{0%{background-position:0%}100%{background-position:200%}}
-.tagline{
-  font-size:clamp(.55rem,1.8vw,.78rem);letter-spacing:.5em;
-  color:rgba(0,229,255,.35);text-transform:uppercase;margin-top:.5rem;
+@keyframes domFlow { 0%{background-position:0%} 100%{background-position:200%} }
+
+.logo-tag {
+  display:block;
+  font-size:clamp(0.5rem,1.8vw,0.72rem);
+  letter-spacing:0.5em;
+  color:rgba(0,229,255,0.35);
+  text-transform:uppercase;
+  margin-top:0.6rem;
 }
 
-.card{
-  background:var(--glass);
-  border:1px solid var(--line);
+/* ═══════════════════════════════════════════
+   AUTH CARD
+═══════════════════════════════════════════ */
+.auth-card {
+  width:min(420px, 95vw);
+  background:rgba(0,4,18,0.85);
+  border:1px solid var(--border);
+  border-radius:3px;
+  position:relative;
+  overflow:hidden;
+  animation:fadeUp 0.6s ease 0.2s both;
+  backdrop-filter:blur(20px);
+  box-shadow:
+    0 0 0 1px rgba(0,229,255,0.05),
+    0 20px 60px rgba(0,0,0,0.5),
+    0 0 80px rgba(0,229,255,0.03);
+}
+@keyframes fadeUp {
+  from { opacity:0; transform:translateY(20px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* Top accent line */
+.auth-card::before {
+  content:'';
+  position:absolute; top:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent 0%, var(--cyan) 30%, var(--purple) 70%, transparent 100%);
+}
+/* Bottom accent */
+.auth-card::after {
+  content:'';
+  position:absolute; bottom:0; left:0; right:0; height:1px;
+  background:linear-gradient(90deg, transparent 0%, rgba(124,58,237,0.5) 50%, transparent 100%);
+}
+
+/* Corner decorations */
+.card-corner {
+  position:absolute; width:12px; height:12px;
+  border-color:var(--cyan); border-style:solid;
+}
+.cc-tl { top:0; left:0; border-width:1px 0 0 1px; }
+.cc-tr { top:0; right:0; border-width:1px 1px 0 0; }
+.cc-bl { bottom:0; left:0; border-width:0 0 1px 1px; }
+.cc-br { bottom:0; right:0; border-width:0 1px 1px 0; }
+
+.card-inner { padding:2rem 2.2rem 2.2rem; }
+
+/* ═══════════════════════════════════════════
+   TABS (Login / Register)
+═══════════════════════════════════════════ */
+.tabs {
+  display:flex; gap:0;
+  margin-bottom:1.8rem;
+  border-bottom:1px solid rgba(0,229,255,0.12);
+}
+.tab-btn {
+  flex:1; padding:0.75rem;
+  font-family:var(--fh); font-size:0.62rem; font-weight:700;
+  letter-spacing:0.25em; text-transform:uppercase;
+  background:transparent; border:none;
+  color:rgba(0,229,255,0.35);
+  cursor:pointer; transition:all 0.25s;
+  position:relative;
+}
+.tab-btn::after {
+  content:'';
+  position:absolute; bottom:-1px; left:0; right:0; height:2px;
+  background:var(--cyan);
+  transform:scaleX(0); transition:transform 0.25s;
+}
+.tab-btn.active {
+  color:var(--cyan);
+}
+.tab-btn.active::after { transform:scaleX(1); }
+.tab-btn:hover:not(.active) { color:rgba(0,229,255,0.6); }
+
+/* ═══════════════════════════════════════════
+   FORM SCREENS
+═══════════════════════════════════════════ */
+.form-screen { display:none; }
+.form-screen.active { display:block; }
+
+.form-title {
+  font-family:var(--fh); font-size:0.6rem; letter-spacing:0.4em;
+  color:rgba(0,229,255,0.4); text-transform:uppercase;
+  text-align:center; margin-bottom:1.5rem;
+}
+
+/* ═══════════════════════════════════════════
+   FORM FIELDS
+═══════════════════════════════════════════ */
+.field {
+  margin-bottom:1.1rem;
+  position:relative;
+}
+.field label {
+  display:block;
+  font-size:0.6rem; letter-spacing:0.25em;
+  color:rgba(0,229,255,0.4); text-transform:uppercase;
+  margin-bottom:0.4rem;
+}
+.field input {
+  width:100%;
+  background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.18);
   border-radius:2px;
-  padding:2rem 2.2rem;
-  width:min(390px,93vw);
-  margin-top:1.8rem;
-  position:relative;overflow:hidden;
+  padding:0.78rem 1rem;
+  color:#fff;
+  font-family:var(--fb); font-size:0.98rem; font-weight:500;
+  outline:none;
+  transition:border-color 0.2s, box-shadow 0.2s, background 0.2s;
 }
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,var(--c1),transparent);}
-.card::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;
-  background:linear-gradient(90deg,transparent,rgba(124,58,237,.4),transparent);}
-
-.card-ttl{font-family:var(--fh);font-size:.6rem;letter-spacing:.4em;color:rgba(0,229,255,.4);text-transform:uppercase;text-align:center;margin-bottom:1.4rem;}
-
-.field{margin-bottom:1rem;}
-.field label{display:block;font-size:.6rem;letter-spacing:.25em;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:.38rem;}
-.field input{
-  width:100%;background:rgba(0,229,255,.03);
-  border:1px solid rgba(0,229,255,.18);border-radius:2px;
-  padding:.72rem .9rem;color:#fff;font-family:var(--fb);font-size:.98rem;font-weight:500;
-  outline:none;transition:border-color .2s,box-shadow .2s;
+.field input:focus {
+  border-color:var(--cyan);
+  background:rgba(0,229,255,0.07);
+  box-shadow:0 0 0 1px rgba(0,229,255,0.1), 0 0 20px rgba(0,229,255,0.06);
 }
-.field input:focus{border-color:var(--c1);box-shadow:0 0 0 1px rgba(0,229,255,.12),0 0 18px rgba(0,229,255,.07);}
-.field input::placeholder{color:rgba(255,255,255,.14);}
+.field input::placeholder { color:rgba(255,255,255,0.15); }
+.field input.err { border-color:rgba(255,23,68,0.6); }
+.field input.ok  { border-color:rgba(0,230,118,0.5); }
 
-/* Difficulty selector */
-.diff-row{display:flex;gap:.5rem;margin-bottom:1rem;}
-.diff-btn{
-  flex:1;padding:.6rem .3rem;
-  font-family:var(--fh);font-size:.55rem;letter-spacing:.12em;
-  text-transform:uppercase;border-radius:2px;cursor:pointer;
-  border:1px solid rgba(0,229,255,.18);background:transparent;color:rgba(0,229,255,.5);
-  transition:all .2s;
+/* Field icon */
+.field-icon {
+  position:absolute; right:0.9rem; top:50%;
+  transform:translateY(-50%);
+  font-size:0.8rem; color:rgba(0,229,255,0.3);
+  pointer-events:none; margin-top:0.6rem;
 }
-.diff-btn.active{background:rgba(0,229,255,.1);border-color:var(--c1);color:var(--c1);}
-.diff-btn:hover:not(.active){background:rgba(0,229,255,.05);}
 
-/* Enemy count */
-.bot-row{display:flex;gap:.5rem;margin-bottom:1.2rem;}
-.bot-btn{
-  flex:1;padding:.55rem .2rem;text-align:center;
-  font-family:var(--fh);font-size:.62rem;letter-spacing:.1em;
-  border-radius:2px;cursor:pointer;
-  border:1px solid rgba(0,229,255,.18);background:transparent;color:rgba(0,229,255,.5);
-  transition:all .2s;
+/* Password toggle */
+.pwd-toggle {
+  position:absolute; right:0.9rem; top:50%;
+  transform:translateY(-50%);
+  background:none; border:none; cursor:pointer;
+  color:rgba(0,229,255,0.35); font-size:0.75rem;
+  margin-top:0.6rem; padding:0.2rem;
+  font-family:var(--fh); letter-spacing:0.1em;
+  transition:color 0.2s;
 }
-.bot-btn.active{background:rgba(124,58,237,.15);border-color:#7c3aed;color:#b388ff;}
-.bot-btn:hover:not(.active){background:rgba(0,229,255,.05);}
+.pwd-toggle:hover { color:var(--cyan); }
 
-.btn{
-  width:100%;padding:.85rem;
-  font-family:var(--fh);font-size:.72rem;font-weight:700;letter-spacing:.22em;
-  text-transform:uppercase;border:none;border-radius:2px;
-  cursor:pointer;transition:all .2s;position:relative;overflow:hidden;
+/* Field hint */
+.field-hint {
+  font-size:0.6rem; letter-spacing:0.08em;
+  color:rgba(255,255,255,0.25);
+  margin-top:0.3rem;
 }
-.btn::after{content:'';position:absolute;inset:0;background:transparent;transition:background .15s;}
-.btn:hover::after{background:rgba(255,255,255,.06);}
-.btn:active{transform:scale(.98);}
-.btn-launch{
-  background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));
-  color:#fff;box-shadow:0 4px 24px rgba(0,170,210,.3);
+.field-hint.err { color:rgba(255,80,80,0.8); }
+.field-hint.ok  { color:rgba(0,230,118,0.7); }
+
+/* Password strength */
+.pwd-strength {
+  display:flex; gap:3px; margin-top:0.4rem;
 }
-.btn-launch:hover{box-shadow:0 6px 32px rgba(0,170,210,.5);}
+.pwd-bar {
+  flex:1; height:3px; border-radius:2px;
+  background:rgba(255,255,255,0.08);
+  transition:background 0.3s;
+}
+.pwd-bar.s1 { background:var(--red); }
+.pwd-bar.s2 { background:var(--gold); }
+.pwd-bar.s3 { background:var(--green); }
 
-.msg{min-height:1.3em;font-size:.72rem;letter-spacing:.1em;text-align:center;color:rgba(0,229,255,.45);margin-top:.5rem;}
-.msg.err{color:var(--c3);}
+/* ═══════════════════════════════════════════
+   AVATAR SELECTOR
+═══════════════════════════════════════════ */
+.avatar-section {
+  margin-bottom:1.1rem;
+}
+.avatar-label {
+  font-size:0.6rem; letter-spacing:0.25em;
+  color:rgba(0,229,255,0.4); text-transform:uppercase;
+  margin-bottom:0.5rem; display:block;
+}
+.avatar-grid {
+  display:flex; gap:0.5rem; flex-wrap:wrap;
+}
+.av-item {
+  width:44px; height:44px;
+  border:1px solid rgba(0,229,255,0.15);
+  border-radius:2px;
+  background:rgba(0,229,255,0.05);
+  cursor:pointer; transition:all 0.2s;
+  display:flex; align-items:center; justify-content:center;
+  font-size:1.4rem;
+  position:relative; overflow:hidden;
+}
+.av-item:hover { border-color:rgba(0,229,255,0.4); background:rgba(0,229,255,0.1); }
+.av-item.selected {
+  border-color:var(--cyan);
+  background:rgba(0,229,255,0.15);
+  box-shadow:0 0 12px rgba(0,229,255,0.3);
+}
+.av-item.selected::after {
+  content:'';
+  position:absolute; inset:0;
+  border:1px solid var(--cyan);
+  border-radius:2px;
+}
 
-/* ══════════════════════════════════════════════
-   GAME CANVAS AREA
-══════════════════════════════════════════════ */
-#game-wrap{position:fixed;inset:0;z-index:10;display:none;}
-#game-wrap.on{display:block;}
-#cv{position:absolute;inset:0;width:100%;height:100%;touch-action:none;}
+/* ═══════════════════════════════════════════
+   BUTTONS
+═══════════════════════════════════════════ */
+.btn-primary {
+  width:100%; padding:0.9rem;
+  font-family:var(--fh); font-size:0.72rem; font-weight:700;
+  letter-spacing:0.25em; text-transform:uppercase;
+  border:none; border-radius:2px; cursor:pointer;
+  background:linear-gradient(90deg, rgba(0,200,230,0.9), rgba(124,58,237,0.9));
+  color:#fff;
+  box-shadow:0 4px 20px rgba(0,180,210,0.25);
+  transition:all 0.2s;
+  position:relative; overflow:hidden;
+  margin-top:0.5rem;
+}
+.btn-primary::before {
+  content:'';
+  position:absolute; top:0; left:-100%; width:100%; height:100%;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+  transition:left 0.4s;
+}
+.btn-primary:hover::before { left:100%; }
+.btn-primary:hover { box-shadow:0 6px 28px rgba(0,180,210,0.4); transform:translateY(-1px); }
+.btn-primary:active { transform:scale(0.98); }
+.btn-primary:disabled {
+  opacity:0.4; cursor:not-allowed;
+  transform:none !important; box-shadow:none;
+}
 
-/* ══════════════════════════════════════════════
-   HUD  (top bar)
-══════════════════════════════════════════════ */
-#hud{
-  position:fixed;top:0;left:0;right:0;height:52px;z-index:30;
-  display:flex;align-items:stretch;
-  background:linear-gradient(180deg,rgba(0,2,12,.97) 0%,rgba(0,2,12,.75) 100%);
-  border-bottom:1px solid var(--line);
-  backdrop-filter:blur(14px);
-  padding:0 .7rem;gap:0;
+.btn-text {
+  background:none; border:none; cursor:pointer;
+  color:rgba(0,229,255,0.5); font-family:var(--fb);
+  font-size:0.78rem; text-decoration:underline;
+  transition:color 0.2s; padding:0;
+}
+.btn-text:hover { color:var(--cyan); }
+
+/* ═══════════════════════════════════════════
+   DIVIDER
+═══════════════════════════════════════════ */
+.divider {
+  display:flex; align-items:center; gap:0.8rem;
+  margin:1rem 0;
+  font-size:0.6rem; letter-spacing:0.2em;
+  color:rgba(255,255,255,0.15); text-transform:uppercase;
+}
+.divider::before, .divider::after {
+  content:''; flex:1; height:1px;
+  background:rgba(255,255,255,0.07);
+}
+
+/* ═══════════════════════════════════════════
+   STATUS MESSAGE
+═══════════════════════════════════════════ */
+.status-box {
+  margin-top:1rem; padding:0.65rem 0.9rem;
+  border-radius:2px; font-size:0.75rem;
+  letter-spacing:0.08em; line-height:1.5;
   display:none;
 }
-.hi{display:flex;flex-direction:column;justify-content:center;padding:0 .75rem;border-right:1px solid rgba(0,229,255,.09);flex-shrink:0;}
-.hi-l{font-size:.46rem;letter-spacing:.22em;color:rgba(0,229,255,.32);text-transform:uppercase;}
-.hi-v{font-family:var(--fh);font-size:.82rem;font-weight:700;color:#fff;line-height:1.2;}
-.hi-v.c{color:var(--c1);}
-.hi-v.g{color:var(--gold);}
-.hi-v.gr{color:var(--green);}
+.status-box.show { display:block; }
+.status-box.err  { background:rgba(255,23,68,0.1); border:1px solid rgba(255,23,68,0.3); color:rgba(255,100,100,0.9); }
+.status-box.ok   { background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.3); color:rgba(0,230,118,0.9); }
+.status-box.inf  { background:rgba(0,229,255,0.08); border:1px solid rgba(0,229,255,0.2); color:rgba(0,229,255,0.8); }
 
-.hud-pls{display:flex;align-items:center;gap:.45rem;flex:1;padding:0 .7rem;overflow:hidden;}
-.hpill{display:flex;align-items:center;gap:.3rem;padding:.18rem .52rem;border-radius:20px;border:1px solid transparent;font-size:.68rem;font-weight:600;flex-shrink:0;}
-.hpill.me{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.06);}
-.hpill-d{width:6px;height:6px;border-radius:50%;}
-.hud-r{display:flex;align-items:center;gap:.4rem;margin-left:auto;}
-.hbtn{padding:.28rem .68rem;font-family:var(--fh);font-size:.52rem;letter-spacing:.13em;border-radius:2px;border:1px solid rgba(0,229,255,.22);background:transparent;color:var(--c1);cursor:pointer;transition:all .2s;text-transform:uppercase;}
-.hbtn:hover{background:rgba(0,229,255,.08);}
-.hbtn.red{border-color:rgba(255,23,68,.28);color:var(--c3);}
-.hbtn.red:hover{background:rgba(255,23,68,.07);}
-
-/* ══════════════════════════════════════════════
-   RIGHT PANEL
-══════════════════════════════════════════════ */
-#rp{
-  position:fixed;right:0;top:52px;bottom:0;width:235px;z-index:30;
-  background:rgba(0,2,12,.93);border-left:1px solid var(--line);
-  backdrop-filter:blur(16px);
-  display:none;flex-direction:column;
-  transition:transform .28s cubic-bezier(.4,0,.2,1);
+/* ═══════════════════════════════════════════
+   LOADING SPINNER
+═══════════════════════════════════════════ */
+.spin {
+  display:inline-block;
+  width:14px; height:14px;
+  border:2px solid rgba(255,255,255,0.15);
+  border-top-color:#fff;
+  border-radius:50%;
+  animation:spin 0.7s linear infinite;
+  vertical-align:middle; margin-right:0.5rem;
 }
-#rp.open{display:flex;}
-#rp.hide{transform:translateX(100%);}
+@keyframes spin { to { transform:rotate(360deg); } }
 
-.rp-sec{padding:.8rem;border-bottom:1px solid rgba(0,229,255,.07);flex-shrink:0;}
-.rp-ttl{font-family:var(--fh);font-size:.52rem;letter-spacing:.3em;color:rgba(0,229,255,.3);text-transform:uppercase;margin-bottom:.65rem;}
-
-.s-name{font-family:var(--fh);font-size:.85rem;font-weight:700;color:#fff;margin-bottom:.12rem;}
-.s-own{font-size:.72rem;color:rgba(255,255,255,.38);margin-bottom:.55rem;}
-.s-grid{display:grid;grid-template-columns:1fr 1fr;gap:.38rem;}
-.sg{background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.1);border-radius:2px;padding:.32rem .48rem;}
-.sg-l{font-size:.5rem;letter-spacing:.13em;color:rgba(0,229,255,.32);}
-.sg-v{font-family:var(--fh);font-size:.8rem;color:#fff;margin-top:.08rem;}
-
-/* Build */
-.brow{display:flex;align-items:center;gap:.45rem;padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.04);}
-.brow:last-child{border:none;}
-.br-info{flex:1;}
-.br-n{font-size:.78rem;font-weight:600;}
-.br-c{font-size:.6rem;color:var(--gold);}
-.bb{background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.2);border-radius:2px;padding:.24rem .52rem;font-family:var(--fh);font-size:.56rem;color:var(--c1);cursor:pointer;transition:all .2s;letter-spacing:.08em;}
-.bb:hover{background:rgba(0,229,255,.16);}
-.bb:disabled{opacity:.22;cursor:not-allowed;}
-
-/* Attack */
-.arow{display:flex;align-items:center;justify-content:space-between;padding:.32rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.74rem;}
-.arow:last-child{border:none;}
-.ab{background:rgba(255,23,68,.07);border:1px solid rgba(255,23,68,.22);border-radius:2px;padding:.22rem .48rem;font-family:var(--fh);font-size:.53rem;color:var(--c3);cursor:pointer;transition:all .2s;letter-spacing:.08em;}
-.ab:hover{background:rgba(255,23,68,.18);}
-.hint{font-size:.7rem;color:rgba(255,255,255,.22);line-height:1.5;}
-
-/* Log */
-.log-h{padding:.42rem .8rem .25rem;font-family:var(--fh);font-size:.5rem;letter-spacing:.3em;color:rgba(0,229,255,.25);text-transform:uppercase;flex-shrink:0;}
-#elog{flex:1;overflow-y:auto;padding:.28rem .8rem .8rem;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,.12) transparent;}
-.le{font-size:.68rem;color:rgba(255,255,255,.32);padding:.25rem 0;border-bottom:1px solid rgba(255,255,255,.03);line-height:1.45;}
-.le .ts{font-family:var(--fh);font-size:.52rem;color:rgba(0,229,255,.22);margin-right:.32rem;}
-.le.ok{color:rgba(0,230,118,.65);}
-.le.bad{color:rgba(255,100,100,.6);}
-.le.build{color:rgba(255,196,0,.55);}
-.le.ai{color:rgba(180,130,255,.55);}
-
-/* ══════════════════════════════════════════════
-   LEADERBOARD
-══════════════════════════════════════════════ */
-#lb{
-  position:fixed;left:.65rem;top:62px;z-index:30;
-  background:rgba(0,2,12,.88);border:1px solid var(--line);border-radius:2px;
-  padding:.55rem .8rem;min-width:146px;backdrop-filter:blur(12px);display:none;
+/* ═══════════════════════════════════════════
+   OTP / VERIFICATION SCREEN
+═══════════════════════════════════════════ */
+.otp-screen {
+  display:none;
+  text-align:center;
 }
-#lb h4{font-family:var(--fh);font-size:.5rem;letter-spacing:.28em;color:rgba(0,229,255,.28);text-transform:uppercase;margin-bottom:.45rem;}
-.lbr{display:flex;align-items:center;gap:.38rem;padding:.22rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.74rem;}
-.lbr:last-child{border:none;}
-.lbrk{font-family:var(--fh);font-size:.58rem;color:rgba(255,255,255,.2);width:12px;}
-.lbd{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-.lbn{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.lbc{font-family:var(--fh);font-size:.65rem;color:var(--green);}
+.otp-screen.active { display:block; }
 
-/* ══════════════════════════════════════════════
-   MINIMAP
-══════════════════════════════════════════════ */
-#mm{
-  position:fixed;left:.65rem;bottom:.65rem;width:138px;height:104px;
-  background:rgba(0,2,12,.88);border:1px solid var(--line);border-radius:2px;
-  overflow:hidden;backdrop-filter:blur(8px);z-index:30;display:none;
+.otp-icon {
+  font-size:3rem; margin-bottom:1rem;
+  animation:floatIcon 3s ease-in-out infinite;
 }
-#mmc{width:100%;height:100%;}
+@keyframes floatIcon {
+  0%,100% { transform:translateY(0); }
+  50%     { transform:translateY(-8px); }
+}
 
-/* ══════════════════════════════════════════════
-   ZOOM BUTTONS
-══════════════════════════════════════════════ */
-#zooms{position:fixed;bottom:.65rem;right:246px;z-index:30;display:none;flex-direction:column;gap:.32rem;}
-.zb{width:32px;height:32px;background:rgba(0,2,12,.88);border:1px solid var(--line);border-radius:2px;color:var(--c1);font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:all .18s;}
-.zb:hover{background:rgba(0,229,255,.1);}
+.otp-title {
+  font-family:var(--fh); font-size:0.85rem; font-weight:700;
+  letter-spacing:0.2em; color:#fff; margin-bottom:0.4rem;
+}
+.otp-sub {
+  font-size:0.8rem; color:rgba(255,255,255,0.4);
+  margin-bottom:0.3rem; line-height:1.5;
+}
+.otp-email-display {
+  font-family:var(--fh); font-size:0.72rem;
+  color:var(--cyan); margin-bottom:1.5rem;
+  letter-spacing:0.1em;
+}
 
-/* ══════════════════════════════════════════════
-   CONQUEST PROGRESS BAR
-══════════════════════════════════════════════ */
-#pgbar{position:fixed;bottom:0;left:0;right:0;height:3px;z-index:30;background:rgba(0,229,255,.07);display:none;}
-#pgfill{height:100%;width:0%;background:linear-gradient(90deg,var(--c1),var(--c2));transition:width .6s ease;box-shadow:0 0 8px rgba(0,229,255,.4);}
+.otp-steps {
+  text-align:left;
+  background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.1);
+  border-radius:2px; padding:1rem;
+  margin-bottom:1.2rem;
+}
+.otp-step {
+  display:flex; align-items:flex-start; gap:0.6rem;
+  font-size:0.75rem; color:rgba(255,255,255,0.5);
+  margin-bottom:0.5rem; line-height:1.5;
+}
+.otp-step:last-child { margin-bottom:0; }
+.otp-step-num {
+  font-family:var(--fh); font-size:0.6rem;
+  color:var(--cyan); background:rgba(0,229,255,0.1);
+  border:1px solid rgba(0,229,255,0.2);
+  border-radius:50%; width:18px; height:18px;
+  display:flex; align-items:center; justify-content:center;
+  flex-shrink:0; margin-top:0.08rem;
+}
 
-/* ══════════════════════════════════════════════
-   TOAST
-══════════════════════════════════════════════ */
-#toasts{position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;align-items:center;gap:.38rem;pointer-events:none;}
-.tst{padding:.48rem 1.05rem;background:rgba(0,2,12,.95);border:1px solid var(--line);border-radius:2px;font-family:var(--fh);font-size:.62rem;letter-spacing:.13em;backdrop-filter:blur(14px);white-space:nowrap;animation:tIn .22s ease,tOut .28s ease 2.4s forwards;}
-.tst.ok{border-color:rgba(0,230,118,.38);color:var(--green);}
-.tst.err{border-color:rgba(255,23,68,.38);color:var(--c3);}
-.tst.inf{border-color:rgba(0,229,255,.32);color:var(--c1);}
-@keyframes tIn{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
-@keyframes tOut{from{opacity:1}to{opacity:0}}
+.resend-timer {
+  font-size:0.72rem; color:rgba(255,255,255,0.3);
+  margin-top:0.8rem; text-align:center;
+}
+.resend-timer span { color:var(--cyan); font-family:var(--fh); }
 
-/* ══════════════════════════════════════════════
-   BATTLE MODAL
-══════════════════════════════════════════════ */
-#bmod{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.78);backdrop-filter:blur(8px);}
-.bcard{background:rgba(0,2,16,.97);border:1px solid rgba(255,23,68,.32);border-radius:3px;padding:2rem 2.8rem;text-align:center;box-shadow:0 0 80px rgba(255,23,68,.12);animation:bPop .28s cubic-bezier(.34,1.56,.64,1);}
-@keyframes bPop{from{transform:scale(.82);opacity:0}to{transform:scale(1);opacity:1}}
-.btt{font-family:var(--fh);font-size:1.1rem;font-weight:900;letter-spacing:.25em;color:var(--c3);margin-bottom:.9rem;text-shadow:0 0 18px rgba(255,23,68,.5);}
-.bvs{display:flex;align-items:center;justify-content:center;gap:2.2rem;font-family:var(--fh);}
-.bside{text-align:center;}
-.bnum{font-size:2.6rem;font-weight:900;line-height:1;}
-.blbl{font-size:.52rem;letter-spacing:.2em;color:rgba(255,255,255,.28);margin-top:.25rem;}
-.bvst{font-size:.8rem;color:rgba(255,255,255,.18);letter-spacing:.25em;}
-.bres{margin-top:1.1rem;font-family:var(--fh);font-size:.92rem;font-weight:700;letter-spacing:.18em;}
-.bres.win{color:var(--green);text-shadow:0 0 14px rgba(0,230,118,.45);}
-.bres.loss{color:var(--c3);text-shadow:0 0 14px rgba(255,23,68,.45);}
+/* ═══════════════════════════════════════════
+   FORGOT PASSWORD SCREEN
+═══════════════════════════════════════════ */
+.forgot-screen {
+  display:none;
+}
+.forgot-screen.active { display:block; }
 
-/* ══════════════════════════════════════════════
-   WIN / LOSE SCREEN
-══════════════════════════════════════════════ */
-#endscr{position:fixed;inset:0;z-index:70;display:none;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(0,15,42,.98) 0%,rgba(0,2,10,.99) 70%);}
-#endscr.on{display:flex;}
-.end-ttl{font-family:var(--fh);font-size:clamp(2.5rem,9vw,5.5rem);font-weight:900;letter-spacing:.22em;text-align:center;}
-.end-ttl.win{color:transparent;background:linear-gradient(135deg,var(--gold),#ff8f00,var(--gold));background-size:200%;-webkit-background-clip:text;background-clip:text;filter:drop-shadow(0 0 28px rgba(255,196,0,.5));animation:domShift 3s linear infinite;}
-.end-ttl.lose{color:var(--c3);text-shadow:0 0 30px rgba(255,23,68,.5);}
-.end-sub{font-size:.9rem;letter-spacing:.35em;color:rgba(255,255,255,.28);margin:.55rem 0 1.8rem;text-transform:uppercase;text-align:center;}
-.end-stats{display:flex;gap:1.5rem;margin-bottom:1.8rem;}
-.estat{background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);border-radius:2px;padding:.75rem 1.3rem;text-align:center;}
-.estat-v{font-family:var(--fh);font-size:1.5rem;font-weight:900;color:var(--gold);}
-.estat-l{font-size:.55rem;letter-spacing:.2em;color:rgba(255,255,255,.28);text-transform:uppercase;margin-top:.18rem;}
-.end-btns{display:flex;gap:.8rem;}
-.end-btn{padding:.75rem 1.6rem;font-family:var(--fh);font-size:.65rem;letter-spacing:.2em;font-weight:700;text-transform:uppercase;border-radius:2px;cursor:pointer;transition:all .2s;}
-.end-btn.primary{background:linear-gradient(90deg,var(--c1),var(--c2));color:#fff;border:none;box-shadow:0 4px 20px rgba(0,170,210,.3);}
-.end-btn.secondary{background:transparent;color:var(--c1);border:1px solid rgba(0,229,255,.28);}
-.end-btn:hover{transform:translateY(-2px);}
+.back-btn {
+  display:inline-flex; align-items:center; gap:0.4rem;
+  background:none; border:none; cursor:pointer;
+  color:rgba(0,229,255,0.4); font-family:var(--fb);
+  font-size:0.75rem; letter-spacing:0.1em;
+  transition:color 0.2s; margin-bottom:1.2rem;
+  padding:0;
+}
+.back-btn:hover { color:var(--cyan); }
+
+/* ═══════════════════════════════════════════
+   PROFILE SETUP SCREEN
+═══════════════════════════════════════════ */
+.profile-screen {
+  display:none;
+}
+.profile-screen.active { display:block; }
+
+.profile-welcome {
+  text-align:center; margin-bottom:1.5rem;
+}
+.profile-welcome-title {
+  font-family:var(--fh); font-size:1rem; font-weight:700;
+  letter-spacing:0.15em; color:var(--cyan);
+}
+.profile-welcome-sub {
+  font-size:0.78rem; color:rgba(255,255,255,0.35);
+  margin-top:0.3rem;
+}
+
+/* ═══════════════════════════════════════════
+   PLAYER PROFILE CARD (after login)
+═══════════════════════════════════════════ */
+.profile-card {
+  display:none;
+  text-align:center;
+}
+.profile-card.active { display:block; }
+
+.profile-avatar-big {
+  width:80px; height:80px;
+  border:2px solid var(--cyan);
+  border-radius:3px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:2.5rem;
+  background:rgba(0,229,255,0.07);
+  margin:0 auto 1rem;
+  box-shadow:0 0 20px rgba(0,229,255,0.2);
+  animation:avatarGlow 3s ease-in-out infinite;
+}
+@keyframes avatarGlow {
+  0%,100% { box-shadow:0 0 20px rgba(0,229,255,0.2); }
+  50%     { box-shadow:0 0 35px rgba(0,229,255,0.4); }
+}
+
+.profile-username {
+  font-family:var(--fh); font-size:1.2rem; font-weight:900;
+  letter-spacing:0.15em; color:#fff; margin-bottom:0.2rem;
+}
+.profile-tag {
+  font-family:var(--fh); font-size:0.65rem;
+  color:rgba(0,229,255,0.5); letter-spacing:0.2em;
+  margin-bottom:0.2rem;
+}
+.profile-email-txt {
+  font-size:0.72rem; color:rgba(255,255,255,0.3);
+  margin-bottom:1.2rem;
+}
+
+.profile-stats {
+  display:grid; grid-template-columns:1fr 1fr 1fr;
+  gap:0.5rem; margin-bottom:1.5rem;
+}
+.pstat {
+  background:rgba(0,229,255,0.04);
+  border:1px solid rgba(0,229,255,0.1);
+  border-radius:2px; padding:0.6rem 0.4rem;
+  text-align:center;
+}
+.pstat-v {
+  font-family:var(--fh); font-size:0.95rem; font-weight:700;
+  color:var(--cyan);
+}
+.pstat-l {
+  font-size:0.52rem; letter-spacing:0.15em;
+  color:rgba(255,255,255,0.28); text-transform:uppercase;
+  margin-top:0.15rem;
+}
+
+.profile-joined {
+  font-size:0.65rem; color:rgba(255,255,255,0.2);
+  letter-spacing:0.1em; margin-bottom:1.5rem;
+}
+
+.btn-enter-game {
+  width:100%; padding:1rem;
+  font-family:var(--fh); font-size:0.78rem; font-weight:900;
+  letter-spacing:0.3em; text-transform:uppercase;
+  border:none; border-radius:2px; cursor:pointer;
+  background:linear-gradient(90deg, var(--cyan), var(--purple), var(--red));
+  background-size:200%;
+  color:#fff;
+  animation:btnShift 4s linear infinite;
+  box-shadow:0 4px 24px rgba(0,180,210,0.3);
+  transition:all 0.2s;
+  margin-bottom:0.8rem;
+}
+@keyframes btnShift { 0%{background-position:0%} 100%{background-position:200%} }
+.btn-enter-game:hover { transform:translateY(-2px); box-shadow:0 8px 32px rgba(0,180,210,0.5); }
+
+.btn-logout {
+  width:100%; padding:0.7rem;
+  font-family:var(--fh); font-size:0.6rem; font-weight:700;
+  letter-spacing:0.2em; text-transform:uppercase;
+  background:transparent;
+  border:1px solid rgba(255,23,68,0.25);
+  color:rgba(255,23,68,0.6);
+  border-radius:2px; cursor:pointer; transition:all 0.2s;
+}
+.btn-logout:hover { background:rgba(255,23,68,0.08); border-color:rgba(255,23,68,0.5); color:var(--red); }
+
+/* ═══════════════════════════════════════════
+   VERIFICATION STATUS BADGE
+═══════════════════════════════════════════ */
+.verify-badge {
+  display:inline-flex; align-items:center; gap:0.35rem;
+  padding:0.2rem 0.6rem;
+  border-radius:20px; font-size:0.6rem; letter-spacing:0.1em;
+  font-family:var(--fh); margin-bottom:1rem;
+}
+.verify-badge.verified   { background:rgba(0,230,118,0.1); border:1px solid rgba(0,230,118,0.3); color:var(--green); }
+.verify-badge.unverified { background:rgba(255,196,0,0.1); border:1px solid rgba(255,196,0,0.3); color:var(--gold); }
+.vbdot { width:6px; height:6px; border-radius:50%; }
+
+/* ═══════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════ */
+.auth-footer {
+  text-align:center; margin-top:1.2rem;
+  font-size:0.65rem; color:rgba(255,255,255,0.18);
+  letter-spacing:0.1em;
+  animation:fadeUp 0.6s ease 0.4s both;
+}
+
+/* ═══════════════════════════════════════════
+   GLOBAL OVERLAY (loading)
+═══════════════════════════════════════════ */
+#overlay {
+  position:fixed; inset:0; z-index:100;
+  background:rgba(0,1,10,0.85);
+  backdrop-filter:blur(8px);
+  display:none; align-items:center; justify-content:center;
+  flex-direction:column; gap:1rem;
+}
+#overlay.show { display:flex; }
+.overlay-spin {
+  width:40px; height:40px;
+  border:3px solid rgba(0,229,255,0.15);
+  border-top-color:var(--cyan);
+  border-radius:50%;
+  animation:spin 0.8s linear infinite;
+}
+.overlay-text {
+  font-family:var(--fh); font-size:0.65rem;
+  letter-spacing:0.3em; color:rgba(0,229,255,0.6);
+  text-transform:uppercase;
+}
+
+/* ═══════════════════════════════════════════
+   TOAST NOTIFICATIONS
+═══════════════════════════════════════════ */
+#toasts {
+  position:fixed; top:1rem; right:1rem; z-index:200;
+  display:flex; flex-direction:column; gap:0.5rem;
+  pointer-events:none;
+}
+.toast {
+  padding:0.65rem 1rem;
+  background:rgba(0,4,18,0.95);
+  border-radius:2px; font-family:var(--fb);
+  font-size:0.78rem; letter-spacing:0.05em;
+  backdrop-filter:blur(14px);
+  animation:tSlide 0.3s ease, tFade 0.3s ease 2.7s forwards;
+  max-width:280px; line-height:1.4;
+}
+.toast.ok  { border-left:3px solid var(--green); color:rgba(0,230,118,0.9); }
+.toast.err { border-left:3px solid var(--red);   color:rgba(255,100,100,0.9); }
+.toast.inf { border-left:3px solid var(--cyan);  color:rgba(0,229,255,0.9); }
+@keyframes tSlide { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:translateX(0)} }
+@keyframes tFade  { from{opacity:1} to{opacity:0} }
 </style>
 </head>
 <body>
-<canvas id="stars"></canvas>
-<div class="nebula"></div>
 
-<!-- ══════════════ MENU ══════════════ -->
-<div class="scr" id="s-menu">
-  <div class="logo-wrap">
-    <span class="logo-void">VOID</span>
-    <span class="logo-dom">DOMINION</span>
-    <div class="tagline">Galactic Sector Conquest &bull; Solo Campaign</div>
-  </div>
+<!-- Background -->
+<canvas id="bg-canvas"></canvas>
+<div class="nebula-layer"></div>
 
-  <div class="card">
-    <div class="card-ttl">Mission Setup</div>
-
-    <div class="field">
-      <label>Commander Callsign</label>
-      <input id="inp-name" type="text" placeholder="Enter your name" maxlength="14" autocomplete="off" spellcheck="false">
-    </div>
-
-    <div class="field">
-      <label>Difficulty</label>
-      <div class="diff-row">
-        <button class="diff-btn active" data-d="easy">EASY</button>
-        <button class="diff-btn" data-d="normal">NORMAL</button>
-        <button class="diff-btn" data-d="hard">HARD</button>
-      </div>
-    </div>
-
-    <div class="field">
-      <label>Enemy Commanders</label>
-      <div class="bot-row">
-        <button class="bot-btn" data-b="1">1 Enemy</button>
-        <button class="bot-btn active" data-b="2">2 Enemies</button>
-        <button class="bot-btn" data-b="3">3 Enemies</button>
-      </div>
-    </div>
-
-    <button class="btn btn-launch" id="btn-start">LAUNCH MISSION</button>
-    <div class="msg" id="msg-menu"></div>
-  </div>
+<!-- Loading Overlay -->
+<div id="overlay">
+  <div class="overlay-spin"></div>
+  <div class="overlay-text" id="overlay-text">Connecting to void...</div>
 </div>
 
-<!-- ══════════════ GAME ══════════════ -->
-<div id="game-wrap">
-  <canvas id="cv"></canvas>
-</div>
-
-<!-- HUD -->
-<div id="hud">
-  <div class="hi" style="padding-left:.2rem;">
-    <div class="hi-l">Commander</div>
-    <div class="hi-v c" id="hv-name">-</div>
-  </div>
-  <div class="hi">
-    <div class="hi-l">Resources</div>
-    <div class="hi-v g" id="hv-res">0</div>
-  </div>
-  <div class="hi">
-    <div class="hi-l">Sectors</div>
-    <div class="hi-v gr" id="hv-sec">0/0</div>
-  </div>
-  <div class="hi">
-    <div class="hi-l">Fleet</div>
-    <div class="hi-v c" id="hv-fl">0</div>
-  </div>
-  <div class="hud-pls" id="hv-pls"></div>
-  <div class="hud-r">
-    <button class="hbtn" id="hbtn-p">INTEL</button>
-    <button class="hbtn red" id="hbtn-q">QUIT</button>
-  </div>
-</div>
-
-<!-- Right Panel -->
-<div id="rp">
-  <div class="rp-sec" id="rp-info">
-    <div class="rp-ttl">Sector Intel</div>
-    <div id="rpi-body" style="font-size:.75rem;color:rgba(255,255,255,.22);">Select a sector on the map</div>
-  </div>
-  <div class="rp-sec" id="rp-bld" style="display:none;">
-    <div class="rp-ttl">Construct</div>
-    <div id="rpb-body"></div>
-  </div>
-  <div class="rp-sec" id="rp-atk" style="display:none;">
-    <div class="rp-ttl">Strike Targets</div>
-    <div id="rpa-body"></div>
-  </div>
-  <div class="log-h">Battle Log</div>
-  <div id="elog"></div>
-</div>
-
-<!-- Leaderboard -->
-<div id="lb"><h4>Conquest</h4><div id="lb-body"></div></div>
-
-<!-- Minimap -->
-<div id="mm"><canvas id="mmc"></canvas></div>
-
-<!-- Zoom -->
-<div id="zooms">
-  <button class="zb" id="z+">+</button>
-  <button class="zb" id="z-">&#8722;</button>
-  <button class="zb" id="zf" style="font-size:.52rem;font-family:var(--fh);">FIT</button>
-</div>
-
-<!-- Progress Bar -->
-<div id="pgbar"><div id="pgfill"></div></div>
-
-<!-- Toasts -->
+<!-- Toast Container -->
 <div id="toasts"></div>
 
-<!-- Battle Modal -->
-<div id="bmod">
-  <div class="bcard">
-    <div class="btt">COMBAT REPORT</div>
-    <div class="bvs">
-      <div class="bside"><div class="bnum" id="b-a" style="color:var(--c3)">0</div><div class="blbl">ATTACKERS</div></div>
-      <div class="bvst">VS</div>
-      <div class="bside"><div class="bnum" id="b-d" style="color:var(--c1)">0</div><div class="blbl">DEFENDERS</div></div>
-    </div>
-    <div class="bres" id="b-res"></div>
+<!-- ═══════════════════════════════════════
+     MAIN PAGE
+═══════════════════════════════════════ -->
+<div class="page">
+
+  <!-- LOGO -->
+  <div class="logo-block">
+    <span class="logo-void">VOID</span>
+    <span class="logo-dominion">DOMINION</span>
+    <span class="logo-tag">Galactic Sector Conquest</span>
   </div>
-</div>
 
-<!-- End Screen -->
-<div id="endscr">
-  <div class="end-ttl" id="end-ttl">VICTORY</div>
-  <div class="end-sub" id="end-sub">The galaxy is yours</div>
-  <div class="end-stats">
-    <div class="estat"><div class="estat-v" id="es-sec">0</div><div class="estat-l">Sectors</div></div>
-    <div class="estat"><div class="estat-v" id="es-fl">0</div><div class="estat-l">Fleet</div></div>
-    <div class="estat"><div class="estat-v" id="es-res">0</div><div class="estat-l">Resources</div></div>
+  <!-- AUTH CARD -->
+  <div class="auth-card" id="auth-card">
+    <div class="card-corner cc-tl"></div>
+    <div class="card-corner cc-tr"></div>
+    <div class="card-corner cc-bl"></div>
+    <div class="card-corner cc-br"></div>
+
+    <div class="card-inner">
+
+      <!-- ═══ LOGIN / REGISTER TABS ═══ -->
+      <div id="tabs-section">
+        <div class="tabs">
+          <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Login</button>
+          <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Register</button>
+        </div>
+
+        <!-- LOGIN FORM -->
+        <div class="form-screen active" id="screen-login">
+          <div class="form-title">Commander Authentication</div>
+
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="login-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="login-pass" placeholder="Enter password" autocomplete="current-password">
+            <button class="pwd-toggle" type="button" onclick="togglePwd('login-pass',this)">SHOW</button>
+          </div>
+
+          <div style="text-align:right;margin-bottom:0.5rem;">
+            <button class="btn-text" onclick="showForgot()">Forgot password?</button>
+          </div>
+
+          <button class="btn-primary" id="btn-login" onclick="doLogin()">
+            ACCESS COMMAND CENTER
+          </button>
+
+          <div class="status-box" id="login-status"></div>
+        </div>
+
+        <!-- REGISTER FORM -->
+        <div class="form-screen" id="screen-register">
+          <div class="form-title">Create Commander Profile</div>
+
+          <div class="field">
+            <label>Username</label>
+            <input type="text" id="reg-username" placeholder="4-16 characters"
+              maxlength="16" autocomplete="off" oninput="checkUsername(this)">
+            <div class="field-hint" id="username-hint"></div>
+          </div>
+
+          <div class="field">
+            <label>Email Address</label>
+            <input type="email" id="reg-email" placeholder="your@email.com" autocomplete="email">
+          </div>
+
+          <div class="field">
+            <label>Password</label>
+            <input type="password" id="reg-pass" placeholder="Min 8 characters"
+              autocomplete="new-password" oninput="checkPwd(this)">
+            <button class="pwd-toggle" type="button" onclick="togglePwd('reg-pass',this)">SHOW</button>
+            <div class="pwd-strength" id="pwd-strength">
+              <div class="pwd-bar" id="ps1"></div>
+              <div class="pwd-bar" id="ps2"></div>
+              <div class="pwd-bar" id="ps3"></div>
+            </div>
+            <div class="field-hint" id="pwd-hint"></div>
+          </div>
+
+          <div class="field">
+            <label>Confirm Password</label>
+            <input type="password" id="reg-pass2" placeholder="Repeat password"
+              autocomplete="new-password" oninput="checkMatch(this)">
+            <button class="pwd-toggle" type="button" onclick="togglePwd('reg-pass2',this)">SHOW</button>
+            <div class="field-hint" id="match-hint"></div>
+          </div>
+
+          <!-- Avatar Selection -->
+          <div class="avatar-section">
+            <span class="avatar-label">Choose Avatar</span>
+            <div class="avatar-grid" id="avatar-grid">
+              <!-- filled by JS -->
+            </div>
+          </div>
+
+          <button class="btn-primary" id="btn-register" onclick="doRegister()">
+            CREATE COMMANDER
+          </button>
+
+          <div class="status-box" id="register-status"></div>
+        </div>
+      </div>
+
+      <!-- ═══ EMAIL VERIFICATION SCREEN ═══ -->
+      <div class="otp-screen" id="screen-verify">
+        <div class="otp-icon">&#128140;</div>
+        <div class="otp-title">Verify Your Email</div>
+        <div class="otp-sub">Verification link sent to:</div>
+        <div class="otp-email-display" id="verify-email-display">-</div>
+
+        <div class="otp-steps">
+          <div class="otp-step">
+            <div class="otp-step-num">1</div>
+            <div>Open your email inbox and find the email from Void Dominion</div>
+          </div>
+          <div class="otp-step">
+            <div class="otp-step-num">2</div>
+            <div>Click the <strong style="color:var(--cyan)">Confirm your email</strong> link in the email</div>
+          </div>
+          <div class="otp-step">
+            <div class="otp-step-num">3</div>
+            <div>Return here and click the button below</div>
+          </div>
+        </div>
+
+        <button class="btn-primary" onclick="checkVerification()">
+          I VERIFIED MY EMAIL
+        </button>
+
+        <div class="resend-timer" id="resend-section">
+          Resend email in <span id="resend-countdown">60</span>s
+        </div>
+        <div style="display:none;text-align:center;margin-top:0.8rem;" id="resend-btn-wrap">
+          <button class="btn-text" onclick="resendVerification()">Resend verification email</button>
+        </div>
+
+        <div class="status-box" id="verify-status"></div>
+
+        <div style="text-align:center;margin-top:1rem;">
+          <button class="btn-text" onclick="backToLogin()">Back to login</button>
+        </div>
+      </div>
+
+      <!-- ═══ FORGOT PASSWORD SCREEN ═══ -->
+      <div class="forgot-screen" id="screen-forgot">
+        <button class="back-btn" onclick="showLogin()">
+          &#8592; Back to login
+        </button>
+        <div class="form-title">Reset Password</div>
+
+        <div class="field">
+          <label>Email Address</label>
+          <input type="email" id="forgot-email" placeholder="your@email.com">
+        </div>
+
+        <button class="btn-primary" onclick="doForgot()">
+          SEND RESET LINK
+        </button>
+
+        <div class="status-box" id="forgot-status"></div>
+      </div>
+
+      <!-- ═══ PROFILE SETUP (first time) ═══ -->
+      <div class="profile-screen" id="screen-profile-setup">
+        <div class="profile-welcome">
+          <div class="profile-welcome-title">Welcome, Commander!</div>
+          <div class="profile-welcome-sub">Your profile is being initialized...</div>
+        </div>
+        <div class="status-box inf show" id="setup-status">
+          Setting up your commander profile...
+        </div>
+      </div>
+
+      <!-- ═══ LOGGED IN PROFILE ═══ -->
+      <div class="profile-card" id="screen-profile">
+        <div class="profile-avatar-big" id="profile-avatar">&#128100;</div>
+
+        <div class="verify-badge" id="verify-badge">
+          <div class="vbdot" id="vbdot"></div>
+          <span id="vbtext">-</span>
+        </div>
+
+        <div class="profile-username" id="profile-username">-</div>
+        <div class="profile-tag" id="profile-tag">-</div>
+        <div class="profile-email-txt" id="profile-email">-</div>
+
+        <div class="profile-stats">
+          <div class="pstat">
+            <div class="pstat-v" id="ps-planets">0</div>
+            <div class="pstat-l">Planets</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-v" id="ps-wins">0</div>
+            <div class="pstat-l">Wins</div>
+          </div>
+          <div class="pstat">
+            <div class="pstat-v" id="ps-battles">0</div>
+            <div class="pstat-l">Battles</div>
+          </div>
+        </div>
+
+        <div class="profile-joined" id="profile-joined">-</div>
+
+        <button class="btn-enter-game" onclick="enterGame()">
+          ENTER THE VOID
+        </button>
+
+        <button class="btn-logout" onclick="doLogout()">
+          LOGOUT
+        </button>
+      </div>
+
+    </div><!-- card-inner -->
+  </div><!-- auth-card -->
+
+  <div class="auth-footer">
+    VOID DOMINION &nbsp;&bull;&nbsp; GALACTIC CONQUEST &nbsp;&bull;&nbsp; v0.1
   </div>
-  <div class="end-btns">
-    <button class="end-btn primary" id="btn-retry">PLAY AGAIN</button>
-    <button class="end-btn secondary" id="btn-menu2">MAIN MENU</button>
-  </div>
-</div>
 
-<script>
-'use strict';
-// ════════════════════════════════════════════════════
-//  CONSTANTS
-// ════════════════════════════════════════════════════
-const HEX   = 33;
-const COLS  = 26, ROWS = 22;
-const NSEC  = 112;
-const WIN   = 0.60;
-const RTICK = 4000; // resource tick ms
+</div><!-- page -->
 
-const PCOLORS = ['#00e5ff','#ff1744','#00e676','#ffc400','#ff6d00','#d500f9'];
-const BOT_NAMES = ['AI-NEXUS','VOID-REAPER','STAR-FORGE','DARK-HERALD'];
+<!-- ═══════════════════════════════════════
+     SUPABASE + GAME LOGIC
+═══════════════════════════════════════ -->
+<script type="module">
+// ─────────────────────────────────────────────
+//  SUPABASE INIT
+// ─────────────────────────────────────────────
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-const SHIPS = [
-  {id:'scout',    name:'Scout',    cost:45,  atk:2,  def:1,  desc:'Fast &amp; cheap'},
-  {id:'fighter',  name:'Fighter',  cost:130, atk:5,  def:4,  desc:'Balanced warrior'},
-  {id:'cruiser',  name:'Cruiser',  cost:310, atk:12, def:9,  desc:'Heavy firepower'},
+const SUPA_URL = 'https://xeetrcygnlpjzkkwpnvf.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o';
+
+const sb = createClient(SUPA_URL, SUPA_KEY);
+
+// ─────────────────────────────────────────────
+//  AVATARS
+// ─────────────────────────────────────────────
+const AVATARS = [
+  { id:1, icon:'&#128737;', name:'Commander' },
+  { id:2, icon:'&#128125;', name:'Alien' },
+  { id:3, icon:'&#129302;', name:'Robot' },
+  { id:4, icon:'&#128123;', name:'Ghost' },
+  { id:5, icon:'&#129330;', name:'Astronaut' },
+  { id:6, icon:'&#128520;', name:'Devil' },
+  { id:7, icon:'&#129351;', name:'Crown' },
+  { id:8, icon:'&#128081;', name:'King' },
 ];
 
-const STYPES = ['star','nebula','void','normal','normal','normal','normal','normal','normal'];
-const SYIELD = {star:28, nebula:20, void:6, normal:11};
+let selectedAvatar = 1;
+let resendTimer = null;
+let currentUser = null;
+let pendingEmail = '';
 
-// Difficulty modifiers
-const DIFF = {
-  easy:   {botAtk:.7,  botDef:.8,  botTick:6000, botRes:.8 },
-  normal: {botAtk:.95, botDef:.95, botTick:4500, botRes:1.0},
-  hard:   {botAtk:1.3, botDef:1.25,botTick:3000, botRes:1.3},
-};
-
-// ════════════════════════════════════════════════════
-//  GAME STATE
-// ════════════════════════════════════════════════════
-let G = null; // { players:{}, sectors:{}, status, winner, tick }
-let sectors = [];
-let myId  = 'player';
-let diff  = 'normal';
-let nBots = 2;
-
-// Render
-let canvas, ctx, mmc, mctx;
-let vX=0,vY=0,vS=1;
-let drag=false,lx=0,ly=0,tD=0,tS=1;
-let raf=null, lastT=0;
-let selId=null;
-let anims=[];   // capture burst anims
-let resTimer=null, botTimer=null;
-
-// ════════════════════════════════════════════════════
+// ─────────────────────────────────────────────
 //  UTILS
-// ════════════════════════════════════════════════════
-const $  = id => document.getElementById(id);
-const rnd = (a,b) => a+Math.random()*(b-a);
-const clamp = (v,a,b) => Math.max(a,Math.min(b,v));
-const ts = () => { const d=new Date(); return `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`; };
+// ─────────────────────────────────────────────
+const $ = id => document.getElementById(id);
 
-function setMsg(id,t,c=''){const e=$(id);if(e){e.textContent=t;e.className='msg'+(c?' '+c:'');}}
-
-function toast(msg,type='inf'){
-  const t=document.createElement('div');
-  t.className='tst '+type; t.textContent=msg;
+function toast(msg, type='inf'){
+  const t = document.createElement('div');
+  t.className = 'toast ' + type;
+  t.textContent = msg;
   $('toasts').appendChild(t);
-  setTimeout(()=>t.remove(),3000);
+  setTimeout(() => t.remove(), 3200);
 }
 
-function log(msg,cls=''){
-  const el=$('elog'); if(!el)return;
-  const d=document.createElement('div');
-  d.className='le '+cls;
-  d.innerHTML=`<span class="ts">${ts()}</span>${msg}`;
-  el.prepend(d);
-  while(el.children.length>120)el.removeChild(el.lastChild);
+function setStatus(id, msg, type=''){
+  const el = $(id);
+  if(!el) return;
+  el.textContent = msg;
+  el.className = 'status-box show ' + type;
 }
 
-function showScr(id){
-  ['s-menu'].forEach(s=>$(s)?.classList.add('off'));
-  $(id)?.classList.remove('off');
+function clearStatus(id){
+  const el = $(id);
+  if(el) el.className = 'status-box';
 }
 
-function pColor(pid){
-  const keys=Object.keys(G?.players||{});
-  const i=keys.indexOf(pid);
-  return i>=0?PCOLORS[i]:'#445';
+function showOverlay(text='Loading...'){
+  $('overlay-text').textContent = text;
+  $('overlay').classList.add('show');
 }
 
-function hexA(hex,a){
-  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
-  return `rgba(${r},${g},${b},${a})`;
+function hideOverlay(){
+  $('overlay').classList.remove('show');
 }
 
-// ════════════════════════════════════════════════════
-//  STARFIELD
-// ════════════════════════════════════════════════════
-(()=>{
-  const c=$('stars'),cx=c.getContext('2d');
-  const stars=Array.from({length:380},()=>({
-    x:Math.random(),y:Math.random(),
-    r:Math.random()*1.4+.15,
-    sp:Math.random()*.00018+.00003,
-    o:Math.random()*.75+.1,
-    t:Math.random()*Math.PI*2
+function showScreen(screenId){
+  // Hide tabs section and all special screens
+  $('tabs-section').style.display = 'none';
+  $('screen-verify').classList.remove('active');
+  $('screen-forgot').classList.remove('active');
+  $('screen-profile-setup').classList.remove('active');
+  $('screen-profile').classList.remove('active');
+
+  if(screenId === 'tabs'){
+    $('tabs-section').style.display = 'block';
+  } else {
+    $(screenId).classList.add('active');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  STARFIELD BACKGROUND
+// ─────────────────────────────────────────────
+(function(){
+  const c = $('bg-canvas');
+  const cx = c.getContext('2d');
+  const stars = Array.from({length:350}, () => ({
+    x:Math.random(), y:Math.random(),
+    r:Math.random()*1.4+0.15,
+    sp:Math.random()*0.00015+0.00003,
+    o:Math.random()
   }));
-  let W,H;
-  const rsz=()=>{W=c.width=innerWidth;H=c.height=innerHeight;};
-  rsz(); addEventListener('resize',rsz);
+  let W, H;
+  function rsz(){ W = c.width = innerWidth; H = c.height = innerHeight; }
+  rsz(); addEventListener('resize', rsz);
   (function loop(){
     cx.clearRect(0,0,W,H);
-    const t=Date.now()*.001;
-    stars.forEach(s=>{
-      s.x-=s.sp; if(s.x<0){s.x=1;s.y=Math.random();}
-      const alpha=s.o*(.35+.55*Math.sin(t*.6+s.t));
-      cx.beginPath(); cx.arc(s.x*W,s.y*H,s.r,0,Math.PI*2);
-      cx.fillStyle=`rgba(190,220,255,${alpha})`; cx.fill();
+    const t = Date.now()*0.001;
+    stars.forEach(s => {
+      s.x -= s.sp;
+      if(s.x < 0){ s.x = 1; s.y = Math.random(); }
+      cx.beginPath();
+      cx.arc(s.x*W, s.y*H, s.r, 0, Math.PI*2);
+      cx.fillStyle = `rgba(180,210,255,${s.o*(0.3+0.5*Math.sin(t*0.5+s.y*10))})`;
+      cx.fill();
     });
     requestAnimationFrame(loop);
   })();
 })();
 
-// ════════════════════════════════════════════════════
-//  HEX GEOMETRY
-// ════════════════════════════════════════════════════
-function h2p(col,row){
-  const w=HEX*2,h=Math.sqrt(3)*HEX;
-  return {x:col*w*.75+HEX*1.7, y:row*h+(col%2===0?h/2:0)+HEX*1.7};
-}
-function hexPts(cx,cy,sz){
-  const p=[];
-  for(let i=0;i<6;i++){const a=Math.PI/180*(60*i-30);p.push({x:cx+sz*Math.cos(a),y:cy+sz*Math.sin(a)});}
-  return p;
-}
-function buildMap(){
-  sectors=[];
-  let id=0;
-  const cc=COLS/2,cr=ROWS/2;
-  for(let col=0;col<COLS&&sectors.length<NSEC;col++){
-    for(let row=0;row<ROWS&&sectors.length<NSEC;row++){
-      const dc=col-cc,dr=row-cr;
-      if(Math.sqrt(dc*dc+dr*dr*1.1)<11 && Math.random()>.06){
-        const {x,y}=h2p(col,row);
-        const type=STYPES[Math.floor(Math.random()*STYPES.length)];
-        const yld=(SYIELD[type]||11)+Math.floor(Math.random()*7);
-        sectors.push({id:id++,col,row,cx:x,cy:y,type,yld});
-      }
-    }
-  }
-}
-function secAt(px,py){
-  let best=null,bd=Infinity;
-  sectors.forEach(s=>{const d=Math.hypot(s.cx-px,s.cy-py);if(d<HEX*1.12&&d<bd){bd=d;best=s;}});
-  return best;
-}
-function neighbors(s){
-  const {col,row}=s,ev=col%2===0;
-  const dirs=ev?[{dc:-1,dr:0},{dc:-1,dr:-1},{dc:0,dr:-1},{dc:1,dr:-1},{dc:1,dr:0},{dc:0,dr:1}]
-               :[{dc:-1,dr:1},{dc:-1,dr:0},{dc:0,dr:-1},{dc:1,dr:0},{dc:1,dr:1},{dc:0,dr:1}];
-  return dirs.map(d=>sectors.find(x=>x.col===col+d.dc&&x.row===row+d.dr)).filter(Boolean);
+// ─────────────────────────────────────────────
+//  AVATAR GRID INIT
+// ─────────────────────────────────────────────
+function initAvatars(){
+  const grid = $('avatar-grid');
+  grid.innerHTML = AVATARS.map(a =>
+    `<div class="av-item ${a.id===1?'selected':''}" 
+      onclick="selectAvatar(${a.id})" 
+      title="${a.name}">${a.icon}</div>`
+  ).join('');
 }
 
-// ════════════════════════════════════════════════════
-//  CANVAS & RENDER
-// ════════════════════════════════════════════════════
-function initCanvas(){
-  canvas=$('cv'); ctx=canvas.getContext('2d');
-  mmc=$('mmc'); mctx=mmc.getContext('2d');
-  mmc.width=138; mmc.height=104;
-
-  const rsz=()=>{canvas.width=innerWidth;canvas.height=innerHeight;fitView();};
-  addEventListener('resize',rsz); rsz();
-
-  // Mouse
-  canvas.addEventListener('mousedown',e=>{drag=true;lx=e.clientX;ly=e.clientY;});
-  canvas.addEventListener('mousemove',e=>{if(!drag)return;vX+=e.clientX-lx;vY+=e.clientY-ly;lx=e.clientX;ly=e.clientY;});
-  canvas.addEventListener('mouseup',e=>{if(drag&&Math.abs(e.movementX)+Math.abs(e.movementY)<4)onTap(e.clientX,e.clientY);drag=false;});
-  canvas.addEventListener('wheel',e=>{e.preventDefault();vS=clamp(vS*(e.deltaY<0?1.12:.89),.2,3.2);},{passive:false});
-
-  // Touch
-  canvas.addEventListener('touchstart',e=>{
-    e.preventDefault();
-    if(e.touches.length===1){drag=true;lx=e.touches[0].clientX;ly=e.touches[0].clientY;}
-    if(e.touches.length===2){drag=false;tD=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);tS=vS;}
-  },{passive:false});
-  canvas.addEventListener('touchmove',e=>{
-    e.preventDefault();
-    if(e.touches.length===1&&drag){vX+=e.touches[0].clientX-lx;vY+=e.touches[0].clientY-ly;lx=e.touches[0].clientX;ly=e.touches[0].clientY;}
-    if(e.touches.length===2){const d=Math.hypot(e.touches[0].clientX-e.touches[1].clientX,e.touches[0].clientY-e.touches[1].clientY);vS=clamp(tS*(d/tD),.2,3.2);}
-  },{passive:false});
-  canvas.addEventListener('touchend',e=>{
-    e.preventDefault();
-    if(drag&&e.changedTouches.length===1){const t=e.changedTouches[0];if(Math.abs(t.clientX-lx)+Math.abs(t.clientY-ly)<10)onTap(t.clientX,t.clientY);}
-    drag=false;
-  },{passive:false});
-
-  $('z+').onclick=()=>{vS=clamp(vS*1.18,.2,3.2);};
-  $('z-').onclick=()=>{vS=clamp(vS*.85,.2,3.2);};
-  $('zf').onclick=fitView;
-}
-
-function fitView(){
-  if(!sectors.length||!canvas)return;
-  const xs=sectors.map(s=>s.cx),ys=sectors.map(s=>s.cy);
-  const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
-  const mw=mxx-mnx+HEX*3.5,mh=mxy-mny+HEX*3.5;
-  vS=Math.min(canvas.width/mw,canvas.height/mh)*.88;
-  vX=(canvas.width-mw*vS)/2-mnx*vS+HEX*1.8*vS;
-  vY=(canvas.height-mh*vS)/2-mny*vS+HEX*1.8*vS;
-}
-
-function startRender(){
-  if(raf)return;
-  (function loop(t){raf=requestAnimationFrame(loop);if(t-lastT<28)return;lastT=t;draw(t);})();
-}
-
-function draw(t){
-  if(!ctx||!sectors.length)return;
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  ctx.fillStyle='#00020c'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  ctx.save(); ctx.translate(vX,vY); ctx.scale(vS,vS);
-
-  const pulse=.5+.5*Math.sin(t*.004);
-
-  sectors.forEach(s=>{
-    const gs=G.sectors[s.id];
-    const sel=s.id===selId;
-    const col=gs.ownerId?pColor(gs.ownerId):null;
-    const pts=hexPts(s.cx,s.cy,HEX-1.5);
-
-    // Glow
-    if(sel){ctx.shadowBlur=24*vS;ctx.shadowColor='rgba(255,255,255,.55)';}
-    else if(col){ctx.shadowBlur=10*vS;ctx.shadowColor=hexA(col,.35);}
-
-    // Fill
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
-    for(let i=1;i<6;i++)ctx.lineTo(pts[i].x,pts[i].y);
-    ctx.closePath();
-
-    let fill='rgba(0,6,22,.9)';
-    if(col) fill=hexA(col,sel?.32:.17);
-    else if(s.type==='star')   fill='rgba(255,200,0,.06)';
-    else if(s.type==='nebula') fill='rgba(124,58,237,.07)';
-    ctx.fillStyle=fill; ctx.fill();
-    ctx.shadowBlur=0;
-
-    // Border
-    ctx.strokeStyle=sel?'#ffffff':(col||'rgba(0,229,255,.14)');
-    ctx.lineWidth=sel?2.4:1.0; ctx.stroke();
-
-    // Inner rim for owned
-    if(col&&!sel){
-      const ip=hexPts(s.cx,s.cy,HEX-4.5);
-      ctx.beginPath();ctx.moveTo(ip[0].x,ip[0].y);
-      for(let i=1;i<6;i++)ctx.lineTo(ip[i].x,ip[i].y);
-      ctx.closePath();
-      ctx.strokeStyle=hexA(col,.1);ctx.lineWidth=.8;ctx.stroke();
-    }
-
-    // Type symbol
-    if(vS>.46){
-      const sym=s.type==='star'?'*':s.type==='nebula'?'~':s.type==='void'?'X':'';
-      if(sym){
-        ctx.textAlign='center';ctx.textBaseline='middle';
-        ctx.font=`bold ${HEX*.38}px Orbitron,monospace`;
-        ctx.fillStyle=s.type==='star'?'#ffc400':s.type==='nebula'?'#b06aff':'#3a5060';
-        ctx.fillText(sym,s.cx,s.cy-(gs.fleet>0?HEX*.22:0));
-      }
-    }
-
-    // Fleet count
-    if((gs.fleet||0)>0&&vS>.38){
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.font=`bold ${Math.max(8,HEX*.38)}px Orbitron,monospace`;
-      ctx.fillStyle=col||'rgba(255,255,255,.38)';
-      ctx.fillText(gs.fleet,s.cx,s.cy+(s.type!=='normal'&&vS>.46?HEX*.26:0));
-    }
-
-    // Owner beacon
-    if(col&&vS>.48){
-      ctx.beginPath();ctx.arc(s.cx,s.cy-HEX*.63,3.5,0,Math.PI*2);
-      ctx.shadowBlur=7;ctx.shadowColor=col;
-      ctx.fillStyle=col;ctx.fill();ctx.shadowBlur=0;
-    }
+window.selectAvatar = function(id){
+  selectedAvatar = id;
+  document.querySelectorAll('.av-item').forEach((el, i) => {
+    el.classList.toggle('selected', AVATARS[i].id === id);
   });
+};
 
-  // Pulse ring
-  if(selId!==null){
-    const s=sectors.find(x=>x.id===selId);
-    if(s){
-      const pts=hexPts(s.cx,s.cy,HEX+7);
-      ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
-      for(let i=1;i<6;i++)ctx.lineTo(pts[i].x,pts[i].y);
-      ctx.closePath();
-      ctx.strokeStyle=`rgba(255,255,255,${.18+.22*pulse})`;
-      ctx.lineWidth=1.5;ctx.stroke();
-    }
-  }
+// ─────────────────────────────────────────────
+//  TAB SWITCH
+// ─────────────────────────────────────────────
+window.switchTab = function(tab){
+  $('tab-login').classList.toggle('active', tab==='login');
+  $('tab-register').classList.toggle('active', tab==='register');
+  $('screen-login').classList.toggle('active', tab==='login');
+  $('screen-register').classList.toggle('active', tab==='register');
+  clearStatus('login-status');
+  clearStatus('register-status');
+};
 
-  // Capture burst anims
-  anims=anims.filter(a=>{
-    const age=(t-a.t)/700; if(age>1)return false;
-    const pts=hexPts(a.x,a.y,HEX*(1+age*.25));
-    ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
-    for(let i=1;i<6;i++)ctx.lineTo(pts[i].x,pts[i].y);
-    ctx.closePath();
-    ctx.strokeStyle=hexA(a.col,(1-age)*.75);
-    ctx.lineWidth=2*(1-age);ctx.stroke();
-    return true;
-  });
-
-  ctx.restore();
-  drawMini();
-}
-
-function drawMini(){
-  if(!mctx||!sectors.length)return;
-  const W=138,H=104;
-  mctx.clearRect(0,0,W,H);
-  mctx.fillStyle='rgba(0,2,12,.92)';mctx.fillRect(0,0,W,H);
-  const xs=sectors.map(s=>s.cx),ys=sectors.map(s=>s.cy);
-  const mnx=Math.min(...xs),mxx=Math.max(...xs),mny=Math.min(...ys),mxy=Math.max(...ys);
-  const sc=Math.min(120/(mxx-mnx+1),86/(mxy-mny+1))*.94;
-  sectors.forEach(s=>{
-    const gs=G.sectors[s.id];
-    const px=(s.cx-mnx)*sc+9,py=(s.cy-mny)*sc+9;
-    mctx.beginPath();mctx.arc(px,py,gs.ownerId?2.6:1.6,0,Math.PI*2);
-    mctx.fillStyle=gs.ownerId?pColor(gs.ownerId):'rgba(0,229,255,.13)';
-    mctx.fill();
-  });
-  // viewport box
-  const rx=(-vX/vS)*sc+9,ry=(-vY/vS)*sc+9;
-  mctx.strokeStyle='rgba(255,255,255,.28)';mctx.lineWidth=1;
-  mctx.strokeRect(rx,ry,(canvas.width/vS)*sc,(canvas.height/vS)*sc);
-}
-
-// ════════════════════════════════════════════════════
-//  TAP / SELECT
-// ════════════════════════════════════════════════════
-function onTap(cx,cy){
-  if(!G||G.status!=='playing')return;
-  const rect=canvas.getBoundingClientRect();
-  const s=secAt((cx-rect.left-vX)/vS,(cy-rect.top-vY)/vS);
-  if(s)selectSec(s.id);
-}
-
-function selectSec(id){
-  selId=id;
-  const s=sectors.find(x=>x.id===id);
-  const gs=G.sectors[id];
-  if(!s||!gs)return;
-
-  const own=gs.ownerId?(G.players[gs.ownerId]?.name||'?'):'Unclaimed';
-  const oc=gs.ownerId?pColor(gs.ownerId):'#556';
-  const tn={star:'Star System',nebula:'Nebula',void:'Void Rift',normal:'Sector'};
-
-  $('rpi-body').innerHTML=
-    `<div class="s-name">${tn[s.type]||'Sector'} #${id}</div>
-     <div class="s-own">Owner: <span style="color:${oc};font-weight:600">${own}</span></div>
-     <div class="s-grid">
-       <div class="sg"><div class="sg-l">Fleet</div><div class="sg-v">${gs.fleet||0}</div></div>
-       <div class="sg"><div class="sg-l">Yield/tick</div><div class="sg-v">${s.yld}</div></div>
-       <div class="sg"><div class="sg-l">Type</div><div class="sg-v" style="font-size:.65rem">${s.type.toUpperCase()}</div></div>
-       <div class="sg"><div class="sg-l">Adjacent</div><div class="sg-v">${neighbors(s).length}</div></div>
-     </div>`;
-
-  const bld=$('rp-bld'),atk=$('rp-atk');
-  if(gs.ownerId===myId){
-    bld.style.display='block'; renderBuild(s,gs);
-    atk.style.display='block'; renderAtk(s,gs);
+// ─────────────────────────────────────────────
+//  PASSWORD TOGGLE
+// ─────────────────────────────────────────────
+window.togglePwd = function(inputId, btn){
+  const inp = $(inputId);
+  if(inp.type === 'password'){
+    inp.type = 'text'; btn.textContent = 'HIDE';
   } else {
-    bld.style.display='none';
-    atk.style.display='none';
+    inp.type = 'password'; btn.textContent = 'SHOW';
   }
-}
+};
 
-function renderBuild(s,gs){
-  const res=G.players[myId]?.resources||0;
-  $('rpb-body').innerHTML=SHIPS.map(sh=>
-    `<div class="brow">
-       <div class="br-info">
-         <div class="br-n">${sh.name}</div>
-         <div class="br-c">${sh.cost} res &nbsp;&bull;&nbsp; ATK:${sh.atk} DEF:${sh.def} &nbsp;&bull;&nbsp; <em style="font-style:normal;opacity:.7">${sh.desc}</em></div>
-       </div>
-       <button class="bb" ${res<sh.cost?'disabled':''} onclick="doBuild(${s.id},'${sh.id}')">BUILD</button>
-     </div>`).join('');
-}
+// ─────────────────────────────────────────────
+//  VALIDATION
+// ─────────────────────────────────────────────
+window.checkUsername = function(inp){
+  const v = inp.value.trim();
+  const hint = $('username-hint');
+  if(v.length === 0){ hint.textContent=''; hint.className='field-hint'; inp.className=''; return; }
+  if(v.length < 4){ hint.textContent='Min 4 characters'; hint.className='field-hint err'; inp.className='field-input err'; return; }
+  if(!/^[a-zA-Z0-9_]+$/.test(v)){ hint.textContent='Only letters, numbers, underscore'; hint.className='field-hint err'; inp.className='field-input err'; return; }
+  hint.textContent='Looks good!'; hint.className='field-hint ok'; inp.className='field-input ok';
+};
 
-function renderAtk(s,gs){
-  const ab=$('rpa-body');
-  if((gs.fleet||0)<1){ab.innerHTML='<div class="hint">No fleet stationed here.<br>Build ships first.</div>';return;}
-  const tgts=neighbors(s).filter(n=>G.sectors[n.id].ownerId!==myId);
-  if(!tgts.length){ab.innerHTML='<div class="hint">No adjacent targets.<br>Expand your borders first.</div>';return;}
-  ab.innerHTML=tgts.map(t=>{
-    const gt=G.sectors[t.id];
-    const tn=gt.ownerId?(G.players[gt.ownerId]?.name||'?'):'Neutral';
-    const tc=gt.ownerId?pColor(gt.ownerId):'#4a6070';
-    return `<div class="arow">
-      <span>#${t.id} <span style="color:${tc}">[${tn}]</span> &nbsp;F:${gt.fleet||0}</span>
-      <button class="ab" onclick="doAttack(${s.id},${t.id})">STRIKE</button>
-    </div>`;
-  }).join('');
-}
+window.checkPwd = function(inp){
+  const v = inp.value;
+  const hint = $('pwd-hint');
+  const bars = [$('ps1'), $('ps2'), $('ps3')];
+  bars.forEach(b => { b.className = 'pwd-bar'; });
 
-// ════════════════════════════════════════════════════
-//  PLAYER ACTIONS
-// ════════════════════════════════════════════════════
-function doBuild(secId,shipId){
-  const sh=SHIPS.find(s=>s.id===shipId);
-  const me=G.players[myId];
-  if(!me||me.resources<sh.cost){toast('Insufficient resources!','err');return;}
-  me.resources-=sh.cost;
-  G.sectors[secId].fleet=(G.sectors[secId].fleet||0)+1;
-  log(`Built ${sh.name} in Sector #${secId}`,'build');
-  updateHUD();
-  if(selId===secId)selectSec(selId);
-}
+  if(v.length === 0){ hint.textContent=''; return; }
 
-function doAttack(fromId,toId){
-  const from=G.sectors[fromId],to=G.sectors[toId];
-  if(!from||!to||(from.fleet||0)<1){toast('Need fleet to attack!','err');return;}
+  let strength = 0;
+  if(v.length >= 8) strength++;
+  if(/[A-Z]/.test(v) && /[0-9]/.test(v)) strength++;
+  if(/[^A-Za-z0-9]/.test(v)) strength++;
 
-  $('b-a').textContent=from.fleet;
-  $('b-d').textContent=to.fleet||0;
-  $('b-res').textContent='';
-  $('bmod').style.display='flex';
+  const cls = ['s1','s2','s3'];
+  const labels = ['Weak','Medium','Strong'];
+  const colors = ['err','','ok'];
+  for(let i=0;i<strength;i++) bars[i].classList.add(cls[strength-1]);
+  hint.textContent = labels[strength-1] || '';
+  hint.className = 'field-hint ' + (colors[strength-1]||'');
+};
 
-  setTimeout(()=>{
-    $('bmod').style.display='none';
-    resolveAttack(fromId,toId,myId,true);
-    checkWin();
-    updateHUD();
-    if(selId!==null)selectSec(selId);
-  },1500);
-}
+window.checkMatch = function(inp){
+  const pass = $('reg-pass').value;
+  const hint = $('match-hint');
+  if(!inp.value){ hint.textContent=''; return; }
+  if(inp.value === pass){ hint.textContent='Passwords match'; hint.className='field-hint ok'; inp.className='ok'; }
+  else { hint.textContent='Passwords do not match'; hint.className='field-hint err'; inp.className='err'; }
+};
 
-function resolveAttack(fromId,toId,attackerId,showAnim){
-  const from=G.sectors[fromId],to=G.sectors[toId];
-  if(!from||(from.fleet||0)<1)return;
+// ─────────────────────────────────────────────
+//  REGISTER
+// ─────────────────────────────────────────────
+window.doRegister = async function(){
+  const username = $('reg-username').value.trim();
+  const email    = $('reg-email').value.trim();
+  const pass     = $('reg-pass').value;
+  const pass2    = $('reg-pass2').value;
 
-  const d=DIFF[diff];
-  const isBot=attackerId!==myId;
-  const atkMul=isBot?d.botAtk:1;
-  const defMul=isBot?1:d.botDef;
+  // Validate
+  if(!username || username.length < 4){ setStatus('register-status','Username must be at least 4 characters','err'); return; }
+  if(!/^[a-zA-Z0-9_]+$/.test(username)){ setStatus('register-status','Username: only letters, numbers, underscore','err'); return; }
+  if(!email){ setStatus('register-status','Enter your email address','err'); return; }
+  if(pass.length < 8){ setStatus('register-status','Password must be at least 8 characters','err'); return; }
+  if(pass !== pass2){ setStatus('register-status','Passwords do not match','err'); return; }
 
-  const atkPow=(from.fleet||1)*atkMul*(1+rnd(0,.45));
-  const defPow=((to.fleet||0)+(to.ownerId?1:0))*defMul*(1.15+rnd(0,.35));
-  const win=atkPow>defPow;
+  showOverlay('Creating your commander...');
+  $('btn-register').disabled = true;
 
-  if(win){
-    const rem=Math.max(1,Math.floor((from.fleet||1)-(to.fleet||0)*.55));
-    to.ownerId=attackerId;
-    to.fleet=rem;
-    from.fleet=0;
-    // capture anim
-    const ts2=sectors.find(x=>x.id===toId);
-    if(ts2)anims.push({x:ts2.cx,y:ts2.cy,col:pColor(attackerId),t:performance.now()});
+  try {
+    // Check username unique
+    const { data: existing } = await sb
+      .from('players')
+      .select('username')
+      .eq('username', username)
+      .maybeSingle();
 
-    if(showAnim){
-      $('b-res').className='bres win';
-      $('b-res').textContent='SECTOR CAPTURED!';
-      toast('Sector captured!','ok');
-      log(`You captured Sector #${toId}`,'ok');
+    if(existing){ hideOverlay(); $('btn-register').disabled=false; setStatus('register-status','Username already taken! Choose another','err'); return; }
+
+    // Register with Supabase Auth
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass,
+      options: {
+        data: { username, avatar_id: selectedAvatar }
+      }
+    });
+
+    if(error) throw error;
+
+    // Save to players table
+    if(data.user){
+      const tag = '#VD-' + Math.floor(10000 + Math.random()*90000);
+      await sb.from('players').insert({
+        id: data.user.id,
+        username,
+        player_tag: tag,
+        avatar_id: selectedAvatar,
+        credits: 0, minerals: 0, energy: 0
+      });
+    }
+
+    pendingEmail = email;
+    hideOverlay();
+    $('btn-register').disabled = false;
+    showVerifyScreen(email);
+    toast('Account created! Check your email.', 'ok');
+
+  } catch(e) {
+    hideOverlay();
+    $('btn-register').disabled = false;
+    setStatus('register-status', e.message || 'Registration failed', 'err');
+  }
+};
+
+// ─────────────────────────────────────────────
+//  LOGIN
+// ─────────────────────────────────────────────
+window.doLogin = async function(){
+  const email = $('login-email').value.trim();
+  const pass  = $('login-pass').value;
+
+  if(!email){ setStatus('login-status','Enter your email','err'); return; }
+  if(!pass) { setStatus('login-status','Enter your password','err'); return; }
+
+  showOverlay('Authenticating...');
+  $('btn-login').disabled = true;
+
+  try {
+    const { data, error } = await sb.auth.signInWithPassword({ email, password:pass });
+    if(error) throw error;
+
+    currentUser = data.user;
+    hideOverlay();
+    $('btn-login').disabled = false;
+
+    if(!data.user.email_confirmed_at){
+      pendingEmail = email;
+      showVerifyScreen(email);
+      toast('Please verify your email first','inf');
     } else {
-      const bname=G.players[attackerId]?.name||'BOT';
-      log(`${bname} captured Sector #${toId}`,'ai');
-    }
-  } else {
-    to.fleet=Math.max(0,Math.floor((to.fleet||0)-(from.fleet||1)*.55));
-    from.fleet=0;
-    if(showAnim){
-      $('b-res').className='bres loss';
-      $('b-res').textContent='ATTACK REPELLED!';
-      log(`Attack on Sector #${toId} repelled`,'bad');
-    }
-  }
-}
-
-// ════════════════════════════════════════════════════
-//  AI BOTS
-// ════════════════════════════════════════════════════
-function botTick(){
-  if(!G||G.status!=='playing')return;
-  const d=DIFF[diff];
-
-  Object.keys(G.players).forEach(pid=>{
-    if(pid===myId)return;
-    const bot=G.players[pid];
-    if(!bot)return;
-
-    const mySecsList=Object.values(G.sectors).filter(s=>s.ownerId===pid);
-    if(!mySecsList.length)return;
-
-    // income
-    const income=mySecsList.reduce((a,s)=>a+(sectors.find(x=>x.id===s.id)?.yld||11)*d.botRes,0);
-    bot.resources=(bot.resources||0)+income;
-
-    // decide: build or attack
-    const action=Math.random();
-
-    if(action<0.5&&bot.resources>=45){
-      // build cheapest affordable ship
-      const affordable=SHIPS.filter(sh=>sh.cost<=bot.resources).sort((a,b)=>b.cost-a.cost);
-      if(affordable.length){
-        const sh=affordable[0];
-        const target=mySecsList[Math.floor(Math.random()*mySecsList.length)];
-        target.fleet=(target.fleet||0)+1;
-        bot.resources-=sh.cost;
-      }
+      await loadProfile(data.user);
     }
 
-    if(action>=0.3){
-      // find best attack: pick sector with fleet, attack weakest neighbor
-      const frontline=mySecsList.filter(s=>(s.fleet||0)>0);
-      if(frontline.length){
-        const from=frontline[Math.floor(Math.random()*frontline.length)];
-        const fromSec=sectors.find(x=>x.id===from.id);
-        if(fromSec){
-          const tgts=neighbors(fromSec).filter(n=>G.sectors[n.id].ownerId!==pid);
-          if(tgts.length){
-            tgts.sort((a,b)=>(G.sectors[a.id].fleet||0)-(G.sectors[b.id].fleet||0));
-            resolveAttack(from.id,tgts[0].id,pid,false);
-            checkWin();
-          }
-        }
-      }
+  } catch(e) {
+    hideOverlay();
+    $('btn-login').disabled = false;
+    let msg = e.message || 'Login failed';
+    if(msg.includes('Invalid login')) msg = 'Invalid email or password';
+    if(msg.includes('Email not confirmed')) msg = 'Please verify your email first';
+    setStatus('login-status', msg, 'err');
+  }
+};
+
+// ─────────────────────────────────────────────
+//  VERIFY EMAIL SCREEN
+// ─────────────────────────────────────────────
+function showVerifyScreen(email){
+  $('verify-email-display').textContent = email;
+  clearStatus('verify-status');
+  showScreen('screen-verify');
+  startResendTimer();
+}
+
+function startResendTimer(){
+  let sec = 60;
+  $('resend-section').style.display = 'block';
+  $('resend-btn-wrap').style.display = 'none';
+  if(resendTimer) clearInterval(resendTimer);
+  resendTimer = setInterval(() => {
+    sec--;
+    $('resend-countdown').textContent = sec;
+    if(sec <= 0){
+      clearInterval(resendTimer);
+      $('resend-section').style.display = 'none';
+      $('resend-btn-wrap').style.display = 'block';
     }
-  });
-  updateHUD();
+  }, 1000);
 }
 
-// ════════════════════════════════════════════════════
-//  RESOURCE TICK (player)
-// ════════════════════════════════════════════════════
-function resTick(){
-  if(!G||G.status!=='playing')return;
-  Object.keys(G.players).forEach(pid=>{
-    const inc=Object.values(G.sectors).filter(s=>s.ownerId===pid)
-      .reduce((a,s)=>a+(sectors.find(x=>x.id===s.id)?.yld||11),0);
-    G.players[pid].resources=(G.players[pid].resources||0)+inc;
-  });
-  updateHUD();
-}
-
-// ════════════════════════════════════════════════════
-//  WIN CHECK
-// ════════════════════════════════════════════════════
-function checkWin(){
-  const all=Object.values(G.sectors),total=all.length,cnt={};
-  all.forEach(s=>{if(s.ownerId)cnt[s.ownerId]=(cnt[s.ownerId]||0)+1;});
-  for(const [pid,n] of Object.entries(cnt)){
-    if(n/total>=WIN){G.status='ended';G.winner=pid;showEnd();return;}
+window.checkVerification = async function(){
+  showOverlay('Checking verification...');
+  try {
+    const { data } = await sb.auth.getUser();
+    if(data.user?.email_confirmed_at){
+      currentUser = data.user;
+      hideOverlay();
+      await loadProfile(data.user);
+      toast('Email verified! Welcome Commander!', 'ok');
+    } else {
+      hideOverlay();
+      setStatus('verify-status', 'Email not verified yet. Please check your inbox and click the link.', 'err');
+    }
+  } catch(e){
+    hideOverlay();
+    setStatus('verify-status', 'Could not check verification status', 'err');
   }
-  // Check if player is eliminated
-  const playerSecs=all.filter(s=>s.ownerId===myId).length;
-  if(playerSecs===0&&G.tick>3){
-    G.status='ended';G.winner='bot';showEnd();
+};
+
+window.resendVerification = async function(){
+  try {
+    await sb.auth.resend({ type:'signup', email:pendingEmail });
+    toast('Verification email resent!', 'ok');
+    startResendTimer();
+  } catch(e){
+    toast('Failed to resend. Try again.', 'err');
   }
-}
+};
 
-// ════════════════════════════════════════════════════
-//  HUD UPDATE
-// ════════════════════════════════════════════════════
-function updateHUD(){
-  if(!G)return;
-  const me=G.players[myId];
-  const all=Object.values(G.sectors);
-  const total=all.length;
-  if(me){
-    $('hv-name').textContent=me.name;
-    $('hv-res').textContent=me.resources||0;
-    const ms=all.filter(s=>s.ownerId===myId);
-    $('hv-sec').textContent=`${ms.length}/${total}`;
-    $('hv-fl').textContent=ms.reduce((a,s)=>a+(s.fleet||0),0);
-    // progress
-    $('pgfill').style.width=((ms.length/total)*100).toFixed(1)+'%';
-  }
+// ─────────────────────────────────────────────
+//  FORGOT PASSWORD
+// ─────────────────────────────────────────────
+window.showForgot = function(){
+  showScreen('screen-forgot');
+  clearStatus('forgot-status');
+};
 
-  // Player pills
-  const pls=Object.entries(G.players);
-  $('hv-pls').innerHTML=pls.map(([pid,p],i)=>{
-    const sc=all.filter(s=>s.ownerId===pid).length;
-    return `<div class="hpill ${pid===myId?'me':''}">
-      <div class="hpill-d" style="background:${PCOLORS[i]};box-shadow:0 0 5px ${PCOLORS[i]}"></div>
-      <span>${p.name}</span>
-      <span style="color:${PCOLORS[i]};font-family:var(--fh);font-size:.6rem;margin-left:.18rem">${sc}</span>
-    </div>`;
-  }).join('');
+window.showLogin = function(){
+  showScreen('tabs');
+  switchTab('login');
+};
 
-  // Leaderboard
-  const sorted=pls.map(([pid,p],i)=>({
-    pid,name:p.name,color:PCOLORS[i],
-    cnt:all.filter(s=>s.ownerId===pid).length
-  })).sort((a,b)=>b.cnt-a.cnt);
-  $('lb-body').innerHTML=sorted.map((p,i)=>
-    `<div class="lbr">
-       <span class="lbrk">#${i+1}</span>
-       <div class="lbd" style="background:${p.color};box-shadow:0 0 4px ${p.color}"></div>
-       <span class="lbn" style="${p.pid===myId?'color:var(--c1);font-weight:600':''}">${p.name}</span>
-       <span class="lbc">${p.cnt}</span>
-     </div>`).join('');
+window.doForgot = async function(){
+  const email = $('forgot-email').value.trim();
+  if(!email){ setStatus('forgot-status','Enter your email address','err'); return; }
 
-  if(selId!==null)selectSec(selId);
-}
-
-// ════════════════════════════════════════════════════
-//  END SCREEN
-// ════════════════════════════════════════════════════
-function showEnd(){
-  clearInterval(resTimer);
-  clearInterval(botTimer);
-
-  const me=G.winner===myId;
-  const all=Object.values(G.sectors);
-  const ms=all.filter(s=>s.ownerId===myId);
-
-  $('end-ttl').textContent=me?'VICTORY':'DEFEATED';
-  $('end-ttl').className='end-ttl '+(me?'win':'lose');
-  $('end-sub').textContent=me?'The galaxy bows to your dominion':
-    `${G.players[G.winner]?.name||'Enemy'} has conquered the galaxy`;
-  $('es-sec').textContent=ms.length;
-  $('es-fl').textContent=ms.reduce((a,s)=>a+(s.fleet||0),0);
-  $('es-res').textContent=G.players[myId]?.resources||0;
-  $('endscr').classList.add('on');
-  if(me)toast('Galaxy conquered!','ok');
-}
-
-// ════════════════════════════════════════════════════
-//  GAME START
-// ════════════════════════════════════════════════════
-function startGame(){
-  buildMap();
-  const d=DIFF[diff];
-
-  // Init players
-  const players={};
-  players[myId]={name:$('inp-name').value.trim()||'Commander',resources:200,isBot:false};
-  for(let i=0;i<nBots;i++){
-    const bid='bot'+i;
-    players[bid]={name:BOT_NAMES[i],resources:Math.round(200*d.botRes),isBot:true};
-  }
-
-  // Init sectors
-  const secs={};
-  sectors.forEach(s=>{secs[s.id]={ownerId:null,fleet:0};});
-
-  G={status:'playing',winner:null,tick:0,players,sectors:secs};
-
-  // Assign starting sectors
-  const pids=Object.keys(players);
-  const shuffled=[...sectors].sort(()=>Math.random()-.5);
-  const step=Math.floor(shuffled.length/pids.length);
-  pids.forEach((pid,i)=>{
-    const ss=G.sectors[shuffled[Math.min(i*step,shuffled.length-1)].id];
-    ss.ownerId=pid; ss.fleet=5;
-  });
-
-  // Show game UI
-  $('s-menu').classList.add('off');
-  $('game-wrap').classList.add('on');
-  $('hud').style.display='flex';
-  $('rp').classList.add('open');
-  $('lb').style.display='block';
-  $('mm').style.display='block';
-  $('zooms').style.display='flex';
-  $('pgbar').style.display='block';
-  $('endscr').classList.remove('on');
-
-  initCanvas(); fitView(); startRender();
-  resTimer=setInterval(resTick,RTICK);
-  botTimer=setInterval(botTick,d.botTick);
-  updateHUD();
-  log('Mission launched. Conquer 60% to win.','ok');
-}
-
-// ════════════════════════════════════════════════════
-//  BOOT
-// ════════════════════════════════════════════════════
-window.addEventListener('load',()=>{
-
-  // Difficulty buttons
-  document.querySelectorAll('.diff-btn').forEach(b=>{
-    b.addEventListener('click',()=>{
-      document.querySelectorAll('.diff-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      diff=b.dataset.d;
+  showOverlay('Sending reset link...');
+  try {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.href
     });
-  });
+    if(error) throw error;
+    hideOverlay();
+    setStatus('forgot-status', 'Password reset link sent! Check your email.', 'ok');
+    toast('Reset link sent to ' + email, 'ok');
+  } catch(e){
+    hideOverlay();
+    setStatus('forgot-status', e.message || 'Failed to send reset link', 'err');
+  }
+};
 
-  // Bot count buttons
-  document.querySelectorAll('.bot-btn').forEach(b=>{
-    b.addEventListener('click',()=>{
-      document.querySelectorAll('.bot-btn').forEach(x=>x.classList.remove('active'));
-      b.classList.add('active');
-      nBots=parseInt(b.dataset.b);
-    });
-  });
+// ─────────────────────────────────────────────
+//  LOAD PROFILE
+// ─────────────────────────────────────────────
+async function loadProfile(user){
+  showOverlay('Loading profile...');
+  try {
+    const { data: profile, error } = await sb
+      .from('players')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle();
 
-  $('btn-start').addEventListener('click',()=>{
-    const name=$('inp-name').value.trim();
-    if(!name){setMsg('msg-menu','Enter your commander name!','err');return;}
-    startGame();
-  });
-  $('inp-name').addEventListener('keydown',e=>{if(e.key==='Enter')$('btn-start').click();});
+    hideOverlay();
 
-  $('hbtn-p').addEventListener('click',()=>$('rp').classList.toggle('hide'));
-  $('hbtn-q').addEventListener('click',()=>{
-    if(!confirm('Abort mission?'))return;
-    clearInterval(resTimer);clearInterval(botTimer);
-    $('game-wrap').classList.remove('on');
-    $('hud').style.display='none';
-    $('rp').classList.remove('open');
-    $('lb').style.display='none';
-    $('mm').style.display='none';
-    $('zooms').style.display='none';
-    $('pgbar').style.display='none';
-    $('s-menu').classList.remove('off');
-    selId=null; G=null; sectors=[];
-    if(raf){cancelAnimationFrame(raf);raf=null;}
-  });
+    if(!profile){
+      // First time — create profile
+      showScreen('screen-profile-setup');
+      const tag = '#VD-' + Math.floor(10000 + Math.random()*90000);
+      const username = user.user_metadata?.username || 'Commander' + Math.floor(Math.random()*9999);
+      const avatarId = user.user_metadata?.avatar_id || 1;
+      await sb.from('players').insert({
+        id: user.id, username, player_tag: tag,
+        avatar_id: avatarId,
+        credits:0, minerals:0, energy:0
+      });
+      await new Promise(r => setTimeout(r, 1000));
+      const { data: newProfile } = await sb.from('players').select('*').eq('id', user.id).single();
+      showProfileCard(user, newProfile);
+    } else {
+      showProfileCard(user, profile);
+    }
 
-  $('btn-retry').addEventListener('click',()=>{
-    $('endscr').classList.remove('on');
-    clearInterval(resTimer);clearInterval(botTimer);
-    if(raf){cancelAnimationFrame(raf);raf=null;}
-    selId=null;anims=[];
-    startGame();
+  } catch(e){
+    hideOverlay();
+    toast('Failed to load profile: ' + e.message, 'err');
+    showScreen('tabs');
+  }
+}
+
+// ─────────────────────────────────────────────
+//  SHOW PROFILE CARD
+// ─────────────────────────────────────────────
+function showProfileCard(user, profile){
+  const av = AVATARS.find(a => a.id === (profile?.avatar_id || 1));
+  $('profile-avatar').innerHTML = av ? av.icon : '&#128737;';
+  $('profile-username').textContent = profile?.username || 'Commander';
+  $('profile-tag').textContent = profile?.player_tag || '#VD-00000';
+  $('profile-email').textContent = user.email;
+  $('ps-planets').textContent = profile?.total_planets || 0;
+  $('ps-wins').textContent    = profile?.battles_won || 0;
+  $('ps-battles').textContent = (profile?.battles_won || 0) + (profile?.battles_lost || 0);
+
+  const joined = new Date(user.created_at);
+  $('profile-joined').textContent = 'Commander since ' + joined.toLocaleDateString('en-IN', {day:'numeric',month:'long',year:'numeric'});
+
+  // Verify badge
+  const verified = !!user.email_confirmed_at;
+  const badge = $('verify-badge');
+  $('vbdot').style.background = verified ? 'var(--green)' : 'var(--gold)';
+  $('vbtext').textContent = verified ? 'Verified' : 'Unverified';
+  badge.className = 'verify-badge ' + (verified ? 'verified' : 'unverified');
+
+  showScreen('screen-profile');
+  toast('Welcome back, ' + (profile?.username || 'Commander') + '!', 'ok');
+}
+
+// ─────────────────────────────────────────────
+//  LOGOUT
+// ─────────────────────────────────────────────
+window.doLogout = async function(){
+  if(!confirm('Log out of Void Dominion?')) return;
+  showOverlay('Logging out...');
+  await sb.auth.signOut();
+  currentUser = null;
+  hideOverlay();
+  showScreen('tabs');
+  switchTab('login');
+  $('login-email').value = '';
+  $('login-pass').value = '';
+  toast('Logged out successfully', 'inf');
+};
+
+// ─────────────────────────────────────────────
+//  ENTER GAME
+// ─────────────────────────────────────────────
+window.enterGame = function(){
+  toast('Game world loading... (Coming soon!)', 'inf');
+  // TODO: redirect to game
+};
+
+// ─────────────────────────────────────────────
+//  BACK TO LOGIN
+// ─────────────────────────────────────────────
+window.backToLogin = function(){
+  if(resendTimer) clearInterval(resendTimer);
+  showScreen('tabs');
+  switchTab('login');
+};
+
+// ─────────────────────────────────────────────
+//  AUTO LOGIN CHECK (session restore)
+// ─────────────────────────────────────────────
+async function init(){
+  showOverlay('Initializing...');
+  initAvatars();
+
+  try {
+    const { data: { session } } = await sb.auth.getSession();
+    if(session?.user){
+      currentUser = session.user;
+      if(!session.user.email_confirmed_at){
+        hideOverlay();
+        pendingEmail = session.user.email;
+        showVerifyScreen(session.user.email);
+      } else {
+        await loadProfile(session.user);
+      }
+    } else {
+      hideOverlay();
+      showScreen('tabs');
+    }
+  } catch(e){
+    hideOverlay();
+    showScreen('tabs');
+  }
+
+  // Listen for auth state changes
+  sb.auth.onAuthStateChange((event, session) => {
+    if(event === 'PASSWORD_RECOVERY'){
+      toast('You can now set a new password', 'inf');
+    }
   });
-  $('btn-menu2').addEventListener('click',()=>{
-    $('endscr').classList.remove('on');
-    $('game-wrap').classList.remove('on');
-    $('hud').style.display='none';
-    $('rp').classList.remove('open');
-    $('lb').style.display='none';
-    $('mm').style.display='none';
-    $('zooms').style.display='none';
-    $('pgbar').style.display='none';
-    $('s-menu').classList.remove('off');
-    clearInterval(resTimer);clearInterval(botTimer);
-    if(raf){cancelAnimationFrame(raf);raf=null;}
-    selId=null;G=null;sectors=[];
-  });
+}
+
+// Enter key support
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Enter') return;
+  const active = document.querySelector('.form-screen.active');
+  if(active?.id === 'screen-login')    window.doLogin();
+  if(active?.id === 'screen-register') window.doRegister();
+  if($('screen-forgot').classList.contains('active')) window.doForgot();
 });
+
+init();
 </script>
 </body>
 </html>
