@@ -482,7 +482,7 @@ function drawNebulaBg(ctx,W,H,t){
 
 function drawGalaxy(ctx, g, t){
   const pulse = 0.5+0.5*Math.sin(t*0.001+g.twinkle);
-  const {r,gg,b} = {r:g.color.r,gg:g.color.g,b:g.color.b};
+  const cr=g.color.r, cg=g.color.g, cb=g.color.b;
 
   ctx.save();
   ctx.translate(g.x, g.y);
@@ -545,8 +545,8 @@ function drawGalaxy(ctx, g, t){
 
 function drawGalaxyShape(ctx, g, t, brightness, glowA, dim){
   const s = g.size;
-  const {r,gg,b} = {r:g.color.r,gg:g.color.g,b:g.color.b};
-  const col = dim ? '150,150,180' : `${r},${gg},${b}`;
+  const cr=g.color.r, cg=g.color.g, cb=g.color.b;
+  const col = dim ? "150,150,180" : `${cr},${cg},${cb}`;
 
   // Outer glow
   const grd = ctx.createRadialGradient(0,0,0,0,0,s*2.2);
@@ -836,14 +836,18 @@ async function init(){
 
   function resize(){
     canvas.width=window.innerWidth; canvas.height=window.innerHeight;
-    fitView();
   }
-  window.addEventListener('resize',resize); resize();
+  window.addEventListener('resize',()=>{ resize(); fitView(); });
+  resize();
+
+  // Fit full universe first
+  fitView();
 
   initInput();
 
   // Center on home galaxy
   const hg=galaxies[homeIdx];
+  cam.scale = 0.45;
   cam.x = canvas.width/2 - hg.x*cam.scale;
   cam.y = canvas.height/2 - hg.y*cam.scale;
   clampCam();
