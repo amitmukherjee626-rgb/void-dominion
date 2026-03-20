@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION — Galaxy</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{
+  width:100%;height:100%;background:#00010a;overflow:hidden;
+  font-family:'Exo 2',sans-serif;color:#d0eeff;
+  touch-action:none;-webkit-tap-highlight-color:transparent;
+  user-select:none;overscroll-behavior:none;
+}
+canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-index:1;touch-action:none;}
+
+/* ─── HUD ─── */
+#hud{
+  position:fixed;top:0;left:0;right:0;height:50px;z-index:10;
+  background:rgba(0,1,10,0.96);border-bottom:1px solid rgba(0,229,255,0.15);
+  display:flex;align-items:center;padding:0 10px;gap:8px;pointer-events:all;
+}
+.hl{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:2px;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,0.6);padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+
+/* Breadcrumb */
+.breadcrumb{display:flex;align-items:center;gap:5px;padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+.bc-item{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;color:rgba(0,229,255,0.4);cursor:pointer;transition:color .2s;}
+.bc-item:hover{color:#00e5ff;}
+.bc-item.active{color:#fff;pointer-events:none;}
+.bc-sep{font-size:9px;color:rgba(0,229,255,0.25);}
+
+.hres{display:flex;gap:8px;padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);}
+.hr{display:flex;flex-direction:column;align-items:center;}
+.hrl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.hrv{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;}
+.hrv.cr{color:#ffc400;}.hrv.mn{color:#78909c;}.hrv.en{color:#80cbc4;}
+
+.hvw{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,0.35);text-transform:uppercase;}
+.hright{margin-left:auto;display:flex;gap:5px;}
+.hbtn{padding:5px 9px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.3);background:transparent;color:#00e5ff;cursor:pointer;text-transform:uppercase;}
+.hbtn.red{border-color:rgba(255,23,68,0.35);color:#ff1744;}
+
+/* ─── GALAXY NAME BANNER ─── */
+#galaxy-banner{
+  position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:10;
+  text-align:center;pointer-events:none;
+}
+.gb-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:3px;color:#fff;text-shadow:0 0 12px rgba(0,229,255,0.4);}
+.gb-type{font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.4);text-transform:uppercase;margin-top:2px;}
+
+/* ─── ZOOM ─── */
+#zctrl{position:fixed;right:12px;bottom:55px;z-index:10;display:flex;flex-direction:column;gap:6px;pointer-events:all;}
+.zbtn{width:44px;height:44px;background:rgba(0,1,10,0.94);border:1px solid rgba(0,229,255,0.2);border-radius:3px;color:#00e5ff;font-size:20px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;}
+.zbtn.fit{font-size:9px;letter-spacing:1px;}
+
+/* ─── BOTTOM BAR ─── */
+#bbar{
+  position:fixed;bottom:0;left:0;right:0;height:44px;z-index:10;
+  background:rgba(0,1,10,0.96);border-top:1px solid rgba(0,229,255,0.15);
+  display:flex;align-items:center;padding:0 12px;gap:12px;pointer-events:none;
+}
+.bli{display:flex;align-items:center;gap:4px;font-size:9px;color:rgba(255,255,255,0.35);}
+.bld{width:7px;height:7px;border-radius:50%;}
+.blz{margin-left:auto;font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,0.35);letter-spacing:1px;}
+
+/* ─── MINIMAP ─── */
+#mmap{position:fixed;left:12px;bottom:54px;width:120px;height:92px;z-index:10;background:rgba(0,1,10,0.92);border:1px solid rgba(0,229,255,0.18);border-radius:2px;overflow:hidden;pointer-events:none;}
+#mmc{display:block;width:100%;height:100%;}
+.mmtxt{position:absolute;top:3px;left:5px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(0,229,255,0.3);}
+
+/* ─── ENTER PROMPT ─── */
+#eprompt{
+  position:fixed;bottom:54px;left:50%;transform:translateX(-50%);z-index:10;
+  background:rgba(0,1,15,0.96);border:1px solid rgba(0,229,255,0.5);border-radius:2px;
+  padding:8px 18px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;
+  color:#00e5ff;text-transform:uppercase;display:none;white-space:nowrap;cursor:pointer;
+  animation:pulse 1.5s ease-in-out infinite;pointer-events:all;
+}
+@keyframes pulse{0%,100%{border-color:rgba(0,229,255,0.3);}50%{border-color:rgba(0,229,255,1);box-shadow:0 0 12px rgba(0,229,255,0.4);}}
+
+/* ─── TOOLTIP ─── */
+#gtip{position:fixed;z-index:15;background:rgba(0,1,15,0.97);border:1px solid rgba(0,229,255,0.2);border-radius:2px;padding:10px 14px;pointer-events:none;display:none;min-width:160px;}
+.gtn{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;margin-bottom:3px;}
+.gtt{font-size:9px;color:rgba(0,229,255,0.5);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.gtrow{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,0.4);margin-bottom:2px;}
+.gtrow span:last-child{color:rgba(255,255,255,0.7);}
+.gtst{font-size:9px;margin-top:5px;font-weight:600;}
+.gtst.h{color:#ffc400;}.gtst.e{color:#00e676;}.gtst.u{color:rgba(255,255,255,0.25);}
+
+/* ─── TOASTS ─── */
+#toasts{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:20;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,0.97);border:1px solid rgba(0,229,255,0.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,0.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,0.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,0.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+/* ─── LOADING ─── */
+#loadscr{position:fixed;inset:0;z-index:100;background:#00010a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;}
+.ltitle{font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,38px);font-weight:900;letter-spacing:3px;color:#00e5ff;text-shadow:0 0 20px rgba(0,229,255,0.7);animation:lpulse 2s ease-in-out infinite;}
+@keyframes lpulse{0%,100%{opacity:0.7}50%{opacity:1}}
+.lsub{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:3px;color:rgba(0,229,255,0.5);text-transform:uppercase;}
+.lbarw{width:200px;height:3px;background:rgba(0,229,255,0.1);border-radius:2px;overflow:hidden;}
+.lbar{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#7c3aed);transition:width 0.4s ease;border-radius:2px;}
+.ltxt{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.4);text-transform:uppercase;}
+
+/* ─── TRANSITION ─── */
+#ztrans{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,0.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity 0.5s;}
+#ztrans.show{opacity:1;pointer-events:all;}
+</style>
+</head>
+<body>
+
+<div id="loadscr">
+  <div class="ltitle">VOID DOMINION</div>
+  <div class="lsub" id="lgalname">Loading Galaxy...</div>
+  <div class="lbarw"><div class="lbar" id="lbar"></div></div>
+  <div class="ltxt" id="ltxt">Initializing...</div>
+</div>
+
+<canvas id="cv"></canvas>
+<div id="ztrans"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hl">VD</div>
+  <div class="breadcrumb">
+    <span class="bc-item" onclick="goUniverse()">UNIVERSE</span>
+    <span class="bc-sep">›</span>
+    <span class="bc-item active" id="bc-galaxy">GALAXY</span>
+  </div>
+  <div class="hres">
+    <div class="hr"><div class="hrl">CR</div><div class="hrv cr" id="hcr">0</div></div>
+    <div class="hr"><div class="hrl">MIN</div><div class="hrv mn" id="hmn">0</div></div>
+    <div class="hr"><div class="hrl">ENE</div><div class="hrv en" id="hen">0</div></div>
+  </div>
+  <div class="hvw" id="hvw">Galaxy View</div>
+  <div class="hright">
+    <button class="hbtn" onclick="goUniverse()">&#8592; BACK</button>
+  </div>
+</div>
+
+<!-- Galaxy Name Banner -->
+<div id="galaxy-banner">
+  <div class="gb-name" id="gb-name">-</div>
+  <div class="gb-type" id="gb-type">-</div>
+</div>
+
+<!-- Zoom Controls -->
+<div id="zctrl">
+  <button class="zbtn" id="zbtn-in">+</button>
+  <button class="zbtn" id="zbtn-out">&#8722;</button>
+  <button class="zbtn fit" id="zbtn-fit">FIT</button>
+</div>
+
+<!-- Bottom Bar -->
+<div id="bbar">
+  <div class="bli"><div class="bld" style="background:#ffc400;box-shadow:0 0 5px #ffc400"></div>Home System</div>
+  <div class="bli"><div class="bld" style="background:#00e676"></div>Explored</div>
+  <div class="bli"><div class="bld" style="background:rgba(255,255,255,0.2)"></div>Unknown</div>
+  <div class="blz" id="bzoom">0.80x</div>
+</div>
+
+<!-- Minimap -->
+<div id="mmap">
+  <canvas id="mmc"></canvas>
+  <div class="mmtxt">GALAXY</div>
+</div>
+
+<!-- Enter Prompt -->
+<div id="eprompt" onclick="enterSystem()">ENTER SYSTEM</div>
+
+<!-- Tooltip -->
+<div id="gtip">
+  <div class="gtn" id="gtn">-</div>
+  <div class="gtt" id="gtt">-</div>
+  <div class="gtrow"><span>Planets</span><span id="gt-planets">-</span></div>
+  <div class="gtrow"><span>Star Type</span><span id="gt-star">-</span></div>
+  <div class="gtrow"><span>Resources</span><span id="gt-res">-</span></div>
+  <div class="gtst" id="gtst">-</div>
+</div>
+
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SB = createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
+
+// ════ CONSTANTS ════
+const SS_TYPES = ['Red Dwarf','Yellow Star','Blue Giant','White Dwarf','Neutron Star','Binary Star'];
+const SS_NA = ['Alpha','Beta','Gamma','Delta','Epsilon','Zeta','Eta','Theta','Iota','Kappa','Lambda','Mu','Nu','Xi','Omicron','Pi','Rho','Sigma','Tau','Upsilon'];
+const SS_NB = ['Majoris','Minoris','Prime','Secundus','Tertius','Centauri','Eridani','Cygni','Draconis','Lyrae','Aquilae','Herculis','Leonis','Virginis','Scorpii','Tauri','Orionis','Persei','Cassiopeiae','Ursae'];
+const RES_TYPES = ['Rich','Abundant','Moderate','Scarce','Barren'];
+const STAR_COLS = {
+  'Red Dwarf':   [255,80,60],
+  'Yellow Star': [255,220,80],
+  'Blue Giant':  [80,160,255],
+  'White Dwarf': [220,220,255],
+  'Neutron Star':[160,80,255],
+  'Binary Star': [255,180,60],
+};
+
+// Galaxy map size
+const GW = 2400, GH = 2000;
+
+// ════ STATE ════
+let CV=null,CTX=null,MC=null,MCTX=null;
+let W=0,H=0;
+let systems=[];
+let homeSystemIdx=0;
+let selS=null;
+let camX=0,camY=0,camS=0.8;
+let isDrag=false,dragSX=0,dragSY=0,camSX=0,camSY=0,hasMoved=false;
+let raf=null;
+let galaxyData=null; // {name, type, id, color}
+let profile=null;
+
+// ════ UTILS ════
+const $=id=>document.getElementById(id);
+function setLoad(p,t){$('lbar').style.width=p+'%';$('ltxt').textContent=t;}
+function toast(m,type='inf'){
+  const el=document.createElement('div');
+  el.className='toast '+type;el.textContent=m;
+  $('toasts').appendChild(el);
+  setTimeout(()=>el.remove(),3200);
+}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return''+n;}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// ════ SEEDED RNG ════
+function mkRng(seed){
+  let s=Math.abs(seed)%2147483647||1;
+  return()=>{s=s*16807%2147483647;return(s-1)/2147483646;};
+}
+function hashStr(str){let h=5381;for(let i=0;i<str.length;i++)h=(h*33^str.charCodeAt(i))>>>0;return h;}
+
+// ════ BUILD SOLAR SYSTEMS ════
+function buildSystems(seed, count){
+  const rng=mkRng(seed);
+  const list=[];
+  const MIN_DIST=55;
+  let tries=0;
+  while(list.length<count&&tries<count*25){
+    tries++;
+    const x=70+rng()*(GW-140);
+    const y=70+rng()*(GH-140);
+    let ok=true;
+    for(const s of list){if(Math.hypot(s.x-x,s.y-y)<MIN_DIST){ok=false;break;}}
+    if(!ok)continue;
+    const starType=SS_TYPES[Math.floor(rng()*SS_TYPES.length)];
+    const col=STAR_COLS[starType]||[255,255,200];
+    const planets=6+Math.floor(rng()*4); // 6-9 planets
+    const resType=RES_TYPES[Math.floor(rng()*RES_TYPES.length)];
+    list.push({
+      id:list.length,x,y,
+      name:SS_NA[Math.floor(rng()*SS_NA.length)]+' '+SS_NB[Math.floor(rng()*SS_NB.length)],
+      starType,
+      planets,
+      resources:resType,
+      cr:col[0],cg:col[1],cb:col[2],
+      size:4+rng()*5,
+      twink:rng()*Math.PI*2,
+      bright:0.6+rng()*0.4,
+      explored:false,
+      isHome:false,
+      hasPlanets:rng()>0.1, // 90% have planets
+    });
+  }
+  return list;
+}
+
+// ════ CAMERA ════
+function w2s(wx,wy){return{x:Math.round(wx*camS+camX),y:Math.round(wy*camS+camY)};}
+function s2w(sx,sy){return{x:(sx-camX)/camS,y:(sy-camY)/camS};}
+function clampS(){camS=Math.max(0.15,Math.min(4.0,camS));}
+
+function fitView(){
+  if(!CV)return;
+  const pad=50;
+  const aW=W-pad*2;
+  const aH=H-100;
+  camS=Math.min(aW/GW,aH/GH)*0.9;
+  clampS();
+  camX=(W-GW*camS)/2;
+  camY=50+(H-100-GH*camS)/2;
+}
+
+function centerOn(x,y){
+  camX=W/2-x*camS;
+  camY=H/2-y*camS;
+}
+
+// ════ DRAW ════
+function draw(ts){
+  if(!CTX)return;
+  CTX.clearRect(0,0,W,H);
+  CTX.fillStyle='#00010a';
+  CTX.fillRect(0,0,W,H);
+
+  // Galaxy background glow
+  if(galaxyData){
+    const gc=`${galaxyData.cr},${galaxyData.cg},${galaxyData.cb}`;
+    const bg=CTX.createRadialGradient(W/2,H/2,0,W/2,H/2,Math.max(W,H)*.7);
+    bg.addColorStop(0,`rgba(${gc},0.04)`);
+    bg.addColorStop(.5,`rgba(${gc},0.02)`);
+    bg.addColorStop(1,'transparent');
+    CTX.fillStyle=bg;CTX.fillRect(0,0,W,H);
+  }
+
+  // Nebula clouds
+  drawNebulaClouds(ts);
+
+  CTX.save();
+  CTX.translate(camX,camY);
+  CTX.scale(camS,camS);
+
+  // Background star field
+  drawStarField(ts);
+
+  // Connection lines between explored systems
+  if(camS>0.3){
+    for(let i=0;i<systems.length;i++){
+      const a=systems[i];
+      if(!a.explored&&!a.isHome)continue;
+      for(let j=i+1;j<systems.length;j++){
+        const b=systems[j];
+        if(!b.explored&&!b.isHome)continue;
+        const d=Math.hypot(a.x-b.x,a.y-b.y);
+        if(d>280)continue;
+        CTX.beginPath();
+        CTX.moveTo(a.x,a.y);CTX.lineTo(b.x,b.y);
+        CTX.strokeStyle=`rgba(0,229,255,${0.06*(1-d/280)})`;
+        CTX.lineWidth=0.8/camS;
+        CTX.stroke();
+      }
+    }
+  }
+
+  // Draw solar systems
+  for(const s of systems) drawSystem(s,ts);
+
+  CTX.restore();
+
+  $('bzoom').textContent=camS.toFixed(2)+'x';
+  drawMini();
+}
+
+function drawNebulaClouds(ts){
+  const t=ts*.0003;
+  const nb1=CTX.createRadialGradient(W*.3,H*.4,0,W*.3,H*.4,W*.4);
+  nb1.addColorStop(0,'rgba(124,58,237,0.06)');nb1.addColorStop(1,'transparent');
+  CTX.fillStyle=nb1;CTX.fillRect(0,0,W,H);
+  const nb2=CTX.createRadialGradient(W*.7,H*.6,0,W*.7,H*.6,W*.35);
+  nb2.addColorStop(0,'rgba(0,229,255,0.04)');nb2.addColorStop(1,'transparent');
+  CTX.fillStyle=nb2;CTX.fillRect(0,0,W,H);
+}
+
+// Decorative background stars (not solar systems)
+let bgStars=null;
+function initBgStars(rng){
+  bgStars=[];
+  for(let i=0;i<300;i++){
+    bgStars.push({x:rng()*GW,y:rng()*GH,r:rng()*.8+.1,o:rng()*.4+.1,t:rng()*Math.PI*2});
+  }
+}
+function drawStarField(ts){
+  if(!bgStars)return;
+  const t=ts*.001;
+  for(const s of bgStars){
+    CTX.beginPath();
+    CTX.arc(s.x,s.y,s.r,0,Math.PI*2);
+    CTX.fillStyle=`rgba(200,220,255,${s.o*(0.3+0.4*Math.sin(t+s.t))})`;
+    CTX.fill();
+  }
+}
+
+function drawSystem(s,ts){
+  const p=.5+.5*Math.sin(ts*.001+s.twink);
+  const sz=s.size;
+  const col=`${s.cr},${s.cg},${s.cb}`;
+
+  CTX.save();
+  CTX.translate(s.x,s.y);
+
+  if(!s.explored&&!s.isHome){
+    // Unknown — tiny dim dot
+    CTX.beginPath();CTX.arc(0,0,sz*.6,0,Math.PI*2);
+    CTX.fillStyle=`rgba(120,130,150,${.12+p*.07})`;
+    CTX.fill();
+    // Tiny pulse ring
+    CTX.beginPath();CTX.arc(0,0,sz*1.2,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(100,110,130,${.06+p*.04})`;
+    CTX.lineWidth=.5/camS;CTX.stroke();
+  } else {
+    // Known system — full render
+    // Outer corona
+    const corona=CTX.createRadialGradient(0,0,0,0,0,sz*3.5);
+    corona.addColorStop(0,`rgba(${col},${.3+p*.2})`);
+    corona.addColorStop(.4,`rgba(${col},${.12+p*.08})`);
+    corona.addColorStop(1,'transparent');
+    CTX.fillStyle=corona;
+    CTX.beginPath();CTX.arc(0,0,sz*3.5,0,Math.PI*2);CTX.fill();
+
+    // Main glow
+    const glow=CTX.createRadialGradient(0,0,0,0,0,sz*1.8);
+    glow.addColorStop(0,`rgba(${col},${.7+p*.25})`);
+    glow.addColorStop(.5,`rgba(${col},${.35+p*.15})`);
+    glow.addColorStop(1,'transparent');
+    CTX.fillStyle=glow;
+    CTX.beginPath();CTX.arc(0,0,sz*1.8,0,Math.PI*2);CTX.fill();
+
+    // Star core
+    const core=CTX.createRadialGradient(0,0,0,0,0,sz*.7);
+    core.addColorStop(0,`rgba(255,255,255,${s.bright*.95})`);
+    core.addColorStop(.4,`rgba(${col},${s.bright*.8})`);
+    core.addColorStop(1,'rgba(0,0,0,0)');
+    CTX.fillStyle=core;
+    CTX.beginPath();CTX.arc(0,0,sz*.7,0,Math.PI*2);CTX.fill();
+
+    // Planet orbit dots (tiny) - visible at higher zoom
+    if(camS>0.5&&s.hasPlanets){
+      for(let i=0;i<Math.min(s.planets,6);i++){
+        const orb=sz*(2.5+i*1.2);
+        const angle=(Date.now()*.0002*(1-i*.12)+i*1.1);
+        const px=Math.cos(angle)*orb;
+        const py=Math.sin(angle)*orb;
+        // Orbit ring
+        CTX.beginPath();CTX.arc(0,0,orb,0,Math.PI*2);
+        CTX.strokeStyle=`rgba(${col},${.06+p*.03})`;
+        CTX.lineWidth=.4/camS;CTX.stroke();
+        // Planet dot
+        CTX.beginPath();CTX.arc(px,py,sz*.22,0,Math.PI*2);
+        CTX.fillStyle=`rgba(${col},${.5+p*.2})`;CTX.fill();
+      }
+    }
+
+    // Sparkle rays
+    if(camS>0.5){
+      for(let i=0;i<4;i++){
+        const a=(i/4)*Math.PI+ts*.0003;
+        const len=sz*(1.5+p*.5);
+        CTX.beginPath();
+        CTX.moveTo(0,0);
+        CTX.lineTo(Math.cos(a)*len,Math.sin(a)*len);
+        CTX.strokeStyle=`rgba(255,255,255,${.15+p*.08})`;
+        CTX.lineWidth=.4/camS;CTX.stroke();
+        CTX.beginPath();
+        CTX.moveTo(0,0);
+        CTX.lineTo(-Math.cos(a)*len,-Math.sin(a)*len);
+        CTX.strokeStyle=`rgba(255,255,255,${.15+p*.08})`;
+        CTX.lineWidth=.4/camS;CTX.stroke();
+      }
+    }
+  }
+
+  // HOME gold ring
+  if(s.isHome){
+    CTX.beginPath();CTX.arc(0,0,sz*2.2,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(255,196,0,${.45+p*.3})`;
+    CTX.lineWidth=2/camS;CTX.stroke();
+    CTX.beginPath();CTX.arc(0,0,sz*3,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(255,196,0,${.15+p*.1})`;
+    CTX.lineWidth=.8/camS;CTX.stroke();
+  }
+
+  // SELECTED
+  if(selS&&selS.id===s.id){
+    CTX.beginPath();CTX.arc(0,0,sz*2,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(255,255,255,${.6+p*.3})`;
+    CTX.lineWidth=1.5/camS;CTX.stroke();
+    CTX.setLineDash([4/camS,3/camS]);
+    CTX.beginPath();CTX.arc(0,0,sz*2.7,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(255,255,255,${.2+p*.12})`;
+    CTX.lineWidth=.7/camS;CTX.stroke();
+    CTX.setLineDash([]);
+  }
+
+  // Label
+  if(camS>0.5&&(s.explored||s.isHome)){
+    CTX.textAlign='center';CTX.textBaseline='top';
+    const fs=Math.min(11,9/camS);
+    CTX.font=`bold ${fs}px Orbitron,monospace`;
+    CTX.fillStyle=s.isHome?`rgba(255,196,0,${.85+p*.15})`:`rgba(255,255,255,${.55+p*.15})`;
+    CTX.fillText(s.name,0,sz*1.5+4/camS);
+    if(camS>1.2){
+      CTX.font=`${fs*.8}px Exo 2,sans-serif`;
+      CTX.fillStyle=`rgba(0,229,255,${.4+p*.1})`;
+      CTX.fillText(s.starType,0,sz*1.5+(fs+6)/camS);
+    }
+  }
+
+  CTX.restore();
+}
+
+function drawMini(){
+  if(!MCTX)return;
+  const MW=120,MH=92;
+  MCTX.clearRect(0,0,MW,MH);
+  MCTX.fillStyle='rgba(0,1,10,0.94)';MCTX.fillRect(0,0,MW,MH);
+  const sx=MW/GW,sy=MH/GH;
+  for(const s of systems){
+    MCTX.beginPath();
+    MCTX.arc(s.x*sx,s.y*sy,s.isHome?3:1.5,0,Math.PI*2);
+    if(s.isHome)MCTX.fillStyle='rgba(255,196,0,0.95)';
+    else if(s.explored)MCTX.fillStyle=`rgba(${s.cr},${s.cg},${s.cb},0.8)`;
+    else MCTX.fillStyle='rgba(80,80,100,0.25)';
+    MCTX.fill();
+  }
+  // viewport
+  const vx=(-camX/camS)*sx,vy=(-camY/camS)*sy;
+  const vw=(W/camS)*sx,vh=(H/camS)*sy;
+  MCTX.strokeStyle='rgba(0,229,255,0.5)';MCTX.lineWidth=1;
+  MCTX.strokeRect(vx,vy,vw,vh);
+}
+
+// ════ HIT TEST ════
+function systemAt(wx,wy){
+  let best=null,bd=Infinity;
+  const minHit=20/camS;
+  for(const s of systems){
+    const d=Math.hypot(s.x-wx,s.y-wy);
+    const hit=Math.max(s.size*3,minHit);
+    if(d<hit&&d<bd){bd=d;best=s;}
+  }
+  return best;
+}
+
+// ════ TOOLTIP ════
+function showTip(s,sx,sy){
+  const tip=$('gtip');
+  if(!s){tip.style.display='none';return;}
+  $('gtn').textContent=s.name;
+  $('gtt').textContent=s.starType;
+  $('gt-planets').textContent=s.explored||s.isHome?s.planets+'':'???';
+  $('gt-star').textContent=s.explored||s.isHome?s.starType:'???';
+  $('gt-res').textContent=s.explored||s.isHome?s.resources:'???';
+  const st=$('gtst');
+  if(s.isHome){st.textContent='HOME SYSTEM';st.className='gtst h';}
+  else if(s.explored){st.textContent='EXPLORED';st.className='gtst e';}
+  else{st.textContent='UNKNOWN';st.className='gtst u';}
+  tip.style.display='block';
+  tip.style.left=Math.min(sx+16,W-220)+'px';
+  tip.style.top=Math.max(58,Math.min(sy-20,H-150))+'px';
+}
+
+// ════ TAP ════
+function onTap(sx,sy){
+  const w=s2w(sx,sy);
+  const s=systemAt(w.x,w.y);
+  if(s){
+    selS=s;
+    $('eprompt').style.display='block';
+    $('eprompt').textContent=(s.isHome?'HOME: ':'ENTER: ')+s.name.toUpperCase();
+    showTip(s,sx,sy);
+    toast(s.name+(s.isHome?' — Home System':(s.explored?' — Explored':' — Unknown')),'inf');
+  } else {
+    selS=null;
+    $('eprompt').style.display='none';
+    $('gtip').style.display='none';
+  }
+}
+
+window.enterSystem=function(){
+  if(!selS)return;
+  $('ztrans').classList.add('show');
+  setTimeout(()=>{
+    selS.explored=true;
+    // Save to session storage for solar system view
+    sessionStorage.setItem('vd_system', JSON.stringify({
+      id: selS.id,
+      name: selS.name,
+      starType: selS.starType,
+      planets: selS.planets,
+      resources: selS.resources,
+      cr: selS.cr, cg: selS.cg, cb: selS.cb,
+      isHome: selS.isHome,
+      galaxyName: galaxyData?.name||'Unknown Galaxy',
+    }));
+    toast('Entering '+selS.name+'...','ok');
+    $('ztrans').classList.remove('show');
+    // Navigate to solar system view
+    window.location.href='solar-system.html';
+  },600);
+};
+
+// ════ NAVIGATION ════
+window.goUniverse=function(){
+  $('ztrans').classList.add('show');
+  setTimeout(()=>window.location.href='universe.html',500);
+};
+
+// ════ ZOOM ════
+function zoom(factor){
+  const cx=W/2,cy=H/2;
+  const wx=(cx-camX)/camS,wy=(cy-camY)/camS;
+  camS*=factor;clampS();
+  camX=cx-wx*camS;camY=cy-wy*camS;
+}
+
+// ════ INPUT ════
+function setupInput(){
+  let t0=null;
+  CV.addEventListener('touchstart',e=>{
+    e.preventDefault();
+    if(e.touches.length===1){
+      isDrag=true;hasMoved=false;
+      t0={x:e.touches[0].clientX,y:e.touches[0].clientY};
+      dragSX=e.touches[0].clientX;dragSY=e.touches[0].clientY;
+      camSX=camX;camSY=camY;
+    } else { isDrag=false;t0=null; }
+  },{passive:false});
+  CV.addEventListener('touchmove',e=>{
+    e.preventDefault();
+    if(!isDrag||e.touches.length!==1)return;
+    const dx=e.touches[0].clientX-dragSX;
+    const dy=e.touches[0].clientY-dragSY;
+    if(Math.abs(dx)+Math.abs(dy)>4)hasMoved=true;
+    camX=camSX+dx;camY=camSY+dy;
+  },{passive:false});
+  CV.addEventListener('touchend',e=>{
+    e.preventDefault();
+    if(isDrag&&!hasMoved&&e.changedTouches.length===1&&t0)
+      onTap(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+    isDrag=false;t0=null;
+  },{passive:false});
+  CV.addEventListener('touchcancel',e=>{e.preventDefault();isDrag=false;t0=null;},{passive:false});
+
+  CV.addEventListener('mousedown',e=>{
+    isDrag=true;hasMoved=false;
+    dragSX=e.clientX;dragSY=e.clientY;camSX=camX;camSY=camY;e.preventDefault();
+  });
+  window.addEventListener('mousemove',e=>{
+    if(!isDrag){const w=s2w(e.clientX,e.clientY);showTip(systemAt(w.x,w.y),e.clientX,e.clientY);return;}
+    const dx=e.clientX-dragSX,dy=e.clientY-dragSY;
+    if(Math.abs(dx)+Math.abs(dy)>3)hasMoved=true;
+    camX=camSX+dx;camY=camSY+dy;e.preventDefault();
+  });
+  window.addEventListener('mouseup',e=>{
+    if(isDrag&&!hasMoved)onTap(e.clientX,e.clientY);
+    isDrag=false;
+  });
+
+  $('zbtn-in').onclick=()=>zoom(1.3);
+  $('zbtn-out').onclick=()=>zoom(0.77);
+  $('zbtn-fit').onclick=()=>{
+    fitView();
+    const hs=systems[homeSystemIdx];
+    if(hs)centerOn(hs.x,hs.y);
+  };
+}
+
+// ════ RESIZE ════
+function resize(){
+  W=window.innerWidth;H=window.innerHeight;
+  CV.width=W;CV.height=H;
+  MC.width=120;MC.height=92;
+}
+
+// ════ RENDER LOOP ════
+function startLoop(){
+  if(raf)return;
+  (function loop(ts){raf=requestAnimationFrame(loop);draw(ts);})();
+}
+
+// ════ INIT ════
+async function init(){
+  setLoad(10,'Connecting...');
+  await delay(100);
+
+  // Auth check
+  let session=null;
+  try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
+  if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+
+  setLoad(30,'Loading profile...');
+  await delay(100);
+  const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
+  profile=prof;
+  $('hcr').textContent=fmt(prof?.credits||0);
+  $('hmn').textContent=fmt(prof?.minerals||0);
+  $('hen').textContent=fmt(prof?.energy||0);
+
+  // Get galaxy data from session storage
+  setLoad(50,'Loading galaxy data...');
+  await delay(100);
+  let gdRaw=sessionStorage.getItem('vd_galaxy');
+  if(!gdRaw){
+    // Fallback — generate a default galaxy
+    const seed=hashStr(session.user.id);
+    galaxyData={
+      id:0, name:'Home Galaxy', type:'Spiral',
+      cr:100, cg:180, cb:255,
+      seed: seed+1,
+      systemCount: 320,
+      isHome: true,
+    };
+  } else {
+    galaxyData=JSON.parse(gdRaw);
+  }
+
+  // Update banner
+  $('gb-name').textContent=galaxyData.name;
+  $('gb-type').textContent=galaxyData.type+' Galaxy';
+  $('bc-galaxy').textContent=galaxyData.name.toUpperCase();
+  $('lgalname').textContent=galaxyData.name;
+
+  // Generate solar systems
+  setLoad(70,'Generating solar systems...');
+  await delay(100);
+  const galSeed=galaxyData.seed||(hashStr(galaxyData.name));
+  const rng=mkRng(galSeed);
+  systems=buildSystems(galSeed, galaxyData.systemCount||320);
+  initBgStars(rng);
+
+  // Set home system
+  setLoad(85,'Locating home system...');
+  await delay(100);
+  const hSeed=hashStr(session.user.id+'_home_'+galaxyData.id);
+  homeSystemIdx=((hSeed%systems.length)+systems.length)%systems.length;
+  systems[homeSystemIdx].isHome=true;
+  systems[homeSystemIdx].explored=true;
+  // Explore nearby
+  let ex=0;
+  const hs=systems[homeSystemIdx];
+  for(const s of systems){
+    if(s.id===homeSystemIdx)continue;
+    if(Math.hypot(s.x-hs.x,s.y-hs.y)<220&&ex<6){s.explored=true;ex++;}
+  }
+
+  // Canvas
+  setLoad(95,'Rendering...');
+  CV=document.getElementById('cv');CTX=CV.getContext('2d');
+  MC=document.getElementById('mmc');MCTX=MC.getContext('2d');
+  W=window.innerWidth;H=window.innerHeight;
+  CV.width=W;CV.height=H;
+  MC.width=120;MC.height=92;
+  window.addEventListener('resize',resize);
+
+  // Camera — center on home system
+  const pad=50;
+  camS=Math.min((W-pad*2)/GW,(H-100)/GH)*0.85;
+  clampS();
+  camX=W/2-hs.x*camS;
+  camY=H/2-hs.y*camS;
+
+  setupInput();
+  setLoad(100,'Ready!');
+  await delay(300);
+
+  // Hide loading
+  const ls=$('loadscr');
+  ls.style.transition='opacity 0.4s';ls.style.opacity='0';
+  setTimeout(()=>ls.style.display='none',450);
+
+  startLoop();
+  toast('Galaxy: '+galaxyData.name+' — '+systems.length+' systems','ok');
+}
+
+init();
+</script>
+</body>
+</html>
