@@ -745,12 +745,23 @@ async function init(){
   MC=document.getElementById('mmc');
   MCTX=MC.getContext('2d');
 
-  resize();
-  window.addEventListener('resize',()=>{ resize(); });
+  // MUST set W,H before any camera calculation
+  W=window.innerWidth;
+  H=window.innerHeight;
+  CV.width=W; CV.height=H;
+  MC.width=120; MC.height=92;
+  window.addEventListener('resize',()=>{
+    W=window.innerWidth; H=window.innerHeight;
+    CV.width=W; CV.height=H;
+  });
 
-  // Set initial camera — fit and center on home
-  fitView();
+  // Now camera calculation will be correct
   const hg=galaxies[homeIdx];
+  // Use a good starting zoom - fit whole universe
+  const pad=50;
+  camS=Math.min((W-pad*2)/UW,(H-100)/UH)*0.9;
+  clampScale();
+  // Center exactly on home galaxy
   camX=W/2-hg.x*camS;
   camY=H/2-hg.y*camS;
 
