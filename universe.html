@@ -562,10 +562,18 @@ window.enterGalaxy=function(){
   $('ztrans').classList.add('show');
   setTimeout(()=>{
     selG.explored=true;
-    toast('Entering '+selG.name+'... Galaxy view coming soon!','ok');
-    $('ztrans').classList.remove('show');
+    // Save galaxy data for galaxy view
+    sessionStorage.setItem('vd_galaxy', JSON.stringify({
+      id: selG.id,
+      name: selG.name,
+      type: selG.type,
+      cr: selG.cr, cg: selG.cg, cb: selG.cb,
+      systemCount: selG.sys,
+      seed: (selG.id+1)*7919,
+      isHome: selG.isHome,
+    }));
     $('eprompt').style.display='none';
-    selG=null;
+    window.location.href='galaxy.html';
   },600);
 };
 
