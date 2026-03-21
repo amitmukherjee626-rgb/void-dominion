@@ -202,9 +202,9 @@ canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 <!-- Toasts -->
 <div id="toasts"></div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-const SB = createClient(
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
   'https://xeetrcygnlpjzkkwpnvf.supabase.co',
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
 );
@@ -536,7 +536,7 @@ function setPlanetStatus(p, status){
 }
 
 // ════ PLANET PANEL ════
-function openPanel(p){
+window.openPanel = function openPanel(p){
   selPlanet=p;
   const status = getPlanetStatus(p);
 
@@ -607,7 +607,7 @@ function openPanel(p){
   $('planet-panel').classList.add('open');
 }
 
-function closePanel(){
+window.closePanel = function closePanel(){
   $('planet-panel').classList.remove('open');
   selPlanet=null;
 }
