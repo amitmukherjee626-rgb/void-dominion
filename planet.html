@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION — Planet</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:'Exo 2',sans-serif;color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
+
+/* PLANET BG CANVAS */
+#bg-cv{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;height:50px;z-index:20;background:rgba(0,1,10,0.97);border-bottom:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;padding:0 10px;gap:6px;}
+.hl{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:2px;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,0.6);padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+.bc{display:flex;align-items:center;gap:3px;padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;overflow:hidden;}
+.bci{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(0,229,255,0.4);cursor:pointer;white-space:nowrap;transition:color .2s;}
+.bci:hover{color:#00e5ff;}
+.bci.active{color:#fff;pointer-events:none;}
+.bcs{font-size:7px;color:rgba(0,229,255,0.2);}
+
+/* Resources in HUD */
+.hres-wrap{display:flex;gap:0;flex:1;overflow:hidden;}
+.hres-item{display:flex;flex-direction:column;align-items:center;padding:0 7px;border-right:1px solid rgba(0,229,255,0.1);}
+.hres-item:last-child{border:none;}
+.hrl{font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.hrv{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;}
+.hrv.cr{color:#ffc400;}.hrv.mn{color:#78909c;}.hrv.en{color:#80cbc4;}
+.hrate{font-size:7px;font-family:'Orbitron',monospace;color:rgba(0,230,118,.6);}
+
+.hright{margin-left:auto;display:flex;gap:5px;flex-shrink:0;}
+.hbtn{padding:5px 8px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.3);background:transparent;color:#00e5ff;cursor:pointer;text-transform:uppercase;white-space:nowrap;}
+
+/* PLANET SURFACE */
+#surface{
+  position:fixed;top:50px;left:0;right:0;bottom:0;z-index:5;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.15) transparent;
+  padding-bottom:70px;
+}
+
+/* PLANET HEADER */
+.planet-header{
+  padding:16px 14px 10px;
+  text-align:center;
+  background:linear-gradient(180deg,rgba(0,5,20,.9) 0%,transparent 100%);
+  position:relative;
+}
+.ph-icon{font-size:48px;margin-bottom:6px;filter:drop-shadow(0 0 14px rgba(0,229,255,0.3));}
+.ph-name{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;letter-spacing:2px;color:#fff;margin-bottom:2px;}
+.ph-type{font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.45);text-transform:uppercase;margin-bottom:8px;}
+.ph-badges{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:2px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;text-transform:uppercase;}
+.badge.home{background:rgba(255,196,0,.1);border:1px solid rgba(255,196,0,.3);color:#ffc400;}
+.badge.colonized{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#00e676;}
+.badge.uninhabited{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);}
+
+/* RESOURCE OVERVIEW CARD */
+.res-card{
+  margin:10px 12px;
+  background:rgba(0,5,20,.85);
+  border:1px solid rgba(0,229,255,.12);
+  border-radius:3px;padding:12px 14px;
+}
+.rc-title{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:10px;}
+.rc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.rc-item{background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.1);border-radius:2px;padding:8px;text-align:center;}
+.rc-icon{font-size:16px;margin-bottom:3px;}
+.rc-lbl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);text-transform:uppercase;}
+.rc-val{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;margin:2px 0;}
+.rc-rate{font-size:8px;font-family:'Orbitron',monospace;color:rgba(0,230,118,.7);}
+
+/* BUILDINGS SECTION */
+.section-title{
+  font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;
+  color:rgba(0,229,255,.4);text-transform:uppercase;
+  padding:14px 14px 8px;
+}
+
+/* BUILDING CARD */
+.bld-card{
+  margin:0 12px 10px;
+  background:rgba(0,5,20,.85);
+  border:1px solid rgba(0,229,255,.12);
+  border-radius:3px;
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.bld-card:active{border-color:rgba(0,229,255,.35);}
+
+.bld-header{
+  display:flex;align-items:center;gap:10px;
+  padding:12px 14px;cursor:pointer;
+}
+.bld-icon{font-size:24px;flex-shrink:0;filter:drop-shadow(0 0 6px rgba(0,229,255,.2));}
+.bld-info{flex:1;min-width:0;}
+.bld-name{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;}
+.bld-desc{font-size:9px;color:rgba(255,255,255,.35);margin-top:2px;}
+.bld-level{
+  display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;
+}
+.bld-lv-txt{font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,229,255,.4);letter-spacing:1px;text-transform:uppercase;}
+.bld-lv-num{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:var(--cyan, #00e5ff);line-height:1;}
+
+/* Level bar */
+.bld-lvbar{padding:0 14px 10px;}
+.lvbar-track{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+.lvbar-fill{height:100%;border-radius:2px;transition:width .4s ease;background:linear-gradient(90deg,#00e5ff,#7c3aed);}
+
+/* Build/Upgrade button */
+.bld-actions{padding:0 14px 12px;display:flex;gap:8px;align-items:center;}
+.upg-btn{
+  flex:1;padding:9px;
+  font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;
+  background:linear-gradient(90deg,rgba(0,200,230,.85),rgba(124,58,237,.85));
+  color:#fff;border:none;border-radius:2px;cursor:pointer;
+  transition:all .2s;
+}
+.upg-btn:hover{transform:translateY(-1px);box-shadow:0 4px 14px rgba(0,180,210,.3);}
+.upg-btn:disabled{opacity:.35;cursor:not-allowed;transform:none;box-shadow:none;}
+.bld-cost{font-size:8px;color:rgba(255,255,255,.3);font-family:'Orbitron',monospace;}
+.bld-cost span{color:rgba(255,196,0,.7);}
+.bld-maxed{font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,230,118,.6);letter-spacing:1px;}
+
+/* Building stat pills */
+.bld-stats{display:flex;gap:6px;flex-wrap:wrap;padding:0 14px 10px;}
+.bstat{padding:3px 8px;background:rgba(0,229,255,.05);border:1px solid rgba(0,229,255,.12);border-radius:2px;font-size:8px;color:rgba(0,229,255,.6);font-family:'Orbitron',monospace;}
+.bstat.gold{border-color:rgba(255,196,0,.2);color:rgba(255,196,0,.7);}
+.bstat.green{border-color:rgba(0,230,118,.2);color:rgba(0,230,118,.7);}
+
+/* BOTTOM NAV */
+#bottom-nav{
+  position:fixed;bottom:0;left:0;right:0;height:56px;z-index:20;
+  background:rgba(0,1,10,.97);border-top:1px solid rgba(0,229,255,.15);
+  display:flex;align-items:stretch;
+}
+.nav-tab{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;
+  color:rgba(0,229,255,.35);cursor:pointer;transition:all .2s;text-transform:uppercase;
+  border-right:1px solid rgba(0,229,255,.08);
+}
+.nav-tab:last-child{border:none;}
+.nav-tab.active{color:#00e5ff;background:rgba(0,229,255,.05);}
+.nav-tab:active{background:rgba(0,229,255,.08);}
+.nav-icon{font-size:16px;}
+
+/* MODAL */
+#modal{
+  position:fixed;inset:0;z-index:40;
+  background:rgba(0,0,0,.8);backdrop-filter:blur(6px);
+  display:none;align-items:flex-end;justify-content:center;
+}
+#modal.open{display:flex;}
+.modal-box{
+  background:rgba(0,2,16,.98);border:1px solid rgba(0,229,255,.2);
+  border-radius:4px 4px 0 0;padding:20px 18px 30px;
+  width:100%;max-width:480px;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.modal-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px;color:#fff;margin-bottom:4px;}
+.modal-sub{font-size:9px;color:rgba(0,229,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.modal-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.05);}
+.modal-row:last-of-type{border:none;}
+.modal-lbl{font-size:10px;color:rgba(255,255,255,.4);}
+.modal-val{font-family:'Orbitron',monospace;font-size:10px;color:#fff;}
+.modal-btns{display:flex;gap:8px;margin-top:16px;}
+.modal-confirm{flex:1;padding:11px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));color:#fff;border:none;border-radius:2px;cursor:pointer;}
+.modal-cancel{padding:11px 16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:rgba(0,229,255,.5);border:1px solid rgba(0,229,255,.2);border-radius:2px;cursor:pointer;}
+
+/* TOASTS */
+#toasts{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,.97);border:1px solid rgba(0,229,255,.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+/* LOADING */
+#loadscr{position:fixed;inset:0;z-index:100;background:#00010a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.lt{font-family:'Orbitron',monospace;font-size:clamp(20px,5vw,34px);font-weight:900;letter-spacing:3px;color:#00e5ff;text-shadow:0 0 20px rgba(0,229,255,.7);animation:lp 2s ease-in-out infinite;}
+@keyframes lp{0%,100%{opacity:.7}50%{opacity:1}}
+.lbw{width:180px;height:3px;background:rgba(0,229,255,.1);border-radius:2px;overflow:hidden;}
+.lb2{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#7c3aed);transition:width .4s;border-radius:2px;}
+.ltx{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.4);text-transform:uppercase;}
+
+/* FLEET / RESEARCH TABS (placeholder) */
+.coming-soon{margin:20px 14px;text-align:center;padding:30px;background:rgba(0,5,20,.6);border:1px dashed rgba(0,229,255,.15);border-radius:3px;}
+.cs-icon{font-size:32px;margin-bottom:8px;}
+.cs-text{font-family:'Orbitron',monospace;font-size:10px;letter-spacing:2px;color:rgba(0,229,255,.3);text-transform:uppercase;}
+
+/* TRANSITION */
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.show{opacity:1;pointer-events:all;}
+</style>
+</head>
+<body>
+
+<div id="loadscr">
+  <div class="lt">VOID DOMINION</div>
+  <div class="lbw"><div class="lb2" id="lbar"></div></div>
+  <div class="ltx" id="ltxt">Landing on planet...</div>
+</div>
+
+<!-- Animated planet background -->
+<canvas id="bg-cv"></canvas>
+<div id="zt"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hl">VD</div>
+  <div class="bc">
+    <span class="bci" onclick="nav('universe.html')">UNI</span>
+    <span class="bcs">›</span>
+    <span class="bci" onclick="nav('galaxy.html')">GAL</span>
+    <span class="bcs">›</span>
+    <span class="bci" onclick="nav('solar.html')">SYS</span>
+    <span class="bcs">›</span>
+    <span class="bci active" id="bc-planet">PLANET</span>
+  </div>
+  <div class="hres-wrap">
+    <div class="hres-item">
+      <div class="hrl">CR</div>
+      <div class="hrv cr" id="hcr">0</div>
+      <div class="hrate" id="hcr-rate">+0/s</div>
+    </div>
+    <div class="hres-item">
+      <div class="hrl">MIN</div>
+      <div class="hrv mn" id="hmn">0</div>
+      <div class="hrate" id="hmn-rate">+0/s</div>
+    </div>
+    <div class="hres-item">
+      <div class="hrl">ENE</div>
+      <div class="hrv en" id="hen">0</div>
+      <div class="hrate" id="hen-rate">+0/s</div>
+    </div>
+  </div>
+  <div class="hright">
+    <button class="hbtn" onclick="nav('solar.html')">&#8592; BACK</button>
+  </div>
+</div>
+
+<!-- Surface Content -->
+<div id="surface">
+  <!-- Planet Header -->
+  <div class="planet-header">
+    <div class="ph-icon" id="ph-icon">&#127756;</div>
+    <div class="ph-name" id="ph-name">Planet</div>
+    <div class="ph-type" id="ph-type">Unknown Type</div>
+    <div class="ph-badges" id="ph-badges"></div>
+  </div>
+
+  <!-- Tab Content -->
+  <div id="tab-buildings">
+    <!-- Resources overview -->
+    <div class="res-card">
+      <div class="rc-title">Planet Resources / Tick</div>
+      <div class="rc-grid">
+        <div class="rc-item">
+          <div class="rc-lbl">Credits</div>
+          <div class="rc-val hrv cr" id="rc-cr">0</div>
+          <div class="rc-rate" id="rc-cr-rate">+0/tick</div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-lbl">Minerals</div>
+          <div class="rc-val hrv mn" id="rc-mn">0</div>
+          <div class="rc-rate" id="rc-mn-rate">+0/tick</div>
+        </div>
+        <div class="rc-item">
+          <div class="rc-lbl">Energy</div>
+          <div class="rc-val hrv en" id="rc-en">0</div>
+          <div class="rc-rate" id="rc-en-rate">+0/tick</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="section-title">Buildings</div>
+    <div id="buildings-list"></div>
+  </div>
+
+  <div id="tab-fleet" style="display:none;">
+    <div class="coming-soon">
+      <div class="cs-icon">&#128640;</div>
+      <div class="cs-text">Fleet System<br>Coming Soon</div>
+    </div>
+  </div>
+
+  <div id="tab-research" style="display:none;">
+    <div class="coming-soon">
+      <div class="cs-icon">&#128300;</div>
+      <div class="cs-text">Research Tree<br>Coming Soon</div>
+    </div>
+  </div>
+
+  <div id="tab-defense" style="display:none;">
+    <div class="coming-soon">
+      <div class="cs-icon">&#128737;</div>
+      <div class="cs-text">Defense System<br>Coming Soon</div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Nav -->
+<div id="bottom-nav">
+  <div class="nav-tab active" onclick="switchTab('buildings')" id="nav-buildings">
+    <div class="nav-icon">&#127970;</div>Buildings
+  </div>
+  <div class="nav-tab" onclick="switchTab('fleet')" id="nav-fleet">
+    <div class="nav-icon">&#128640;</div>Fleet
+  </div>
+  <div class="nav-tab" onclick="switchTab('research')" id="nav-research">
+    <div class="nav-icon">&#128300;</div>Research
+  </div>
+  <div class="nav-tab" onclick="switchTab('defense')" id="nav-defense">
+    <div class="nav-icon">&#128737;</div>Defense
+  </div>
+</div>
+
+<!-- Upgrade Modal -->
+<div id="modal">
+  <div class="modal-box">
+    <div class="modal-title" id="modal-title">Upgrade Building</div>
+    <div class="modal-sub" id="modal-sub">Level 1 → Level 2</div>
+    <div id="modal-rows"></div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal()">CANCEL</button>
+      <button class="modal-confirm" id="modal-confirm-btn" onclick="confirmUpgrade()">UPGRADE</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toasts -->
+<div id="toasts"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SB = createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
+
+// ════ BUILDING DEFINITIONS ════
+const BUILDINGS = [
+  {
+    id:'cc', name:'Commander Center',
+    icon:'&#127963;',
+    desc:'Main HQ. Generates Credits every tick.',
+    maxLevel:12,
+    baseCost:{cr:0,mn:100,en:50},
+    costMul:1.8,
+    perLevel:(lv,planet)=>{
+      const base={
+        Rocky:{cr:2,mn:0,en:0},
+        'Gas Giant':{cr:2,mn:0,en:0},
+        Ice:{cr:6,mn:0,en:0},
+        Lava:{cr:1,mn:0,en:0},
+        Ocean:{cr:5,mn:0,en:0},
+        Desert:{cr:3,mn:0,en:0},
+        Toxic:{cr:1,mn:0,en:0},
+        Terran:{cr:4,mn:0,en:0},
+      };
+      const b=base[planet?.type]||{cr:3,mn:0,en:0};
+      return {cr:b.cr*lv*4, mn:0, en:0};
+    },
+    unlockAt:1,
+  },
+  {
+    id:'solar', name:'Solar Plant',
+    icon:'&#9728;',
+    desc:'Generates Energy. Available on all planets.',
+    maxLevel:12,
+    baseCost:{cr:80,mn:120,en:0},
+    costMul:1.7,
+    perLevel:(lv)=>({cr:0, mn:0, en:lv*3}),
+    unlockAt:1,
+  },
+  {
+    id:'shipyard', name:'Shipyard',
+    icon:'&#128676;',
+    desc:'Produces ships. Unlocks new ships each level.',
+    maxLevel:12,
+    baseCost:{cr:200,mn:300,en:100},
+    costMul:2.0,
+    perLevel:()=>({cr:0,mn:0,en:0}),
+    unlockAt:2, // CC level 2 needed
+    upkeep:{en:2}, // per level energy drain
+  },
+  {
+    id:'reslab', name:'Research Lab',
+    icon:'&#128300;',
+    desc:'Generates Tech Points for research tree.',
+    maxLevel:12,
+    baseCost:{cr:300,mn:200,en:150},
+    costMul:1.9,
+    perLevel:(lv)=>({cr:0,mn:0,en:0,tp:lv*2}),
+    unlockAt:3,
+    upkeep:{en:1},
+  },
+  {
+    id:'gasplant', name:'Gas Plant',
+    icon:'&#127981;',
+    desc:'Extracts gas for massive Energy. GAS/TOXIC planets only.',
+    maxLevel:12,
+    baseCost:{cr:150,mn:250,en:0},
+    costMul:1.75,
+    perLevel:(lv)=>({cr:0,mn:0,en:lv*7}),
+    unlockAt:1,
+    planetRestrict:['Gas Giant','Toxic'],
+  },
+];
+
+// ════ STATE ════
+let planetData=null;
+let profile=null;
+let userId=null;
+let buildings={}; // {id: level}
+let resources={cr:0,mn:0,en:0};
+let resRates={cr:0,mn:0,en:0};
+let resTimer=null;
+let pendingUpgrade=null;
+let bgCanvas,bgCtx,bgW,bgH;
+let bgAnim=null;
+
+// ════ UTILS ════
+const $=id=>document.getElementById(id);
+function setLoad(p,t){$('lbar').style.width=p+'%';$('ltxt').textContent=t;}
+function toast(m,type='inf'){const el=document.createElement('div');el.className='toast '+type;el.textContent=m;$('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function fmt(n){if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n)+'';}
+
+// ════ NAVIGATION ════
+window.nav=function(url){$('zt').classList.add('show');setTimeout(()=>window.location.href=url,500);};
+
+// ════ BACKGROUND ANIMATION ════
+function initBg(){
+  bgCanvas=$('bg-cv');bgCtx=bgCanvas.getContext('2d');
+  function resize(){bgW=bgCanvas.width=window.innerWidth;bgH=bgCanvas.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+
+  const col=planetData?.col||[60,120,200];
+  const stars=Array.from({length:150},()=>({
+    x:Math.random(),y:Math.random(),
+    r:Math.random()*.8+.1,o:Math.random()*.3+.05,t:Math.random()*Math.PI*2
+  }));
+
+  (function loop(ts){
+    bgAnim=requestAnimationFrame(loop);
+    bgCtx.clearRect(0,0,bgW,bgH);
+    bgCtx.fillStyle='#00010a';bgCtx.fillRect(0,0,bgW,bgH);
+
+    // Planet glow from bottom
+    const pg=bgCtx.createRadialGradient(bgW/2,bgH+50,0,bgW/2,bgH+50,bgW*.8);
+    pg.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},0.12)`);
+    pg.addColorStop(.5,`rgba(${col[0]},${col[1]},${col[2]},0.04)`);
+    pg.addColorStop(1,'transparent');
+    bgCtx.fillStyle=pg;bgCtx.fillRect(0,0,bgW,bgH);
+
+    // Stars
+    const t=ts*.001;
+    stars.forEach(s=>{
+      bgCtx.beginPath();bgCtx.arc(s.x*bgW,s.y*bgH,s.r,0,Math.PI*2);
+      bgCtx.fillStyle=`rgba(200,220,255,${s.o*(0.3+0.4*Math.sin(t+s.t))})`;
+      bgCtx.fill();
+    });
+  })();
+}
+
+// ════ CALC RESOURCE RATES ════
+function calcRates(){
+  let cr=0,mn=0,en=0;
+  for(const bld of BUILDINGS){
+    const lv=buildings[bld.id]||0;
+    if(lv===0)continue;
+    const gen=bld.perLevel(lv,planetData);
+    cr+=gen.cr||0; mn+=gen.mn||0; en+=gen.en||0;
+    // Upkeep
+    if(bld.upkeep){ en-=bld.upkeep.en*(lv||0); }
+  }
+  // Planet base yield added via CC
+  resRates={cr,mn,en};
+  return {cr,mn,en};
+}
+
+// ════ RESOURCE TICK ════
+function startResTick(){
+  if(resTimer)clearInterval(resTimer);
+  resTimer=setInterval(async()=>{
+    const r=calcRates();
+    resources.cr=Math.max(0,resources.cr+(r.cr||0));
+    resources.mn=Math.max(0,resources.mn+(r.mn||0));
+    resources.en=Math.max(0,resources.en+(r.en||0));
+    updateHudRes();
+    // Save to DB every 5 ticks
+  },1000); // 1 second tick
+}
+
+function updateHudRes(){
+  $('hcr').textContent=fmt(resources.cr);
+  $('hmn').textContent=fmt(resources.mn);
+  $('hen').textContent=fmt(resources.en);
+  const r=calcRates();
+  $('hcr-rate').textContent=`+${r.cr}/s`;
+  $('hmn-rate').textContent=`+${r.mn}/s`;
+  $('hen-rate').textContent=`+${r.en}/s`;
+}
+
+// ════ UPGRADE COST ════
+function upgradeCost(bld, currentLevel){
+  const nextLv=currentLevel+1;
+  const mul=Math.pow(bld.costMul,currentLevel);
+  return {
+    cr:Math.floor((bld.baseCost.cr||0)*mul),
+    mn:Math.floor((bld.baseCost.mn||0)*mul),
+    en:Math.floor((bld.baseCost.en||0)*mul),
+  };
+}
+
+// ════ SHOW UPGRADE MODAL ════
+window.showUpgrade=function(bldId){
+  const bld=BUILDINGS.find(b=>b.id===bldId);
+  if(!bld)return;
+  const curLv=buildings[bldId]||0;
+  if(curLv>=bld.maxLevel){toast('Already max level!','inf');return;}
+  const cost=upgradeCost(bld,curLv);
+  const nextLv=curLv+1;
+  const gen=bld.perLevel(nextLv,planetData);
+
+  pendingUpgrade={bldId,bld,curLv,nextLv,cost};
+
+  $('modal-title').textContent=bld.name;
+  $('modal-sub').textContent=curLv===0?'BUILD (Level 1)':`UPGRADE Lv${curLv} → Lv${nextLv}`;
+
+  const canAfford=resources.cr>=cost.cr&&resources.mn>=cost.mn&&resources.en>=cost.en;
+
+  $('modal-rows').innerHTML=`
+    <div class="modal-row"><span class="modal-lbl">Level After</span><span class="modal-val">${nextLv} / ${bld.maxLevel}</span></div>
+    <div class="modal-row"><span class="modal-lbl">CR Cost</span><span class="modal-val" style="color:${resources.cr>=cost.cr?'#ffc400':'#ff1744'}">${fmt(cost.cr)}</span></div>
+    <div class="modal-row"><span class="modal-lbl">MIN Cost</span><span class="modal-val" style="color:${resources.mn>=cost.mn?'#78909c':'#ff1744'}">${fmt(cost.mn)}</span></div>
+    <div class="modal-row"><span class="modal-lbl">ENE Cost</span><span class="modal-val" style="color:${resources.en>=cost.en?'#80cbc4':'#ff1744'}">${fmt(cost.en)}</span></div>
+    ${gen.cr||gen.mn||gen.en?`<div class="modal-row"><span class="modal-lbl">New Output</span><span class="modal-val" style="color:#00e676">${gen.cr?`+${gen.cr} CR `:''} ${gen.mn?`+${gen.mn} MIN `:''} ${gen.en?`+${gen.en} ENE`:''}${gen.tp?` +${gen.tp} TP`:''}</span></div>`:''}
+  `;
+  $('modal-confirm-btn').disabled=!canAfford;
+  $('modal').classList.add('open');
+};
+
+window.closeModal=function(){$('modal').classList.remove('open');pendingUpgrade=null;};
+
+window.confirmUpgrade=async function(){
+  if(!pendingUpgrade)return;
+  const {bldId,cost,nextLv}=pendingUpgrade;
+  // Deduct resources
+  resources.cr-=cost.cr;
+  resources.mn-=cost.mn;
+  resources.en-=cost.en;
+  buildings[bldId]=nextLv;
+  pendingUpgrade=null;
+  $('modal').classList.remove('open');
+  toast('Upgraded to Level '+nextLv+'!','ok');
+  renderBuildings();
+  updateHudRes();
+  // Save to DB
+  await saveProgress();
+};
+
+// ════ SAVE PROGRESS ════
+async function saveProgress(){
+  if(!userId)return;
+  try{
+    await SB.from('players').update({
+      credits:Math.floor(resources.cr),
+      minerals:Math.floor(resources.mn),
+      energy:Math.floor(resources.en),
+    }).eq('id',userId);
+  }catch(e){}
+}
+
+// ════ RENDER BUILDINGS ════
+function renderBuildings(){
+  const ccLevel=buildings['cc']||0;
+  const list=document.getElementById('buildings-list');
+  list.innerHTML='';
+
+  for(const bld of BUILDINGS){
+    const lv=buildings[bld.id]||0;
+    const pct=(lv/bld.maxLevel)*100;
+    const maxed=lv>=bld.maxLevel;
+    const cost=upgradeCost(bld,lv);
+    const canAfford=resources.cr>=cost.cr&&resources.mn>=cost.mn&&resources.en>=cost.en;
+
+    // Check unlock condition
+    const locked=bld.unlockAt>1&&ccLevel<bld.unlockAt;
+
+    // Check planet restriction
+    const restricted=bld.planetRestrict&&!bld.planetRestrict.includes(planetData?.type);
+    if(restricted) continue;
+
+    const gen=bld.perLevel(Math.max(1,lv),planetData);
+
+    const card=document.createElement('div');
+    card.className='bld-card';
+    card.innerHTML=`
+      <div class="bld-header" onclick="${locked?'':'showUpgrade(\''+bld.id+'\')'}">
+        <div class="bld-icon" style="${locked?'opacity:.3':''}">
+          ${bld.icon}
+        </div>
+        <div class="bld-info">
+          <div class="bld-name" style="${locked?'color:rgba(255,255,255,.3)':''}">
+            ${bld.name}${locked?` <span style="font-size:8px;color:rgba(255,100,100,.5)">[CC Lv${bld.unlockAt} needed]</span>`:''}
+          </div>
+          <div class="bld-desc">${bld.desc}</div>
+        </div>
+        <div class="bld-level">
+          <div class="bld-lv-txt">Level</div>
+          <div class="bld-lv-num" style="${lv===0?'color:rgba(255,255,255,.2)':lv>=bld.maxLevel?'color:#00e676':''}">${lv}</div>
+        </div>
+      </div>
+      <div class="bld-lvbar">
+        <div class="lvbar-track">
+          <div class="lvbar-fill" style="width:${pct}%"></div>
+        </div>
+      </div>
+      ${lv>0?`<div class="bld-stats">
+        ${gen.cr?`<span class="bstat gold">+${gen.cr} CR/tick</span>`:''}
+        ${gen.mn?`<span class="bstat">+${gen.mn} MIN/tick</span>`:''}
+        ${gen.en?`<span class="bstat green">+${gen.en} ENE/tick</span>`:''}
+        ${gen.tp?`<span class="bstat">+${gen.tp} TP/tick</span>`:''}
+        ${bld.upkeep?`<span class="bstat" style="color:rgba(255,100,100,.6)">-${bld.upkeep.en*lv} ENE</span>`:''}
+      </div>`:''}
+      <div class="bld-actions">
+        ${locked
+          ?`<div class="bld-cost">Unlock by upgrading Commander Center to Level ${bld.unlockAt}</div>`
+          :maxed
+            ?`<span class="bld-maxed">MAX LEVEL</span>`
+            :`<button class="upg-btn" ${!canAfford?'disabled':''} onclick="showUpgrade('${bld.id}')">
+                ${lv===0?'BUILD':'UPGRADE'} → Lv${lv+1}
+              </button>
+              <div class="bld-cost">
+                ${cost.cr?`CR: <span>${fmt(cost.cr)}</span> `:''}
+                ${cost.mn?`MIN: <span>${fmt(cost.mn)}</span> `:''}
+                ${cost.en?`ENE: <span>${fmt(cost.en)}</span>`:''}
+              </div>`
+        }
+      </div>
+    `;
+    list.appendChild(card);
+  }
+
+  // Update resource overview
+  const rates=calcRates();
+  $('rc-cr').textContent=fmt(resources.cr);
+  $('rc-mn').textContent=fmt(resources.mn);
+  $('rc-en').textContent=fmt(resources.en);
+  $('rc-cr-rate').textContent=`+${rates.cr}/tick`;
+  $('rc-mn-rate').textContent=`+${rates.mn}/tick`;
+  $('rc-en-rate').textContent=`+${rates.en}/tick`;
+}
+
+// ════ TAB SWITCHING ════
+window.switchTab=function(tab){
+  ['buildings','fleet','research','defense'].forEach(t=>{
+    $('tab-'+t).style.display=t===tab?'block':'none';
+    $('nav-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='buildings') renderBuildings();
+};
+
+// ════ INIT ════
+async function init(){
+  setLoad(10,'Connecting...');await delay(100);
+
+  let session=null;
+  try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
+  if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+  userId=session.user.id;
+
+  setLoad(30,'Loading profile...');await delay(100);
+  const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
+  profile=prof;
+  resources={
+    cr:prof?.credits||0,
+    mn:prof?.minerals||0,
+    en:prof?.energy||0,
+  };
+
+  // Get planet data
+  setLoad(55,'Loading planet data...');await delay(100);
+  const pRaw=sessionStorage.getItem('vd_planet');
+  if(pRaw){
+    planetData=JSON.parse(pRaw);
+  } else {
+    planetData={id:0,name:'Planet 1',type:'Terran',icon:'&#127758;',col:[60,160,80],isHome:true,crYield:4,mnYield:3,enYield:3,moons:1,atm:'Breathable',temp:'Mild',grav:'1.0g',systemName:'Alpha Centauri',galaxyName:'Home Galaxy'};
+  }
+
+  // Init buildings state — in real game this would come from DB
+  // For now use localStorage keyed to planet
+  const bldKey='vd_bld_'+userId+'_'+planetData.id;
+  const savedBld=localStorage.getItem(bldKey);
+  if(savedBld){ buildings=JSON.parse(savedBld); }
+  else { buildings={cc:1}; } // Start with CC level 1
+
+  // Override save to include buildings
+  window._saveBld=async function(){
+    localStorage.setItem(bldKey,JSON.stringify(buildings));
+    await saveProgress();
+  };
+
+  // Patch confirmUpgrade to also save buildings
+  const origConfirm=window.confirmUpgrade;
+  window.confirmUpgrade=async function(){
+    await origConfirm();
+    await window._saveBld();
+  };
+
+  // Update UI
+  $('ph-icon').innerHTML=planetData.icon||'&#127756;';
+  $('ph-name').textContent=planetData.name||'Planet';
+  $('ph-type').textContent=(planetData.type||'Unknown')+' Planet';
+  $('bc-planet').textContent=(planetData.name||'PLANET').toUpperCase();
+
+  const badges=[];
+  if(planetData.isHome) badges.push(`<span class="badge home">&#11088; Home Planet</span>`);
+  badges.push(`<span class="badge ${buildings.cc>0?'colonized':'uninhabited'}">${buildings.cc>0?'Colonized':'Uninhabited'}</span>`);
+  $('ph-badges').innerHTML=badges.join('');
+
+  setLoad(85,'Rendering...');await delay(100);
+
+  // Init background
+  initBg();
+
+  // Render buildings
+  renderBuildings();
+  updateHudRes();
+  startResTick();
+
+  setLoad(100,'Welcome!');await delay(300);
+  const ls=$('loadscr');
+  ls.style.transition='opacity .4s';ls.style.opacity='0';
+  setTimeout(()=>ls.style.display='none',450);
+
+  toast('Landed on '+planetData.name+'!','ok');
+
+  // Auto-save every 30s
+  setInterval(window._saveBld, 30000);
+}
+
+// Close modal on outside tap
+$('modal').addEventListener('click',e=>{if(e.target===$('modal'))closeModal();});
+
+init();
+</script>
+</body>
+</html>
