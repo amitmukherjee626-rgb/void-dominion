@@ -184,6 +184,7 @@ canvas#cv{
   </div>
   <div class="hvw">Universe</div>
   <div class="hright">
+    <button class="hbtn" onclick="goHome()" style="border-color:rgba(0,229,255,0.5);margin-right:4px;">&#127968; HOME</button>
     <button class="hbtn" onclick="doLogout()">EXIT</button>
   </div>
 </div>
@@ -689,6 +690,11 @@ function startLoop(){
 }
 
 // ════ LOGOUT ════
+window.goHome=function(){
+  const zt=document.getElementById('zt');
+  if(zt){zt.classList.add('show');}
+  setTimeout(()=>window.location.href='game.html',500);
+};
 window.doLogout=async function(){
   if(!confirm('Logout from Void Dominion?'))return;
   await SB.auth.signOut();
