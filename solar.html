@@ -890,7 +890,7 @@ function renderAtkModal(fleet,combatShips,defVal){
       <div class="am-icon">&#9876;&#65039;</div>
       <div>
         <div class="am-title">LAUNCH ATTACK</div>
-        <div class="am-sub">Planet ${(selPlanet?.id||0)+1}: ${selPlanet?.type||''} — ${systemData?.name||''}</div>
+        <div class="am-sub">Planet ${(atkTargetPlanet?.id||0)+1}: ${atkTargetPlanet?.type||''} — ${systemData?.name||''}</div>
       </div>
       <button class="am-x" onclick="closeAtkModal()">&#10005;</button>
     </div>
@@ -947,12 +947,13 @@ function renderAtkModal(fleet,combatShips,defVal){
       &#9876; LAUNCH ATTACK ${hasSelection?'(ATK:'+myAtk+')':''}
     </button>`;
   
-  // Attach click listener after render
+  // Attach click listener after render — clone to wipe all old listeners
   requestAnimationFrame(()=>{
     const btn=document.getElementById('atk-confirm-btn');
     if(btn){
-      btn.onclick=null; // remove old
-      btn.onclick=function(){executeAtk(defVal);};
+      const fresh=btn.cloneNode(true);
+      btn.parentNode.replaceChild(fresh,btn);
+      fresh.addEventListener('click',function(){executeAtk(defVal);},{once:true});
     }
   });
 }
@@ -993,8 +994,6 @@ function closeAtkModal(){
 }
 
 // ══ EXECUTE ATTACK (multi-ship) ══
-let atkLocked=false; // prevent double-fire
-let atkTargetPlanet=null; // stored separately from selPlanet
 
 function executeAtk(defVal){
   // Prevent double execution
