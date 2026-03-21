@@ -49,12 +49,32 @@ canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 /* Planet panel - slides from right */
 #planet-panel{
-  position:fixed;right:0;top:50px;bottom:44px;width:220px;z-index:15;
+  position:fixed;right:0;top:50px;bottom:44px;width:240px;z-index:15;
   background:rgba(0,1,15,0.96);border-left:1px solid rgba(0,229,255,0.18);
   transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);
   display:flex;flex-direction:column;overflow:hidden;pointer-events:all;
 }
 #planet-panel.open{transform:translateX(0);}
+/* planet action buttons */
+.pp-action-wrap{display:flex;flex-direction:column;gap:6px;margin:8px 14px 0;}
+.pp-act-btn{padding:9px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;
+  letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;
+  cursor:pointer;transition:all .2s;color:#fff;width:100%;}
+.pp-act-btn.land{background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));}
+.pp-act-btn.scout{background:linear-gradient(90deg,rgba(124,58,237,.85),rgba(80,0,180,.85));}
+.pp-act-btn.attack{background:linear-gradient(90deg,rgba(255,23,68,.9),rgba(180,0,40,.9));}
+.pp-act-btn.colonize{background:linear-gradient(90deg,rgba(0,200,100,.9),rgba(0,130,60,.9));}
+.pp-act-btn:active{transform:scale(.97);}
+.pp-status-badge{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;
+  font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;margin:6px 14px 0;width:fit-content;}
+.pp-status-badge.home{background:rgba(255,196,0,.1);border:1px solid rgba(255,196,0,.3);color:#ffc400;}
+.pp-status-badge.mine{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#00e676;}
+.pp-status-badge.neutral{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.4);}
+.pp-status-badge.enemy{background:rgba(255,23,68,.08);border:1px solid rgba(255,23,68,.3);color:#ff4466;}
+.pp-def-info{margin:4px 14px 0;padding:7px 10px;background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.18);border-radius:2px;}
+.pp-def-row{display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.4);margin-bottom:2px;}
+.pp-def-row:last-child{margin:0;}
+.pp-def-row span:last-child{font-family:'Orbitron',monospace;font-size:8px;}
 .pp-header{
   padding:12px 14px 10px;border-bottom:1px solid rgba(0,229,255,0.1);
   flex-shrink:0;
@@ -176,7 +196,7 @@ canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-ind
     <div class="pp-row"><span class="pp-label">Moons</span><span class="pp-val" id="pp-moons">-</span></div>
     <div class="pp-row"><span class="pp-label">Status</span><span class="pp-val" id="pp-status">-</span></div>
   </div>
-  <button class="pp-enter-btn" onclick="enterPlanet()">LAND ON PLANET</button>
+  <div id="pp-action-section"></div>
 </div>
 
 <!-- Toasts -->
@@ -503,9 +523,23 @@ function planetAt(wx,wy){
   return best;
 }
 
+// ════ PLANET STATUS SYSTEM ════
+// planetStatus stored in localStorage: {planetKey: 'home'|'mine'|'neutral'|'conquered'}
+function getPlanetKey(p){ return 'vd_ps_'+userId+'_'+systemData?.id+'_'+p.id; }
+function getPlanetStatus(p){
+  if(p.isHome) return 'home';
+  const saved = localStorage.getItem(getPlanetKey(p));
+  return saved||'neutral';
+}
+function setPlanetStatus(p, status){
+  localStorage.setItem(getPlanetKey(p), status);
+}
+
 // ════ PLANET PANEL ════
 function openPanel(p){
   selPlanet=p;
+  const status = getPlanetStatus(p);
+
   $('pp-icon').innerHTML=p.icon;
   $('pp-name').textContent='Planet '+(p.id+1)+': '+p.type;
   $('pp-type').textContent=p.type+' Planet';
@@ -526,7 +560,49 @@ function openPanel(p){
   $('pp-temp').textContent=p.temp;
   $('pp-grav').textContent=p.grav;
   $('pp-moons').textContent=p.moons;
-  $('pp-status').textContent=p.colonized?'COLONIZED':'Uninhabited';
+
+  // Status labels
+  const statusLabels={home:'HOME PLANET',mine:'COLONIZED',neutral:'NEUTRAL',conquered:'CONQUERED — Send Colonizer'};
+  $('pp-status').textContent=statusLabels[status]||status.toUpperCase();
+
+  // Build action section based on status
+  const sec=$('pp-action-section');
+  
+  if(status==='home'||status==='mine'){
+    // OUR planet - land directly
+    sec.innerHTML=`
+      <div class="pp-status-badge ${status==='home'?'home':'mine'}">
+        ${status==='home'?'&#11088; HOME PLANET':'&#10003; YOUR PLANET'}
+      </div>
+      <div class="pp-action-wrap">
+        <button class="pp-act-btn land" onclick="enterPlanet()">LAND ON PLANET</button>
+      </div>`;
+  } else if(status==='conquered'){
+    // Won battle, need colonizer
+    sec.innerHTML=`
+      <div class="pp-status-badge mine">&#9876;&#65039; CONQUERED</div>
+      <div class="pp-action-wrap">
+        <button class="pp-act-btn colonize" onclick="doColonize()">SEND COLONIZER</button>
+        <div style="font-size:8px;color:rgba(255,255,255,.3);padding:0 2px;">Colonizer ship required</div>
+      </div>`;
+  } else {
+    // NEUTRAL or ENEMY — show defense estimate + scout/attack
+    const defStr = status==='enemy'?'STRONG (scouting recommended)':'WEAK (auto-defense only)';
+    const defVal = status==='enemy'?'200-600':'10-60';
+    sec.innerHTML=`
+      <div class="pp-status-badge ${status==='enemy'?'enemy':'neutral'}">
+        ${status==='enemy'?'&#9888; ENEMY PLANET':'&#9711; NEUTRAL PLANET'}
+      </div>
+      <div class="pp-def-info">
+        <div class="pp-def-row"><span>Defense</span><span style="color:${status==='enemy'?'#ff4466':'#00e676'}">${defStr}</span></div>
+        <div class="pp-def-row"><span>Est. Power</span><span style="color:${status==='enemy'?'#ff4466':'#ffc400'}">${defVal}</span></div>
+        <div class="pp-def-row"><span>Fleet</span><span>${status==='enemy'?'Present':'None'}</span></div>
+      </div>
+      <div class="pp-action-wrap">
+        <button class="pp-act-btn scout" onclick="doScout()">&#128065; SCOUT FIRST</button>
+        <button class="pp-act-btn attack" onclick="doAttack()">&#9876;&#65039; LAUNCH ATTACK</button>
+      </div>`;
+  }
 
   $('planet-panel').classList.add('open');
 }
@@ -536,30 +612,114 @@ function closePanel(){
   selPlanet=null;
 }
 
-// ════ ENTER PLANET ════
+// ════ PLANET ACTIONS ════
+function savePlanetData(){
+  if(!selPlanet) return;
+  sessionStorage.setItem('vd_planet',JSON.stringify({
+    id:selPlanet.id,
+    name:'Planet '+(selPlanet.id+1),
+    type:selPlanet.type,
+    icon:selPlanet.icon,
+    col:selPlanet.col,
+    crYield:selPlanet.crYield,
+    mnYield:selPlanet.mnYield,
+    enYield:selPlanet.enYield,
+    isHome:selPlanet.isHome,
+    moons:selPlanet.moons,
+    atm:selPlanet.atm,
+    temp:selPlanet.temp,
+    grav:selPlanet.grav,
+    systemName:systemData?.name||'Unknown',
+    galaxyName:systemData?.galaxyName||'Unknown',
+    status: getPlanetStatus(selPlanet),
+  }));
+}
+
 window.enterPlanet=function(){
   if(!selPlanet)return;
+  savePlanetData();
+  $('zt').classList.add('show');
+  setTimeout(()=>window.location.href='planet.html',550);
+};
+
+window.doScout=function(){
+  if(!selPlanet)return;
+  // Check if probe available
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  if(!(fleet.probe>0)){
+    toast('No Probe available! Build one in Shipyard.','err');
+    return;
+  }
+  // Deduct probe
+  fleet.probe=Math.max(0,(fleet.probe||1)-1);
+  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  fleetData.fleet=fleet;
+  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+  
+  const status=getPlanetStatus(selPlanet);
+  const defVal=status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50);
+  toast('Scout launched! Intel incoming...','inf');
+  setTimeout(()=>{
+    toast('Scout report: Defense Power ~'+defVal,'ok');
+    if(status==='enemy') toast('WARNING: Enemy notified of scouting!','inf');
+    // Update panel with real defense info
+    const defInfo=document.querySelector('.pp-def-info');
+    if(defInfo) defInfo.innerHTML=`
+      <div class="pp-def-row"><span>Defense Power</span><span style="color:#ffc400">${defVal} (CONFIRMED)</span></div>
+      <div class="pp-def-row"><span>Fleet</span><span>${status==='enemy'?'~'+Math.floor(defVal/10)+' ships':'None'}</span></div>
+      <div class="pp-def-row"><span>Buildings</span><span>${status==='enemy'?'Fortified':'None'}</span></div>`;
+  },2000);
+};
+
+window.doAttack=function(){
+  if(!selPlanet)return;
+  // Check fleet power
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  let myAtk=0;
+  const SHIP_ATK={probe:0,colonizer:0,light_carrier:8,fleet_carrier:20,collector:2,fighter:4,gunship:8,destroyer:12,frigate:18,cruiser:28,battleship:45,dreadnought:70,leviathan:150};
+  for(const [id,cnt] of Object.entries(fleet)) myAtk+=(cnt||0)*(SHIP_ATK[id]||0);
+  
+  if(myAtk===0){toast('No combat ships! Build ships first.','err');return;}
+  
+  const status=getPlanetStatus(selPlanet);
+  const defVal=status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50);
+  
   $('zt').classList.add('show');
   setTimeout(()=>{
-    sessionStorage.setItem('vd_planet',JSON.stringify({
-      id:selPlanet.id,
-      name:'Planet '+(selPlanet.id+1),
-      type:selPlanet.type,
-      icon:selPlanet.icon,
-      col:selPlanet.col,
-      crYield:selPlanet.crYield,
-      mnYield:selPlanet.mnYield,
-      enYield:selPlanet.enYield,
-      isHome:selPlanet.isHome,
-      moons:selPlanet.moons,
-      atm:selPlanet.atm,
-      temp:selPlanet.temp,
-      grav:selPlanet.grav,
-      systemName:systemData?.name||'Unknown',
-      galaxyName:systemData?.galaxyName||'Unknown',
-    }));
-    window.location.href='planet.html';
-  },550);
+    $('zt').classList.remove('show');
+    const myPow=myAtk*(0.8+Math.random()*0.4);
+    const enPow=defVal*(0.85+Math.random()*0.3);
+    if(myPow>enPow){
+      setPlanetStatus(selPlanet,'conquered');
+      selPlanet.colonized=true;
+      const loss=Math.floor(myAtk*.15+Math.random()*myAtk*.2);
+      toast('VICTORY! Planet captured!','ok');
+      if(loss>0) toast('Lost ~'+loss+' attack power in battle','inf');
+      // Reopen panel with new status
+      openPanel(selPlanet);
+    } else {
+      toast('DEFEAT! Reinforce and try again.','err');
+      toast('Tip: Scout first to know exact defense strength.','inf');
+      closePanel();
+    }
+  },800);
+};
+
+window.doColonize=function(){
+  if(!selPlanet)return;
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  if(!(fleet.colonizer>0)){toast('No Colonizer ship! Build one in Shipyard first.','err');return;}
+  fleet.colonizer=Math.max(0,(fleet.colonizer||1)-1);
+  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  fleetData.fleet=fleet;
+  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+  setPlanetStatus(selPlanet,'mine');
+  selPlanet.colonized=true;
+  toast('Planet colonized! You can now build here.','ok');
+  openPanel(selPlanet);
 };
 
 // ════ NAVIGATION ════
