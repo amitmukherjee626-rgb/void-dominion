@@ -845,9 +845,16 @@ async function init(){
   planets=buildPlanets(sysSeed,planetCount);
 
   // Set home planet (first planet for home system)
-  const homePIdx=systemData.isHome?0:((hashStr(session.user.id+'planet')%planets.length+planets.length)%planets.length);
-  planets[homePIdx].isHome=true;
-  homePlanetIdx=homePIdx;
+  // HOME PLANET: ONLY planet 0 of the home system
+  // All other systems have NO home planet
+  const isHomeSystem = systemData?.isHome === true;
+  if(isHomeSystem){
+    planets[0].isHome=true;
+    homePlanetIdx=0;
+  } else {
+    // No home planet in this system
+    homePlanetIdx=-1;
+  }
 
   // Sun position = center of canvas world
   sunX=0; sunY=0;
