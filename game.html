@@ -1,0 +1,1020 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:'Exo 2',sans-serif;color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
+
+/* BG CANVAS */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
+
+/* ─── TOP BAR ─── */
+#topbar{
+  position:fixed;top:0;left:0;right:0;z-index:30;
+  background:rgba(0,1,10,0.97);
+  border-bottom:1px solid rgba(0,229,255,0.12);
+}
+#topbar-main{display:flex;align-items:center;padding:6px 10px;gap:8px;height:50px;}
+.tb-avatar{width:32px;height:32px;border:1px solid rgba(0,229,255,0.25);border-radius:3px;background:rgba(0,229,255,0.07);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;cursor:pointer;}
+.tb-player{display:flex;flex-direction:column;padding-right:8px;border-right:1px solid rgba(0,229,255,0.1);}
+.tb-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;}
+.tb-tag{font-size:7px;color:rgba(0,229,255,0.4);letter-spacing:1px;}
+/* Resources */
+.tb-res{display:flex;gap:0;flex:1;overflow:hidden;}
+.tb-ri{display:flex;flex-direction:column;align-items:center;padding:0 6px;border-right:1px solid rgba(0,229,255,0.08);}
+.tb-ri:last-child{border:none;}
+.tb-rl{font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.tb-rv{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;}
+.tb-rv.cr{color:#ffc400;}.tb-rv.mn{color:#78909c;}.tb-rv.en{color:#80cbc4;}
+.tb-rate{font-size:6px;font-family:'Orbitron',monospace;color:rgba(0,230,118,.6);}
+/* Notification bell */
+.tb-bell{position:relative;margin-left:auto;flex-shrink:0;padding:6px;cursor:pointer;}
+.tb-bell-icon{font-size:20px;color:rgba(0,229,255,0.5);}
+.tb-bell-badge{position:absolute;top:4px;right:4px;background:#ff1744;border-radius:10px;min-width:14px;height:14px;display:flex;align-items:center;justify-content:center;font-size:8px;font-family:'Orbitron',monospace;color:#fff;padding:0 3px;}
+
+/* Notification dropdown */
+#notif-panel{
+  position:fixed;top:50px;right:0;width:280px;z-index:35;
+  background:rgba(0,1,15,0.98);border:1px solid rgba(0,229,255,0.15);
+  border-top:none;max-height:300px;overflow-y:auto;display:none;
+}
+#notif-panel.open{display:block;}
+.notif-item{padding:10px 14px;border-bottom:1px solid rgba(0,229,255,0.07);cursor:pointer;}
+.notif-item:last-child{border:none;}
+.notif-item:active{background:rgba(0,229,255,0.05);}
+.ni-title{font-family:'Orbitron',monospace;font-size:9px;font-weight:700;color:#fff;margin-bottom:2px;}
+.ni-body{font-size:9px;color:rgba(255,255,255,0.4);line-height:1.4;}
+.ni-time{font-size:7px;color:rgba(0,229,255,0.3);font-family:'Orbitron',monospace;margin-top:3px;}
+.ni-type{display:inline-block;padding:1px 6px;border-radius:1px;font-size:7px;font-family:'Orbitron',monospace;letter-spacing:1px;margin-bottom:3px;}
+.ni-type.war{background:rgba(255,23,68,.15);border:1px solid rgba(255,23,68,.3);color:#ff4466;}
+.ni-type.attack{background:rgba(255,100,0,.12);border:1px solid rgba(255,100,0,.3);color:#ff8844;}
+.ni-type.done{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.25);color:#00e676;}
+.ni-type.info{background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:#00e5ff;}
+.notif-empty{padding:20px;text-align:center;font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,.25);letter-spacing:2px;}
+
+/* ─── MAIN TABS (top row) ─── */
+#main-tabs{
+  display:flex;border-top:1px solid rgba(0,229,255,0.08);
+  overflow-x:auto;scrollbar-width:none;
+}
+#main-tabs::-webkit-scrollbar{display:none;}
+.mtab{flex-shrink:0;padding:6px 12px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;text-align:center;cursor:pointer;color:rgba(0,229,255,0.35);transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent;white-space:nowrap;}
+.mtab.active{color:#00e5ff;border-bottom-color:#00e5ff;background:rgba(0,229,255,0.04);}
+
+/* ─── MAIN CONTENT ─── */
+#content{
+  position:fixed;top:92px;left:0;right:0;bottom:56px;z-index:5;
+  overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.12) transparent;
+}
+
+/* ─── PLANET SURFACE HEADER ─── */
+.surface-header{padding:12px 14px 8px;text-align:center;background:linear-gradient(180deg,rgba(0,5,20,.98) 0%,transparent 100%);}
+.sh-icon{font-size:44px;margin-bottom:4px;filter:drop-shadow(0 0 12px rgba(0,229,255,0.25));}
+.sh-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:2px;color:#fff;margin-bottom:2px;}
+.sh-type{font-size:8px;letter-spacing:3px;color:rgba(0,229,255,0.45);text-transform:uppercase;margin-bottom:6px;}
+.sh-coord{font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,229,255,0.3);letter-spacing:1px;margin-bottom:6px;}
+.sh-badges{display:flex;justify-content:center;gap:6px;flex-wrap:wrap;}
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:2px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;text-transform:uppercase;}
+.badge.home{background:rgba(255,196,0,.1);border:1px solid rgba(255,196,0,.3);color:#ffc400;}
+.badge.colonized{background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#00e676;}
+
+/* ─── SECTION TITLE ─── */
+.stitle{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.4);text-transform:uppercase;padding:12px 14px 8px;display:flex;align-items:center;gap:8px;}
+.stitle::after{content:'';flex:1;height:1px;background:rgba(0,229,255,.08);}
+
+/* ─── RESOURCE CARD ─── */
+.res-card{margin:8px 12px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;padding:12px 14px;}
+.rc-title{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:10px;}
+.rc-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.rc-item{background:rgba(0,229,255,.04);border:1px solid rgba(0,229,255,.1);border-radius:2px;padding:8px;text-align:center;}
+.rc-lbl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);text-transform:uppercase;}
+.rc-val{font-family:'Orbitron',monospace;font-size:13px;font-weight:700;margin:2px 0;}
+.rc-rate{font-size:8px;font-family:'Orbitron',monospace;color:rgba(0,230,118,.7);}
+
+/* ─── MY PLANETS LIST ─── */
+.planet-row{margin:0 12px 8px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:border-color .2s;}
+.planet-row:active{border-color:rgba(0,229,255,.3);}
+.pr-icon{font-size:28px;flex-shrink:0;}
+.pr-info{flex:1;min-width:0;}
+.pr-name{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:2px;}
+.pr-coord{font-size:8px;color:rgba(0,229,255,.4);font-family:'Orbitron',monospace;letter-spacing:1px;}
+.pr-res{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap;}
+.pr-res-item{font-size:8px;font-family:'Orbitron',monospace;}
+.pr-res-item.cr{color:rgba(255,196,0,.7);}
+.pr-res-item.mn{color:rgba(120,144,156,.7);}
+.pr-res-item.en{color:rgba(128,203,196,.7);}
+.pr-ships{font-size:8px;color:rgba(0,229,255,.4);margin-top:2px;}
+.pr-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.pr-go{padding:6px 12px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.7),rgba(124,58,237,.7));color:#fff;border:none;border-radius:2px;cursor:pointer;}
+.pr-id{font-family:'Orbitron',monospace;font-size:7px;color:rgba(0,229,255,.3);letter-spacing:1px;}
+
+/* ─── QUICK ACTION BUTTONS ─── */
+.quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 12px;}
+.qa-btn{padding:14px 10px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;text-align:center;cursor:pointer;transition:all .2s;}
+.qa-btn:active{border-color:rgba(0,229,255,.35);background:rgba(0,229,255,.07);}
+.qa-icon{font-size:24px;margin-bottom:4px;}
+.qa-label{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,.6);text-transform:uppercase;}
+
+/* ─── COORDINATE SEARCH ─── */
+#search-modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;}
+#search-modal.open{display:flex;}
+.search-box{background:rgba(0,2,18,.99);border:1px solid rgba(0,229,255,.2);border-radius:4px 4px 0 0;width:100%;max-width:480px;padding:20px 18px 30px;animation:slideUp .28s ease;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sb-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px;color:#fff;margin-bottom:4px;}
+.sb-sub{font-size:9px;color:rgba(0,229,255,.4);letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;}
+.coord-display{font-family:'Orbitron',monospace;font-size:28px;font-weight:900;color:#00e5ff;letter-spacing:4px;text-align:center;margin:10px 0 16px;min-height:40px;border-bottom:2px solid rgba(0,229,255,.2);padding-bottom:8px;}
+.numpad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.np-btn{padding:14px;font-family:'Orbitron',monospace;font-size:18px;font-weight:700;background:rgba(0,5,20,.9);border:1px solid rgba(0,229,255,.15);border-radius:3px;color:#00e5ff;cursor:pointer;text-align:center;transition:all .15s;}
+.np-btn:active{background:rgba(0,229,255,.12);border-color:#00e5ff;}
+.np-btn.del{color:rgba(255,80,80,.7);font-size:14px;}
+.np-btn.dash{color:rgba(0,229,255,.5);}
+.np-btn.clear{color:rgba(255,100,50,.6);font-size:12px;letter-spacing:1px;}
+.search-actions{display:flex;gap:8px;}
+.sa-search{flex:1;padding:12px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));color:#fff;border:none;border-radius:2px;cursor:pointer;}
+.sa-cancel{padding:12px 16px;font-family:'Orbitron',monospace;font-size:10px;letter-spacing:1px;text-transform:uppercase;background:transparent;color:rgba(0,229,255,.5);border:1px solid rgba(0,229,255,.2);border-radius:2px;cursor:pointer;}
+/* Search result */
+#search-result{margin-top:12px;display:none;}
+.sr-card{background:rgba(0,5,20,.9);border:1px solid rgba(0,229,255,.15);border-radius:3px;padding:12px 14px;}
+.src-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;margin-bottom:8px;}
+.src-row{display:flex;justify-content:space-between;padding:4px 0;font-size:9px;color:rgba(255,255,255,.4);border-bottom:1px solid rgba(255,255,255,.04);}
+.src-row:last-child{border:none;}
+.src-row span:last-child{font-family:'Orbitron',monospace;font-size:9px;color:#fff;}
+.src-actions{display:flex;gap:8px;margin-top:10px;}
+.src-act{flex:1;padding:8px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;color:#fff;}
+.src-act.goto{background:linear-gradient(90deg,rgba(0,200,230,.8),rgba(124,58,237,.8));}
+.src-act.attack{background:linear-gradient(90deg,rgba(255,23,68,.8),rgba(180,0,40,.8));}
+.src-act.scout{background:linear-gradient(90deg,rgba(124,58,237,.8),rgba(80,0,180,.8));}
+
+/* ─── PLANET DETAIL MODAL (for other planets) ─── */
+#planet-detail{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;}
+#planet-detail.open{display:flex;}
+.pd-box{background:rgba(0,2,18,.99);border:1px solid rgba(0,229,255,.2);border-radius:4px 4px 0 0;width:100%;max-width:480px;max-height:85vh;overflow-y:auto;animation:slideUp .28s ease;padding-bottom:20px;}
+.pd-header{padding:16px 18px 10px;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid rgba(0,229,255,.08);}
+.pd-icon{font-size:40px;flex-shrink:0;}
+.pd-info{flex:1;}
+.pd-name{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;color:#fff;letter-spacing:1px;margin-bottom:2px;}
+.pd-type{font-size:9px;color:rgba(0,229,255,.45);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px;}
+.pd-id{font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,229,255,.3);letter-spacing:1px;}
+.pd-close{background:none;border:none;color:rgba(0,229,255,.4);font-size:18px;cursor:pointer;padding:4px;flex-shrink:0;}
+.pd-section{padding:12px 18px;border-top:1px solid rgba(0,229,255,.06);}
+.pd-stitle{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:8px;}
+.pd-row{display:flex;justify-content:space-between;padding:5px 0;font-size:9px;color:rgba(255,255,255,.35);border-bottom:1px solid rgba(255,255,255,.03);}
+.pd-row:last-child{border:none;}
+.pd-row span:last-child{font-family:'Orbitron',monospace;font-size:9px;color:#fff;}
+/* Defense info (after scout) */
+.def-info{background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.18);border-radius:2px;padding:10px 12px;margin:8px 0;}
+.def-row{display:flex;justify-content:space-between;font-size:9px;color:rgba(255,255,255,.35);padding:3px 0;}
+.ship-detail-row{display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.03);}
+.ship-detail-row:last-child{border:none;}
+.sdr-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:12px;}
+.sdr-name{flex:1;font-size:9px;color:#fff;}
+.sdr-count{font-family:'Orbitron',monospace;font-size:9px;color:#00e5ff;}
+.sdr-atk{font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,80,80,.7);}
+.sdr-def{font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,200,100,.7);}
+/* Actions */
+.pd-actions{display:flex;gap:8px;padding:12px 18px 0;}
+.pda-btn{flex:1;padding:11px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;color:#fff;transition:all .2s;}
+.pda-btn.land{background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));}
+.pda-btn.scout{background:linear-gradient(90deg,rgba(124,58,237,.85),rgba(80,0,180,.85));}
+.pda-btn.attack{background:linear-gradient(90deg,rgba(255,23,68,.9),rgba(180,0,40,.9));}
+.pda-btn.colonize{background:linear-gradient(90deg,rgba(0,200,100,.9),rgba(0,130,60,.9));}
+.pda-btn:disabled{opacity:.3;cursor:not-allowed;}
+
+/* ─── BOTTOM TABS ─── */
+#bottom-tabs{
+  position:fixed;bottom:0;left:0;right:0;height:56px;z-index:30;
+  background:rgba(0,1,10,0.97);border-top:1px solid rgba(0,229,255,.12);
+  display:flex;
+}
+.btab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Orbitron',monospace;font-size:6px;letter-spacing:1px;color:rgba(0,229,255,.35);cursor:pointer;transition:all .2s;text-transform:uppercase;border-right:1px solid rgba(0,229,255,.06);}
+.btab:last-child{border:none;}
+.btab.active{color:#00e5ff;background:rgba(0,229,255,.04);}
+.btab:active{background:rgba(0,229,255,.07);}
+.btab-icon{font-size:16px;}
+
+/* DAILY MISSIONS */
+.mission-card{margin:0 12px 8px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;padding:12px 14px;}
+.mc-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.mc-icon{font-size:20px;}
+.mc-info{flex:1;}
+.mc-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;letter-spacing:1px;}
+.mc-desc{font-size:9px;color:rgba(255,255,255,.35);margin-top:2px;}
+.mc-progress{height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;margin:6px 0;}
+.mc-bar{height:100%;border-radius:2px;background:linear-gradient(90deg,#00e5ff,#7c3aed);transition:width .4s;}
+.mc-footer{display:flex;justify-content:space-between;align-items:center;}
+.mc-reward{font-size:8px;color:rgba(255,196,0,.7);font-family:'Orbitron',monospace;}
+.mc-claim{padding:5px 12px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,196,0,.8),rgba(200,120,0,.8));color:#fff;border:none;border-radius:2px;cursor:pointer;}
+.mc-claim:disabled{opacity:.4;cursor:not-allowed;}
+
+/* DAILY REWARD */
+.reward-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin:8px 12px;}
+.rg-day{background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.1);border-radius:2px;padding:8px 4px;text-align:center;}
+.rg-day.claimed{border-color:rgba(0,230,118,.3);background:rgba(0,230,118,.06);}
+.rg-day.today{border-color:#ffc400;background:rgba(255,196,0,.08);}
+.rg-num{font-family:'Orbitron',monospace;font-size:7px;color:rgba(255,255,255,.3);margin-bottom:3px;}
+.rg-icon{font-size:16px;margin-bottom:2px;}
+.rg-val{font-family:'Orbitron',monospace;font-size:7px;color:rgba(0,229,255,.6);}
+
+/* TOASTS */
+#toasts{position:fixed;top:96px;left:50%;transform:translateX(-50%);z-index:60;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,.97);border:1px solid rgba(0,229,255,.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+/* LOADING */
+#loadscr{position:fixed;inset:0;z-index:100;background:#00010a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.lt{font-family:'Orbitron',monospace;font-size:clamp(22px,6vw,40px);font-weight:900;letter-spacing:4px;color:#00e5ff;text-shadow:0 0 25px rgba(0,229,255,.7);animation:lp 2s ease-in-out infinite;}
+@keyframes lp{0%,100%{opacity:.7}50%{opacity:1}}
+.lbw{width:200px;height:3px;background:rgba(0,229,255,.1);border-radius:2px;overflow:hidden;}
+.lb2{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#7c3aed);transition:width .4s;border-radius:2px;}
+.ltx{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.4);text-transform:uppercase;}
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.show{opacity:1;pointer-events:all;}
+
+/* WORLD CHAT STYLE */
+.chat-msg{margin:0 12px 6px;padding:8px 12px;background:rgba(0,5,20,.7);border-left:2px solid rgba(0,229,255,.3);border-radius:0 3px 3px 0;}
+.chat-player{font-family:'Orbitron',monospace;font-size:9px;color:#00e5ff;font-weight:700;margin-bottom:2px;}
+.chat-text{font-size:10px;color:rgba(255,255,255,.7);line-height:1.4;}
+.chat-time{font-size:7px;color:rgba(255,255,255,.25);font-family:'Orbitron',monospace;margin-top:3px;}
+.chat-input-wrap{position:sticky;bottom:0;padding:8px 12px;background:rgba(0,1,10,.97);border-top:1px solid rgba(0,229,255,.1);display:flex;gap:8px;}
+.chat-input{flex:1;padding:8px 12px;background:rgba(0,5,20,.9);border:1px solid rgba(0,229,255,.2);border-radius:2px;color:#fff;font-family:'Exo 2',sans-serif;font-size:10px;outline:none;}
+.chat-send{padding:8px 14px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:1px;background:rgba(0,229,255,.15);border:1px solid rgba(0,229,255,.3);color:#00e5ff;border-radius:2px;cursor:pointer;}
+</style>
+</head>
+<body>
+<div id="loadscr">
+  <div class="lt">VOID DOMINION</div>
+  <div class="lbw"><div class="lb2" id="lbar"></div></div>
+  <div class="ltx" id="ltxt">Loading...</div>
+</div>
+<canvas id="bg"></canvas>
+<div id="zt"></div>
+
+<!-- TOP BAR -->
+<div id="topbar">
+  <div id="topbar-main">
+    <div class="tb-avatar" id="tb-avatar" onclick="nav('index.html')">&#128737;</div>
+    <div class="tb-player">
+      <div class="tb-name" id="tb-name">-</div>
+      <div class="tb-tag" id="tb-tag">-</div>
+    </div>
+    <div class="tb-res">
+      <div class="tb-ri"><div class="tb-rl">CR</div><div class="tb-rv cr" id="tb-cr">0</div><div class="tb-rate" id="tb-cr-r">+0</div></div>
+      <div class="tb-ri"><div class="tb-rl">MIN</div><div class="tb-rv mn" id="tb-mn">0</div><div class="tb-rate" id="tb-mn-r">+0</div></div>
+      <div class="tb-ri"><div class="tb-rl">ENE</div><div class="tb-rv en" id="tb-en">0</div><div class="tb-rate" id="tb-en-r">+0</div></div>
+    </div>
+    <div class="tb-bell" onclick="toggleNotif()">
+      <div class="tb-bell-icon">&#128276;</div>
+      <div class="tb-bell-badge" id="notif-badge" style="display:none;">0</div>
+    </div>
+  </div>
+  <!-- Main tabs -->
+  <div id="main-tabs">
+    <div class="mtab active" id="mt-home" onclick="switchMain('home')">&#127760; Home</div>
+    <div class="mtab" id="mt-planets" onclick="switchMain('planets')">&#127758; My Planets</div>
+    <div class="mtab" id="mt-reports" onclick="switchMain('reports')">&#128196; Reports</div>
+    <div class="mtab" id="mt-map" onclick="nav('universe.html')">&#127759; Map</div>
+    <div class="mtab" id="mt-missions" onclick="switchMain('missions')">&#127942; Missions</div>
+    <div class="mtab" id="mt-chat" onclick="switchMain('chat')">&#128172; Chat</div>
+  </div>
+</div>
+
+<!-- NOTIFICATION PANEL -->
+<div id="notif-panel">
+  <div id="notif-list"></div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div id="content">
+  <!-- HOME TAB -->
+  <div id="tab-home">
+    <div class="surface-header">
+      <div class="sh-icon" id="sh-icon">&#127758;</div>
+      <div class="sh-name" id="sh-name">Home Planet</div>
+      <div class="sh-type" id="sh-type">Loading...</div>
+      <div class="sh-coord" id="sh-coord">ID: — | Coord: —</div>
+      <div class="sh-badges">
+        <span class="badge home">&#11088; Home Planet</span>
+        <span class="badge colonized">Colonized</span>
+      </div>
+    </div>
+
+    <div class="res-card">
+      <div class="rc-title">Planet Resources</div>
+      <div class="rc-grid">
+        <div class="rc-item"><div class="rc-lbl">Credits</div><div class="rc-val cr" id="rc-cr" style="color:#ffc400">0</div><div class="rc-rate" id="rc-cr-r">+0/s</div></div>
+        <div class="rc-item"><div class="rc-lbl">Minerals</div><div class="rc-val mn" id="rc-mn" style="color:#78909c">0</div><div class="rc-rate" id="rc-mn-r">+0/s</div></div>
+        <div class="rc-item"><div class="rc-lbl">Energy</div><div class="rc-val en" id="rc-en" style="color:#80cbc4">0</div><div class="rc-rate" id="rc-en-r">+0/s</div></div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="stitle">Quick Actions</div>
+    <div class="quick-actions">
+      <div class="qa-btn" onclick="nav('planet.html')"><div class="qa-icon">&#127963;</div><div class="qa-label">Buildings</div></div>
+      <div class="qa-btn" onclick="nav('fleet.html')"><div class="qa-icon">&#128640;</div><div class="qa-label">Fleet</div></div>
+      <div class="qa-btn" onclick="nav('research.html')"><div class="qa-icon">&#128300;</div><div class="qa-label">Research</div></div>
+      <div class="qa-btn" onclick="openSearch()"><div class="qa-icon">&#128269;</div><div class="qa-label">Find Planet</div></div>
+    </div>
+  </div>
+
+  <!-- MY PLANETS TAB -->
+  <div id="tab-planets" style="display:none;">
+    <div class="stitle">My Planets</div>
+    <div id="planets-list"></div>
+  </div>
+
+  <!-- REPORTS TAB -->
+  <div id="tab-reports" style="display:none;">
+    <div class="stitle">Recent Reports</div>
+    <div id="reports-preview"></div>
+    <div style="padding:8px 12px;">
+      <button onclick="nav('reports.html')" style="width:100%;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.2);color:#00e5ff;border-radius:2px;cursor:pointer;">VIEW ALL REPORTS</button>
+    </div>
+  </div>
+
+  <!-- MISSIONS TAB -->
+  <div id="tab-missions" style="display:none;">
+    <div class="stitle">Daily Reward</div>
+    <div class="reward-grid" id="reward-grid"></div>
+    <div style="padding:0 12px 8px;">
+      <button id="claim-reward-btn" onclick="claimDailyReward()" style="width:100%;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,rgba(255,196,0,.8),rgba(200,120,0,.8));color:#fff;border:none;border-radius:2px;cursor:pointer;">CLAIM DAILY REWARD</button>
+    </div>
+    <div class="stitle">Daily Missions</div>
+    <div id="missions-list"></div>
+  </div>
+
+  <!-- CHAT TAB -->
+  <div id="tab-chat" style="display:none;padding-bottom:60px;">
+    <div style="display:flex;gap:0;border-bottom:1px solid rgba(0,229,255,.08);margin-bottom:8px;">
+      <div style="flex:1;padding:8px;text-align:center;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:#00e5ff;cursor:pointer;border-bottom:2px solid #00e5ff;">WORLD CHAT</div>
+      <div style="flex:1;padding:8px;text-align:center;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,.3);cursor:pointer;">ALLIANCE</div>
+    </div>
+    <div id="chat-messages" style="min-height:200px;"></div>
+    <div class="chat-input-wrap">
+      <input class="chat-input" id="chat-input" placeholder="Message..." maxlength="120">
+      <button class="chat-send" onclick="sendChat()">SEND</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM TABS -->
+<div id="bottom-tabs">
+  <div class="btab active" id="bt-buildings" onclick="nav('planet.html')"><div class="btab-icon">&#127963;</div>Buildings</div>
+  <div class="btab" id="bt-fleet" onclick="nav('fleet.html')"><div class="btab-icon">&#128640;</div>Fleet</div>
+  <div class="btab" id="bt-research" onclick="nav('research.html')"><div class="btab-icon">&#128300;</div>Research</div>
+  <div class="btab" id="bt-defense" onclick="nav('planet.html#defense')"><div class="btab-icon">&#128737;</div>Defense</div>
+  <div class="btab" id="bt-map" onclick="nav('solar.html')"><div class="btab-icon">&#127759;</div>System</div>
+</div>
+
+<!-- COORDINATE SEARCH MODAL -->
+<div id="search-modal">
+  <div class="search-box">
+    <div class="sb-title">Find Planet</div>
+    <div class="sb-sub">Enter Planet Coordinate</div>
+    <div class="coord-display" id="coord-display">—</div>
+    <div class="numpad">
+      <button class="np-btn" onclick="numInput('1')">1</button>
+      <button class="np-btn" onclick="numInput('2')">2</button>
+      <button class="np-btn" onclick="numInput('3')">3</button>
+      <button class="np-btn" onclick="numInput('4')">4</button>
+      <button class="np-btn" onclick="numInput('5')">5</button>
+      <button class="np-btn" onclick="numInput('6')">6</button>
+      <button class="np-btn" onclick="numInput('7')">7</button>
+      <button class="np-btn" onclick="numInput('8')">8</button>
+      <button class="np-btn" onclick="numInput('9')">9</button>
+      <button class="np-btn dash" onclick="numInput(':')">:</button>
+      <button class="np-btn" onclick="numInput('0')">0</button>
+      <button class="np-btn del" onclick="numDel()">&#9003;</button>
+    </div>
+    <div class="search-actions">
+      <button class="sa-cancel" onclick="closeSearch()">CANCEL</button>
+      <button class="sa-search" onclick="doSearch()">&#128269; SEARCH</button>
+    </div>
+    <div id="search-result"></div>
+  </div>
+</div>
+
+<!-- PLANET DETAIL MODAL -->
+<div id="planet-detail">
+  <div class="pd-box" id="pd-box">
+    <!-- filled by JS -->
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+const AVATARS=['&#128737;','&#128125;','&#129302;','&#128123;','&#129330;','&#128520;','&#129351;','&#128081;'];
+let userId=null, profile=null;
+let resources={cr:0,mn:0,en:0};
+let buildings={};
+let planetData=null;
+let myPlanets=[];
+let notifications=[];
+let coordInput='';
+let resTimer=null;
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+const $=id=>document.getElementById(id);
+function setLoad(p,t){$('lbar').style.width=p+'%';$('ltxt').textContent=t;}
+function toast(m,type='inf'){const el=document.createElement('div');el.className='toast '+type;el.textContent=m;$('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function fmt(n){if(n>=1e9)return(n/1e9).toFixed(1)+'B';if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n)+'';}
+function nav(url){$('zt').classList.add('show');setTimeout(()=>window.location.href=url,500);}
+
+// Generate planet coordinate from userId + planet id
+function genCoord(uid, planetId){
+  function hash(s){let h=5381;for(let i=0;i<s.length;i++)h=(h*33^s.charCodeAt(i))>>>0;return h;}
+  const h=hash(uid+planetId);
+  const x=(h%900)+100;
+  const y=((h>>10)%900)+100;
+  return x+':'+y;
+}
+
+// ═══════════════════════════════════════════════
+//  BACKGROUND ANIMATION
+// ═══════════════════════════════════════════════
+function initBg(){
+  const cv=$('bg'),ctx=cv.getContext('2d');
+  const col=planetData?.col||[60,120,200];
+  function resize(){cv.width=window.innerWidth;cv.height=window.innerHeight;}
+  resize();window.addEventListener('resize',resize);
+  const stars=Array.from({length:150},()=>({x:Math.random(),y:Math.random(),r:Math.random()*.8+.1,o:Math.random()*.3+.05,t:Math.random()*Math.PI*2}));
+  (function loop(ts){
+    requestAnimationFrame(loop);
+    ctx.clearRect(0,0,cv.width,cv.height);
+    ctx.fillStyle='#00010a';ctx.fillRect(0,0,cv.width,cv.height);
+    const pg=ctx.createRadialGradient(cv.width/2,cv.height+80,0,cv.width/2,cv.height+80,cv.width*.9);
+    pg.addColorStop(0,`rgba(${col[0]},${col[1]},${col[2]},0.1)`);
+    pg.addColorStop(.5,`rgba(${col[0]},${col[1]},${col[2]},0.03)`);
+    pg.addColorStop(1,'transparent');
+    ctx.fillStyle=pg;ctx.fillRect(0,0,cv.width,cv.height);
+    const t=ts*.001;
+    stars.forEach(s=>{
+      ctx.beginPath();ctx.arc(s.x*cv.width,s.y*cv.height,s.r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,220,255,${s.o*(.3+.4*Math.sin(t+s.t))})`;
+      ctx.fill();
+    });
+  })();
+}
+
+// ═══════════════════════════════════════════════
+//  RESOURCE RATES
+// ═══════════════════════════════════════════════
+const PLANET_RES={Rocky:{cr:2,mn:6,en:1},'Gas Giant':{cr:2,mn:1,en:6},Ice:{cr:6,mn:1,en:2},Lava:{cr:1,mn:5,en:5},Ocean:{cr:5,mn:2,en:2},Desert:{cr:3,mn:3,en:3},Toxic:{cr:1,mn:1,en:7},Terran:{cr:4,mn:3,en:3}};
+
+function calcRates(){
+  const type=planetData?.type||'Terran';
+  const base=PLANET_RES[type]||PLANET_RES.Terran;
+  const ccLv=buildings.cc||0;
+  const solarLv=buildings.solar||0;
+  let cr=base.cr*ccLv*4, mn=base.mn*ccLv*2, en=base.en*ccLv+(solarLv*3);
+  en-=(buildings.shipyard||0)*2+(buildings.reslab||0)+(buildings.defense||0)*3;
+  return {cr:Math.max(0,cr),mn:Math.max(0,mn),en};
+}
+
+function startTick(){
+  if(resTimer)clearInterval(resTimer);
+  resTimer=setInterval(()=>{
+    const r=calcRates();
+    resources.cr=Math.max(0,resources.cr+r.cr);
+    resources.mn=Math.max(0,resources.mn+r.mn);
+    resources.en=Math.max(0,resources.en+Math.max(0,r.en));
+    updateResUI();
+    // Save every 30s via tick
+  },1000);
+}
+
+function updateResUI(){
+  const r=calcRates();
+  // Top bar
+  $('tb-cr').textContent=fmt(resources.cr);
+  $('tb-mn').textContent=fmt(resources.mn);
+  $('tb-en').textContent=fmt(resources.en);
+  $('tb-cr-r').textContent='+'+r.cr+'/s';
+  $('tb-mn-r').textContent='+'+r.mn+'/s';
+  const es=r.en>=0?'+':'';
+  $('tb-en-r').textContent=es+r.en+'/s';
+  // Resource card
+  $('rc-cr').textContent=fmt(resources.cr);
+  $('rc-mn').textContent=fmt(resources.mn);
+  $('rc-en').textContent=fmt(resources.en);
+  $('rc-cr-r').textContent='+'+r.cr+'/s';
+  $('rc-mn-r').textContent='+'+r.mn+'/s';
+  $('rc-en-r').textContent=es+r.en+'/s';
+}
+
+// ═══════════════════════════════════════════════
+//  MAIN TAB SWITCHING
+// ═══════════════════════════════════════════════
+function switchMain(tab){
+  ['home','planets','reports','missions','chat'].forEach(t=>{
+    $('tab-'+t).style.display=t===tab?'block':'none';
+    const el=$('mt-'+t);
+    if(el) el.classList.toggle('active',t===tab);
+  });
+  if(tab==='planets') renderMyPlanets();
+  if(tab==='reports') renderReportsPreview();
+  if(tab==='missions') renderMissions();
+  if(tab==='chat') renderChat();
+}
+
+// ═══════════════════════════════════════════════
+//  NOTIFICATIONS
+// ═══════════════════════════════════════════════
+function toggleNotif(){
+  $('notif-panel').classList.toggle('open');
+  if($('notif-panel').classList.contains('open')) renderNotifs();
+}
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.tb-bell')&&!e.target.closest('#notif-panel'))
+    $('notif-panel').classList.remove('open');
+});
+
+function renderNotifs(){
+  const notifs=JSON.parse(localStorage.getItem('vd_notifs_'+userId)||'[]');
+  const unread=notifs.filter(n=>!n.read).length;
+  $('notif-badge').style.display=unread>0?'flex':'none';
+  $('notif-badge').textContent=unread;
+  
+  if(!notifs.length){
+    $('notif-list').innerHTML='<div class="notif-empty">No notifications</div>';
+    return;
+  }
+  $('notif-list').innerHTML=notifs.slice(0,20).map(n=>`
+    <div class="notif-item">
+      <div class="ni-type ${n.type||'info'}">${(n.type||'INFO').toUpperCase()}</div>
+      <div class="ni-title">${n.title||''}</div>
+      <div class="ni-body">${n.body||''}</div>
+      <div class="ni-time">${timeAgo(n.time)}</div>
+    </div>`).join('');
+}
+
+function addNotif(type,title,body){
+  const notifs=JSON.parse(localStorage.getItem('vd_notifs_'+userId)||'[]');
+  notifs.unshift({type,title,body,time:new Date().toISOString(),read:false});
+  localStorage.setItem('vd_notifs_'+userId,JSON.stringify(notifs.slice(0,50)));
+  // Update badge
+  $('notif-badge').style.display='flex';
+  $('notif-badge').textContent=notifs.filter(n=>!n.read).length;
+}
+
+function timeAgo(iso){
+  const d=(Date.now()-new Date(iso).getTime())/1000;
+  if(d<60)return Math.floor(d)+'s ago';
+  if(d<3600)return Math.floor(d/60)+'m ago';
+  return Math.floor(d/3600)+'h ago';
+}
+
+// ═══════════════════════════════════════════════
+//  MY PLANETS
+// ═══════════════════════════════════════════════
+function loadMyPlanets(){
+  const raw=localStorage.getItem('vd_myplanets_'+userId);
+  if(raw) return JSON.parse(raw);
+  // Build from home planet + any conquered
+  const planets=[];
+  if(planetData){
+    planets.push({
+      id:'home_'+planetData.id,
+      name:planetData.name||'Planet 1',
+      type:planetData.type||'Terran',
+      icon:planetData.icon||'&#127758;',
+      col:planetData.col||[60,160,80],
+      coord:genCoord(userId,'home'),
+      isHome:true,
+      crYield:planetData.crYield||4,
+      mnYield:planetData.mnYield||3,
+      enYield:planetData.enYield||3,
+    });
+  }
+  return planets;
+}
+
+function renderMyPlanets(){
+  const list=$('planets-list');
+  const planets=loadMyPlanets();
+  if(!planets.length){
+    list.innerHTML='<div style="margin:20px 14px;padding:20px;text-align:center;background:rgba(0,5,20,.6);border:1px dashed rgba(0,229,255,.12);border-radius:3px;font-family:\'Orbitron\',monospace;font-size:9px;color:rgba(0,229,255,.25);letter-spacing:2px;">NO PLANETS<br><span style="font-size:8px;margin-top:4px;display:block;">Conquer planets to expand your empire</span></div>';
+    return;
+  }
+  list.innerHTML=planets.map(p=>{
+    const r=calcRates();
+    const fleet=JSON.parse(localStorage.getItem('vd_fleet_'+userId)||'{}');
+    const fleetObj=fleet.fleet||{};
+    const totalShips=Object.values(fleetObj).reduce((a,b)=>a+b,0);
+    return `<div class="planet-row" onclick="goPlanet('${p.id}')">
+      <div class="pr-icon">${p.icon||'&#127756;'}</div>
+      <div class="pr-info">
+        <div class="pr-name">${p.name}${p.isHome?' &#11088;':''}</div>
+        <div class="pr-coord">ID: ${p.id} &nbsp;|&nbsp; Coord: ${p.coord||'—'}</div>
+        <div class="pr-res">
+          ${p.isHome?`<span class="pr-res-item cr">+${fmt(r.cr)} CR/s</span>
+          <span class="pr-res-item mn">+${fmt(r.mn)} MIN/s</span>
+          <span class="pr-res-item en">+${fmt(r.en)} ENE/s</span>`:`<span class="pr-res-item cr">+${p.crYield||0} CR/tick</span>`}
+        </div>
+        ${p.isHome&&totalShips>0?`<div class="pr-ships">&#128640; ${totalShips} ships stationed</div>`:''}
+      </div>
+      <div class="pr-right">
+        <div class="pr-id">Coord: ${p.coord||'—'}</div>
+        <button class="pr-go" onclick="event.stopPropagation();goPlanet('${p.id}')">GO &#8594;</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function goPlanet(planetId){
+  // Navigate to that planet's view
+  // For home planet, go to planet.html
+  // For others, set sessionStorage and go
+  sessionStorage.setItem('vd_goto_planet', planetId);
+  nav('solar.html');
+}
+
+// ═══════════════════════════════════════════════
+//  REPORTS PREVIEW
+// ═══════════════════════════════════════════════
+function renderReportsPreview(){
+  const reports=JSON.parse(localStorage.getItem('vd_reports_'+userId)||'[]');
+  const el=$('reports-preview');
+  if(!reports.length){
+    el.innerHTML='<div style="margin:8px 12px;padding:16px;text-align:center;background:rgba(0,5,20,.6);border:1px dashed rgba(0,229,255,.12);border-radius:3px;font-family:\'Orbitron\',monospace;font-size:9px;color:rgba(0,229,255,.25);letter-spacing:2px;">No reports yet</div>';
+    return;
+  }
+  el.innerHTML=reports.slice(0,3).map(r=>{
+    const icon=r.type==='scout'?'&#128065;':r.outcome==='win'?'&#127942;':'&#128128;';
+    const col=r.type==='scout'?'#a78bfa':r.outcome==='win'?'#00e676':'#ff4466';
+    return `<div style="margin:0 12px 8px;padding:10px 14px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.1);border-radius:3px;display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="nav('reports.html')">
+      <div style="font-size:20px;">${icon}</div>
+      <div style="flex:1;">
+        <div style="font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;">${r.targetName||'Unknown'}</div>
+        <div style="font-size:8px;color:rgba(255,255,255,.35);">${r.type?.toUpperCase()||''} — ${timeAgo(r.time)}</div>
+      </div>
+      <div style="font-family:'Orbitron',monospace;font-size:9px;color:${col};">${r.type==='scout'?'SCOUTED':r.outcome?.toUpperCase()||''}</div>
+    </div>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════
+//  DAILY MISSIONS
+// ═══════════════════════════════════════════════
+const MISSIONS_DEF=[
+  {id:'m1',name:'Build a Ship',desc:'Build any ship in the Shipyard',icon:'&#128640;',target:1,reward:'500 CR',rewardVal:{cr:500}},
+  {id:'m2',name:'Upgrade a Building',desc:'Upgrade any building to the next level',icon:'&#127963;',target:1,reward:'200 MIN',rewardVal:{mn:200}},
+  {id:'m3',name:'Scout a Planet',desc:'Send a Probe to scout any planet',icon:'&#128065;',target:1,reward:'100 TP',rewardVal:{tp:100}},
+  {id:'m4',name:'Generate Resources',desc:'Generate 1000 Credits from buildings',icon:'&#128176;',target:1000,reward:'300 MIN + 200 ENE',rewardVal:{mn:300,en:200}},
+];
+
+function renderMissions(){
+  // Daily reward grid
+  const today=Math.floor(Date.now()/86400000);
+  const lastClaim=parseInt(localStorage.getItem('vd_last_reward_'+userId)||'0');
+  const streak=parseInt(localStorage.getItem('vd_reward_streak_'+userId)||'0');
+  const canClaim=today>lastClaim;
+  
+  const rewards=[500,800,1200,1000,1500,2000,5000];
+  const rewardIcons=['&#128176;','&#128176;','&#129415;','&#128176;','&#9889;','&#128176;','&#127942;'];
+  
+  $('reward-grid').innerHTML=Array.from({length:7},(_, i)=>{
+    const day=i+1;
+    const claimed=streak>=day&&!canClaim;
+    const isToday=streak===i&&canClaim;
+    return `<div class="rg-day ${claimed?'claimed':isToday?'today':''}">
+      <div class="rg-num">Day ${day}</div>
+      <div class="rg-icon">${rewardIcons[i]}</div>
+      <div class="rg-val">${rewards[i]}CR</div>
+    </div>`;
+  }).join('');
+  
+  const claimBtn=$('claim-reward-btn');
+  if(claimBtn){
+    claimBtn.disabled=!canClaim;
+    claimBtn.textContent=canClaim?'CLAIM DAILY REWARD':'COME BACK TOMORROW';
+  }
+
+  // Missions
+  const missionProgress=JSON.parse(localStorage.getItem('vd_missions_'+userId)||'{}');
+  $('missions-list').innerHTML=MISSIONS_DEF.map(m=>{
+    const prog=missionProgress[m.id]||0;
+    const done=prog>=m.target;
+    const claimed=missionProgress[m.id+'_claimed'];
+    const pct=Math.min(100,(prog/m.target*100)).toFixed(0);
+    return `<div class="mission-card">
+      <div class="mc-header">
+        <div class="mc-icon">${m.icon}</div>
+        <div class="mc-info">
+          <div class="mc-name">${m.name}</div>
+          <div class="mc-desc">${m.desc}</div>
+        </div>
+      </div>
+      <div class="mc-progress"><div class="mc-bar" style="width:${pct}%"></div></div>
+      <div class="mc-footer">
+        <div class="mc-reward">Reward: ${m.reward}</div>
+        ${done&&!claimed
+          ?`<button class="mc-claim" onclick="claimMission('${m.id}')">CLAIM</button>`
+          :claimed
+            ?`<span style="font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,230,118,.6);">&#10003; CLAIMED</span>`
+            :`<span style="font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,255,255,.25);">${prog}/${m.target}</span>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.claimDailyReward=function(){
+  const today=Math.floor(Date.now()/86400000);
+  const streak=(parseInt(localStorage.getItem('vd_reward_streak_'+userId)||'0')+1)%8||1;
+  localStorage.setItem('vd_last_reward_'+userId,today.toString());
+  localStorage.setItem('vd_reward_streak_'+userId,streak.toString());
+  const rewards=[500,800,1200,1000,1500,2000,5000];
+  const reward=rewards[streak-1]||500;
+  resources.cr+=reward;
+  // Save
+  localStorage.setItem('vd_res_'+userId,JSON.stringify(resources));
+  toast('Day '+streak+' reward claimed! +'+reward+' CR','ok');
+  addNotif('done','Daily Reward Claimed','You received '+reward+' Credits!');
+  renderMissions();
+  updateResUI();
+};
+
+window.claimMission=function(mId){
+  const m=MISSIONS_DEF.find(x=>x.id===mId);
+  if(!m)return;
+  const prog=JSON.parse(localStorage.getItem('vd_missions_'+userId)||'{}');
+  prog[mId+'_claimed']=true;
+  localStorage.setItem('vd_missions_'+userId,JSON.stringify(prog));
+  // Give reward
+  if(m.rewardVal.cr) resources.cr+=m.rewardVal.cr;
+  if(m.rewardVal.mn) resources.mn+=m.rewardVal.mn;
+  if(m.rewardVal.en) resources.en+=m.rewardVal.en;
+  localStorage.setItem('vd_res_'+userId,JSON.stringify(resources));
+  toast('Mission complete! '+m.reward+' claimed!','ok');
+  renderMissions();
+  updateResUI();
+};
+
+// ═══════════════════════════════════════════════
+//  WORLD CHAT (simple localStorage based)
+// ═══════════════════════════════════════════════
+function renderChat(){
+  const msgs=JSON.parse(localStorage.getItem('vd_worldchat')||'[]');
+  const el=$('chat-messages');
+  if(!msgs.length){
+    el.innerHTML='<div style="padding:20px;text-align:center;font-family:\'Orbitron\',monospace;font-size:9px;color:rgba(0,229,255,.25);letter-spacing:2px;">No messages yet. Say hello!</div>';
+    return;
+  }
+  el.innerHTML=msgs.slice(-30).map(m=>`
+    <div class="chat-msg">
+      <div class="chat-player">${m.player||'Commander'} <span style="font-size:7px;color:rgba(0,229,255,.3);">${m.tag||''}</span></div>
+      <div class="chat-text">${m.text||''}</div>
+      <div class="chat-time">${timeAgo(m.time)}</div>
+    </div>`).join('');
+  el.scrollTop=el.scrollHeight;
+}
+
+function sendChat(){
+  const input=$('chat-input');
+  const text=input.value.trim();
+  if(!text)return;
+  const msgs=JSON.parse(localStorage.getItem('vd_worldchat')||'[]');
+  msgs.push({player:profile?.username||'Commander',tag:profile?.player_tag||'#VD-00000',text,time:new Date().toISOString()});
+  localStorage.setItem('vd_worldchat',JSON.stringify(msgs.slice(-100)));
+  input.value='';
+  renderChat();
+}
+
+// ═══════════════════════════════════════════════
+//  COORDINATE SEARCH
+// ═══════════════════════════════════════════════
+function openSearch(){$('search-modal').classList.add('open');coordInput='';$('coord-display').textContent='—';$('search-result').style.display='none';}
+function closeSearch(){$('search-modal').classList.remove('open');}
+function numInput(c){
+  if(c===':'&&coordInput.includes(':'))return;
+  if(coordInput.length>=8)return;
+  coordInput+=c;
+  $('coord-display').textContent=coordInput||'—';
+}
+function numDel(){coordInput=coordInput.slice(0,-1);$('coord-display').textContent=coordInput||'—';}
+
+function doSearch(){
+  if(!coordInput||!coordInput.includes(':')){toast('Enter valid coordinate (e.g. 450:320)','err');return;}
+  const [x,y]=coordInput.split(':').map(Number);
+  if(isNaN(x)||isNaN(y)){toast('Invalid coordinate format','err');return;}
+  
+  // Search in myPlanets first
+  const myP=loadMyPlanets();
+  const found=myP.find(p=>p.coord===coordInput);
+  
+  // Generate "discovered" planet info from coordinate
+  const rng=(()=>{let s=(x*1000+y)%2147483647||1;return()=>{s=s*16807%2147483647;return(s-1)/2147483646;};})();
+  const TYPES=['Rocky','Gas Giant','Ice','Lava','Ocean','Desert','Toxic','Terran'];
+  const pType=TYPES[Math.floor(rng()*TYPES.length)];
+  const status=found?'yours':rng()>0.7?'enemy':'neutral';
+  const owner=status==='enemy'?('Commander #'+Math.floor(rng()*9000+1000)):null;
+  
+  // Check if scouted
+  const scoutKey='vd_scout_'+coordInput;
+  const scoutInfo=JSON.parse(localStorage.getItem(scoutKey)||'null');
+  
+  const sr=$('search-result');
+  sr.style.display='block';
+  sr.innerHTML=`<div class="sr-card">
+    <div class="src-title">Planet at ${coordInput}</div>
+    <div class="src-row"><span>Type</span><span>${pType}</span></div>
+    <div class="src-row"><span>Status</span><span style="color:${status==='yours'?'#00e676':status==='enemy'?'#ff4466':'rgba(255,255,255,.5)'}">${status==='yours'?'YOUR PLANET':status==='enemy'?'ENEMY':'NEUTRAL'}</span></div>
+    ${owner?`<div class="src-row"><span>Owner</span><span style="color:#ff8844">${owner}</span></div>`:''}
+    ${scoutInfo?`<div class="src-row"><span>Defense</span><span style="color:#ffc400">${scoutInfo.defPower} (scouted)</span></div>`:'<div class="src-row"><span>Defense</span><span style="color:rgba(255,255,255,.3)">Unknown — Scout to reveal</span></div>'}
+    <div class="src-actions">
+      ${status==='yours'
+        ?`<button class="src-act goto" onclick="closeSearch();toast('Navigating...','inf')">GO TO PLANET</button>`
+        :`<button class="src-act scout" onclick="closeSearch();toast('Send probe to scout!','inf')">SCOUT</button>
+          <button class="src-act attack" onclick="closeSearch();toast('Send fleet to attack!','inf')">ATTACK</button>`
+      }
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════════════════
+//  PLANET DETAIL MODAL (for solar.html planets)
+// ═══════════════════════════════════════════════
+window.showPlanetDetail=function(planetInfo){
+  const status=planetInfo.status||'neutral';
+  const scoutKey='vd_scout_coord_'+userId+'_'+(planetInfo.coord||'');
+  const scoutData=JSON.parse(localStorage.getItem(scoutKey)||'null');
+  
+  $('pd-box').innerHTML=`
+    <div class="pd-header">
+      <div class="pd-icon">${planetInfo.icon||'&#127756;'}</div>
+      <div class="pd-info">
+        <div class="pd-name">${planetInfo.name||'Planet'}</div>
+        <div class="pd-type">${planetInfo.type||'Unknown'} Planet</div>
+        <div class="pd-id">ID: ${planetInfo.id||'—'} &nbsp;|&nbsp; Coord: ${planetInfo.coord||'—'}</div>
+      </div>
+      <button class="pd-close" onclick="closePlanetDetail()">&#10005;</button>
+    </div>
+    <div class="pd-section">
+      <div class="pd-stitle">Planet Info</div>
+      <div class="pd-row"><span>Type</span><span>${planetInfo.type||'Unknown'}</span></div>
+      <div class="pd-row"><span>Atmosphere</span><span>${planetInfo.atm||'Unknown'}</span></div>
+      <div class="pd-row"><span>Temperature</span><span>${planetInfo.temp||'Unknown'}</span></div>
+      <div class="pd-row"><span>Gravity</span><span>${planetInfo.grav||'Unknown'}</span></div>
+      <div class="pd-row"><span>Moons</span><span>${planetInfo.moons||0}</span></div>
+      <div class="pd-row"><span>Status</span><span style="color:${status==='yours'?'#00e676':status==='enemy'?'#ff4466':'rgba(255,255,255,.5)'}">${status.toUpperCase()}</span></div>
+      ${status==='enemy'&&planetInfo.owner?`<div class="pd-row"><span>Owner</span><span style="color:#ff8844">${planetInfo.owner}</span></div>`:''}
+    </div>
+    ${scoutData?`<div class="pd-section">
+      <div class="pd-stitle">Scout Intelligence</div>
+      <div class="def-info">
+        <div class="def-row"><span>Defense Power</span><span style="color:#ffc400">${scoutData.defPower}</span></div>
+        <div class="def-row"><span>Enemy Fleet</span><span>${scoutData.enemyFleet||'None'}</span></div>
+        <div class="def-row"><span>Buildings</span><span>${scoutData.buildings||'None'}</span></div>
+      </div>
+      ${scoutData.ships&&scoutData.ships.length?`
+        <div class="pd-stitle" style="margin-top:8px;">Enemy Ships</div>
+        ${scoutData.ships.map(s=>`
+          <div class="ship-detail-row">
+            <div class="sdr-icon">${s.icon||'&#128640;'}</div>
+            <div class="sdr-name">${s.name}</div>
+            <div class="sdr-count">x${s.count}</div>
+            <div class="sdr-atk">ATK:${s.atk*s.count}</div>
+            <div class="sdr-def">DEF:${s.def*s.count}</div>
+          </div>`).join('')}`:''}
+    </div>`:`<div class="pd-section">
+      <div style="font-size:9px;color:rgba(255,255,255,.3);font-style:italic;">&#128065; Scout this planet to reveal defense information and enemy fleet details.</div>
+    </div>`}
+    <div class="pd-actions">
+      ${status==='yours'||status==='home'
+        ?`<button class="pda-btn land" onclick="closePlanetDetail();nav('planet.html')">LAND ON PLANET</button>`
+        :status==='conquered'
+          ?`<button class="pda-btn colonize" onclick="closePlanetDetail()">SEND COLONIZER</button>`
+          :`<button class="pda-btn scout" onclick="closePlanetDetail()">&#128065; SCOUT</button>
+            <button class="pda-btn attack" onclick="closePlanetDetail()">&#9876; ATTACK</button>`
+      }
+    </div>`;
+  $('planet-detail').classList.add('open');
+};
+window.closePlanetDetail=function(){$('planet-detail').classList.remove('open');};
+
+// Close modals on backdrop
+$('search-modal').addEventListener('click',e=>{if(e.target===$('search-modal'))closeSearch();});
+$('planet-detail').addEventListener('click',e=>{if(e.target===$('planet-detail'))closePlanetDetail();});
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+async function init(){
+  setLoad(10,'Connecting...');await delay(100);
+
+  let session=null;
+  try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
+  if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+  userId=session.user.id;
+
+  setLoad(30,'Loading profile...');await delay(100);
+  const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
+  profile=prof;
+
+  // Set profile UI
+  const ai=(prof?.avatar_id||1)-1;
+  $('tb-avatar').innerHTML=AVATARS[Math.min(ai,AVATARS.length-1)];
+  $('tb-name').textContent=prof?.username||'Commander';
+  $('tb-tag').textContent=prof?.player_tag||'#VD-00000';
+
+  // Load resources from localStorage
+  setLoad(50,'Loading planet...');await delay(100);
+  const savedRes=localStorage.getItem('vd_res_'+userId);
+  if(savedRes){
+    resources=JSON.parse(savedRes);
+  } else {
+    resources={cr:prof?.credits||0,mn:prof?.minerals||500,en:prof?.energy||200};
+  }
+
+  // Load home planet data
+  const pRaw=sessionStorage.getItem('vd_planet');
+  if(pRaw){
+    planetData=JSON.parse(pRaw);
+  } else {
+    // Generate home planet from userId
+    function mkRng(seed){let s=Math.abs(seed)%2147483647||1;return()=>{s=s*16807%2147483647;return(s-1)/2147483646;};}
+    function hashStr(str){let h=5381;for(let i=0;i<str.length;i++)h=(h*33^str.charCodeAt(i))>>>0;return h;}
+    const rng=mkRng(hashStr(session.user.id));
+    const TYPES=['Rocky','Gas Giant','Ice','Lava','Ocean','Desert','Toxic','Terran'];
+    const ICONS=['&#10052;','&#127756;','&#10052;','&#127755;','&#127754;','&#127757;','&#9763;','&#127758;'];
+    const COLS=[[180,140,100],[220,160,80],[160,210,255],[255,80,30],[40,120,220],[210,180,100],[120,200,60],[60,160,80]];
+    const ti=Math.floor(rng()*TYPES.length);
+    planetData={
+      id:0,name:'Planet 1',type:TYPES[ti],
+      icon:ICONS[ti],col:COLS[ti],
+      isHome:true,
+      crYield:4,mnYield:3,enYield:3,
+      moons:Math.floor(rng()*4),
+      atm:'Breathable',temp:'Mild',grav:'1.0g',
+      systemName:'Home System',galaxyName:'Home Galaxy',
+    };
+    sessionStorage.setItem('vd_planet',JSON.stringify(planetData));
+  }
+
+  // Load buildings
+  setLoad(70,'Loading buildings...');await delay(100);
+  const bldKey='vd_bld_'+userId+'_home';
+  const savedBld=localStorage.getItem(bldKey);
+  buildings=savedBld?JSON.parse(savedBld):{cc:1};
+
+  // Update home planet UI
+  $('sh-icon').innerHTML=planetData.icon||'&#127758;';
+  $('sh-name').textContent=planetData.name||'Home Planet';
+  $('sh-type').textContent=(planetData.type||'Unknown')+' Planet';
+  $('sh-coord').textContent='ID: home_'+planetData.id+' | Coord: '+genCoord(userId,'home');
+
+  // Check notifications
+  setLoad(85,'Ready...');await delay(100);
+  renderNotifs();
+
+  // Init background and resources
+  initBg();
+  updateResUI();
+  startTick();
+
+  // Auto-save resources
+  setInterval(()=>{
+    localStorage.setItem('vd_res_'+userId,JSON.stringify(resources));
+  },10000);
+
+  // Add demo notification if first time
+  const notifs=JSON.parse(localStorage.getItem('vd_notifs_'+userId)||'[]');
+  if(notifs.length===0){
+    addNotif('info','Welcome to Void Dominion','Your empire begins! Build your Commander Center and start expanding.');
+    addNotif('done','Daily Reward Available','Claim your Day 1 reward in the Missions tab!');
+  }
+
+  setLoad(100,'Welcome!');await delay(300);
+  const ls=$('loadscr');ls.style.transition='opacity .4s';ls.style.opacity='0';
+  setTimeout(()=>ls.style.display='none',450);
+
+  toast('Welcome back, '+(prof?.username||'Commander')+'!','ok');
+}
+
+init();
+</script>
+</body>
+</html>
