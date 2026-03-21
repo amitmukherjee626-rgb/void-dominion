@@ -974,6 +974,17 @@ async function init(){
   let session=null;
   try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
   if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+  userId=session.user.id;
+
+  // If no system data in sessionStorage, we came here directly
+  // Redirect to game.html instead of hanging
+  const quickSysCheck = sessionStorage.getItem('vd_system');
+  if(!quickSysCheck){
+    // Try to use home system as default — don't hang
+    // Just set a default and continue, or go home
+    window.location.href='game.html';
+    return;
+  }
 
   setLoad(30,'Loading profile...');await delay(100);
   const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
