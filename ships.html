@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{background:#00010a;display:flex;flex-wrap:wrap;gap:16px;padding:20px;font-family:monospace;justify-content:center;}
+.ship{text-align:center;color:#00e5ff;font-size:10px;letter-spacing:1px;}
+.ship svg{filter:drop-shadow(0 0 8px var(--glow,rgba(0,229,255,0.4))) drop-shadow(0 0 3px var(--glow,rgba(0,229,255,0.3)));}
+.ship{background:rgba(0,5,15,0.0);border-radius:4px;}
+.small{opacity:0.8;font-size:8px;color:rgba(0,229,255,0.4);}
+</style>
+</head>
+<body>
+
+<!-- 1. PROBE -->
+<div class="ship" style="--glow:rgba(155,92,246,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg1" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#9b5cf6" stop-opacity="0.15"/><stop offset="100%" stop-color="#9b5cf6" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg1)"/>
+  <!-- fuselage slim diamond -->
+  <polygon points="40,8 44,22 40,36 36,22" fill="#1e0d38" stroke="#9b5cf6" stroke-width="1.3"/>
+  <!-- inner glow -->
+  <polygon points="40,12 42,22 40,32 38,22" fill="#2d1254" stroke="#c084fc" stroke-width="0.6"/>
+  <!-- cockpit -->
+  <ellipse cx="40" cy="18" rx="3" ry="4" fill="#3b1e6e" stroke="#d8b4fe" stroke-width="0.7"/>
+  <ellipse cx="40" cy="17" rx="1.8" ry="2.4" fill="#5b2d9e" stroke="#ede9fe" stroke-width="0.4"/>
+  <!-- 4 sensor booms -->
+  <line x1="40" y1="10" x2="40" y2="2" stroke="#9b5cf6" stroke-width="1.3"/>
+  <line x1="40" y1="34" x2="40" y2="42" stroke="#9b5cf6" stroke-width="1.3"/>
+  <line x1="36" y1="22" x2="22" y2="22" stroke="#9b5cf6" stroke-width="1.3"/>
+  <line x1="44" y1="22" x2="58" y2="22" stroke="#9b5cf6" stroke-width="1.3"/>
+  <!-- sensor nodes -->
+  <circle cx="40" cy="2" r="3" fill="#7c3aed" stroke="#a78bfa" stroke-width="0.8"/>
+  <circle cx="40" cy="2" r="1.2" fill="#ddd6fe"/>
+  <circle cx="40" cy="42" r="3" fill="#7c3aed" stroke="#a78bfa" stroke-width="0.8"/>
+  <circle cx="40" cy="42" r="1.2" fill="#ddd6fe"/>
+  <circle cx="22" cy="22" r="3" fill="#7c3aed" stroke="#a78bfa" stroke-width="0.8"/>
+  <circle cx="22" cy="22" r="1.2" fill="#ddd6fe"/>
+  <circle cx="58" cy="22" r="3" fill="#7c3aed" stroke="#a78bfa" stroke-width="0.8"/>
+  <circle cx="58" cy="22" r="1.2" fill="#ddd6fe"/>
+  <!-- side micro wings -->
+  <polygon points="36,20 28,28 32,26 36,24" fill="#1a0a30" stroke="#9b5cf6" stroke-width="0.7"/>
+  <polygon points="44,20 52,28 48,26 44,24" fill="#1a0a30" stroke="#9b5cf6" stroke-width="0.7"/>
+  <!-- engine tiny -->
+  <rect x="37" y="35" width="6" height="7" rx="1.5" fill="#120828" stroke="#9b5cf6" stroke-width="0.8"/>
+  <ellipse cx="40" cy="43" rx="3" ry="1.5" fill="#7c3aed" opacity="0.7"/>
+</svg>
+<div>PROBE</div><div class="small">Stealth Scout</div>
+</div>
+
+<!-- 2. COLONIZER -->
+<div class="ship" style="--glow:rgba(0,180,204,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg2" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00b4cc" stop-opacity="0.12"/><stop offset="100%" stop-color="#00b4cc" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg2)"/>
+  <!-- wide body transport -->
+  <path d="M40,8 L54,16 L58,50 L52,58 L40,62 L28,58 L22,50 L26,16 Z" fill="#061a24" stroke="#00b4cc" stroke-width="1.3"/>
+  <!-- hull panels -->
+  <line x1="40" y1="8" x2="40" y2="62" stroke="#00e5ff" stroke-width="0.4" opacity="0.25"/>
+  <line x1="26" y1="28" x2="54" y2="28" stroke="#00e5ff" stroke-width="0.4" opacity="0.25"/>
+  <line x1="24" y1="42" x2="56" y2="42" stroke="#00e5ff" stroke-width="0.4" opacity="0.25"/>
+  <!-- cargo dome top -->
+  <ellipse cx="40" cy="22" rx="10" ry="8" fill="#0a2a38" stroke="#00e5ff" stroke-width="0.9"/>
+  <ellipse cx="40" cy="20" rx="6" ry="5" fill="#103545" stroke="#00ccdd" stroke-width="0.7"/>
+  <ellipse cx="40" cy="18" rx="3" ry="2.5" fill="#1a4d5e" stroke="#80eeff" stroke-width="0.5"/>
+  <!-- cargo bay -->
+  <rect x="30" y="30" width="20" height="16" rx="1.5" fill="#060f16" stroke="#00b4cc" stroke-width="0.8"/>
+  <rect x="32" y="32" width="7" height="12" rx="1" fill="#091820"/>
+  <rect x="41" y="32" width="7" height="12" rx="1" fill="#091820"/>
+  <line x1="40" y1="32" x2="40" y2="44" stroke="#00b4cc" stroke-width="0.5" opacity="0.5"/>
+  <!-- landing leg L -->
+  <line x1="26" y1="48" x2="14" y2="60" stroke="#00b4cc" stroke-width="1.5"/>
+  <line x1="22" y1="52" x2="10" y2="60" stroke="#00b4cc" stroke-width="1.2"/>
+  <ellipse cx="12" cy="61" rx="5" ry="2.5" fill="#00e676" opacity="0.6"/>
+  <!-- landing leg R -->
+  <line x1="54" y1="48" x2="66" y2="60" stroke="#00b4cc" stroke-width="1.5"/>
+  <line x1="58" y1="52" x2="70" y2="60" stroke="#00b4cc" stroke-width="1.2"/>
+  <ellipse cx="68" cy="61" rx="5" ry="2.5" fill="#00e676" opacity="0.6"/>
+  <!-- twin engines -->
+  <rect x="31" y="58" width="8" height="10" rx="2" fill="#060f16" stroke="#00b4cc" stroke-width="0.9"/>
+  <rect x="41" y="58" width="8" height="10" rx="2" fill="#060f16" stroke="#00b4cc" stroke-width="0.9"/>
+  <ellipse cx="35" cy="69" rx="4" ry="2" fill="#00e5ff" opacity="0.55"/>
+  <ellipse cx="45" cy="69" rx="4" ry="2" fill="#00e5ff" opacity="0.55"/>
+</svg>
+<div>COLONIZER</div><div class="small">Planet Colonization</div>
+</div>
+
+<!-- 3. LIGHT CARRIER -->
+<div class="ship" style="--glow:rgba(204,160,0,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg3" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#cca000" stop-opacity="0.13"/><stop offset="100%" stop-color="#cca000" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg3)"/>
+  <!-- hull -->
+  <path d="M40,8 L56,16 L58,52 L40,60 L22,52 L24,16 Z" fill="#141a00" stroke="#cca000" stroke-width="1.2"/>
+  <!-- flight deck -->
+  <rect x="24" y="18" width="32" height="28" rx="1" fill="#0d1400" stroke="#cca000" stroke-width="0.8"/>
+  <!-- 2 lanes -->
+  <line x1="32" y1="19" x2="32" y2="45" stroke="#ffc400" stroke-width="0.7" stroke-dasharray="3,2"/>
+  <line x1="48" y1="19" x2="48" y2="45" stroke="#ffc400" stroke-width="0.7" stroke-dasharray="3,2"/>
+  <line x1="40" y1="19" x2="40" y2="45" stroke="#ffc400" stroke-width="0.8"/>
+  <!-- catapult bar -->
+  <line x1="25" y1="26" x2="55" y2="26" stroke="#d4a800" stroke-width="0.5" opacity="0.45"/>
+  <line x1="25" y1="38" x2="55" y2="38" stroke="#d4a800" stroke-width="0.5" opacity="0.45"/>
+  <!-- bridge island offset starboard -->
+  <rect x="50" y="10" width="10" height="14" rx="1" fill="#1e2800" stroke="#ffc400" stroke-width="0.9"/>
+  <rect x="52" y="7" width="6" height="5" rx="1" fill="#283600" stroke="#ffd700" stroke-width="0.7"/>
+  <rect x="54" y="5" width="2.5" height="2.5" fill="#ffc400" opacity="0.5"/>
+  <line x1="55" y1="5" x2="55" y2="2" stroke="#ffc400" stroke-width="0.7"/>
+  <circle cx="55" cy="1.5" r="1.2" fill="#ffd700"/>
+  <!-- corner turrets -->
+  <circle cx="26" cy="20" r="3" fill="#121800" stroke="#cca000" stroke-width="0.7"/>
+  <circle cx="26" cy="44" r="3" fill="#121800" stroke="#cca000" stroke-width="0.7"/>
+  <circle cx="54" cy="44" r="3" fill="#121800" stroke="#cca000" stroke-width="0.7"/>
+  <!-- deck boxes -->
+  <rect x="28" y="28" width="8" height="10" rx="1" fill="none" stroke="#ffc400" stroke-width="0.45" opacity="0.4"/>
+  <!-- 2 engines -->
+  <rect x="30" y="53" width="9" height="9" rx="2" fill="#0d1200" stroke="#cca000" stroke-width="0.8"/>
+  <rect x="41" y="53" width="9" height="9" rx="2" fill="#0d1200" stroke="#cca000" stroke-width="0.8"/>
+  <ellipse cx="35" cy="63" rx="4.5" ry="2" fill="#cc8800" opacity="0.8"/>
+  <ellipse cx="45" cy="63" rx="4.5" ry="2" fill="#cc8800" opacity="0.8"/>
+</svg>
+<div>LIGHT CARRIER</div><div class="small">Fleet Transport</div>
+</div>
+
+<!-- 4. FLEET CARRIER -->
+<div class="ship" style="--glow:rgba(212,168,0,0.55)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg4" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#d4a800" stop-opacity="0.14"/><stop offset="100%" stop-color="#d4a800" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg4)"/>
+  <path d="M40,5 L66,13 L70,57 L40,67 L10,57 L14,13 Z" fill="#0d1400" stroke="#d4a800" stroke-width="1.5"/>
+  <rect x="13" y="15" width="54" height="38" rx="1" fill="#0c1400" stroke="#d4a800" stroke-width="0.9"/>
+  <!-- 3 lanes -->
+  <line x1="21" y1="16" x2="21" y2="52" stroke="#ffc400" stroke-width="0.7" stroke-dasharray="4,3"/>
+  <line x1="40" y1="16" x2="40" y2="52" stroke="#ffc400" stroke-width="0.95"/>
+  <line x1="59" y1="16" x2="59" y2="52" stroke="#ffc400" stroke-width="0.7" stroke-dasharray="4,3"/>
+  <line x1="14" y1="24" x2="66" y2="24" stroke="#d4a800" stroke-width="0.5" opacity="0.4"/>
+  <line x1="14" y1="44" x2="66" y2="44" stroke="#d4a800" stroke-width="0.5" opacity="0.4"/>
+  <!-- blast deflectors -->
+  <rect x="15" y="53" width="8" height="2.5" rx="0.5" fill="#1e2e00" stroke="#d4a800" stroke-width="0.5"/>
+  <rect x="36" y="53" width="8" height="2.5" rx="0.5" fill="#1e2e00" stroke="#d4a800" stroke-width="0.5"/>
+  <rect x="57" y="53" width="8" height="2.5" rx="0.5" fill="#1e2e00" stroke="#d4a800" stroke-width="0.5"/>
+  <!-- ISLAND BRIDGE starboard -->
+  <rect x="56" y="7" width="15" height="18" rx="1" fill="#1e2e00" stroke="#ffc400" stroke-width="1.1"/>
+  <rect x="58" y="4" width="11" height="5" rx="1" fill="#283e00" stroke="#ffd700" stroke-width="0.8"/>
+  <rect x="61" y="2" width="5" height="3" rx="0.5" fill="#ffc400" opacity="0.55"/>
+  <line x1="63" y1="2" x2="63" y2="0" stroke="#ffc400" stroke-width="0.9"/>
+  <circle cx="63" cy="0" r="1.5" fill="#ffd700"/>
+  <!-- AA turrets -->
+  <circle cx="15" cy="17" r="3.5" fill="#141e00" stroke="#d4a800" stroke-width="0.8"/>
+  <circle cx="15" cy="51" r="3.5" fill="#141e00" stroke="#d4a800" stroke-width="0.8"/>
+  <circle cx="65" cy="51" r="3.5" fill="#141e00" stroke="#d4a800" stroke-width="0.8"/>
+  <!-- deck boxes -->
+  <rect x="24" y="28" width="10" height="14" rx="1" fill="none" stroke="#ffc400" stroke-width="0.5" opacity="0.4"/>
+  <rect x="46" y="28" width="10" height="14" rx="1" fill="none" stroke="#ffc400" stroke-width="0.5" opacity="0.4"/>
+  <!-- 3 engine banks -->
+  <rect x="15" y="58" width="12" height="9" rx="2" fill="#0e1500" stroke="#d4a800" stroke-width="0.9"/>
+  <rect x="34" y="59" width="12" height="9" rx="2" fill="#0e1500" stroke="#d4a800" stroke-width="0.9"/>
+  <rect x="53" y="58" width="12" height="9" rx="2" fill="#0e1500" stroke="#d4a800" stroke-width="0.9"/>
+  <ellipse cx="21" cy="68" rx="6" ry="2.5" fill="#cc8800" opacity="0.8"/>
+  <ellipse cx="40" cy="69" rx="6" ry="2.5" fill="#ffaa00" opacity="0.9"/>
+  <ellipse cx="59" cy="68" rx="6" ry="2.5" fill="#cc8800" opacity="0.8"/>
+</svg>
+<div>FLEET CARRIER</div><div class="small">Massive Transport</div>
+</div>
+
+<!-- 5. GARBAGE COLLECTOR -->
+<div class="ship" style="--glow:rgba(0,200,83,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg5" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#00c853" stop-opacity="0.12"/><stop offset="100%" stop-color="#00c853" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg5)"/>
+  <!-- round body -->
+  <circle cx="40" cy="36" r="17" fill="#071a08" stroke="#00c853" stroke-width="1.3"/>
+  <circle cx="40" cy="36" r="11" fill="#0a1e0a" stroke="#00e676" stroke-width="0.8"/>
+  <!-- upper arm L -->
+  <path d="M28,24 L16,14 L12,19 L24,29 Z" fill="#061006" stroke="#00c853" stroke-width="1"/>
+  <!-- upper arm R -->
+  <path d="M52,24 L64,14 L68,19 L56,29 Z" fill="#061006" stroke="#00c853" stroke-width="1"/>
+  <!-- lower arm L -->
+  <path d="M26,46 L12,58 L15,63 L28,52 Z" fill="#061006" stroke="#00c853" stroke-width="1"/>
+  <!-- lower arm R -->
+  <path d="M54,46 L68,58 L65,63 L52,52 Z" fill="#061006" stroke="#00c853" stroke-width="1"/>
+  <!-- claw UL -->
+  <path d="M12,14 L8,10 L5,16 L9,19 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <path d="M12,19 L7,19 L5,24 L11,23 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <!-- claw UR -->
+  <path d="M68,14 L72,10 L75,16 L71,19 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <path d="M68,19 L73,19 L75,24 L69,23 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <!-- claw LL -->
+  <path d="M12,60 L8,64 L10,70 L14,66 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <path d="M15,63 L10,67 L12,73 L16,69 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <!-- claw LR -->
+  <path d="M68,60 L72,64 L70,70 L66,66 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <path d="M65,63 L70,67 L68,73 L64,69 Z" fill="#00c853" stroke="#00e676" stroke-width="0.7"/>
+  <!-- core -->
+  <circle cx="40" cy="36" r="7" fill="#0d200d" stroke="#00e676" stroke-width="0.9"/>
+  <circle cx="40" cy="36" r="4" fill="#112011" stroke="#00e676" stroke-width="0.6"/>
+  <circle cx="40" cy="36" r="2" fill="#00e676" opacity="0.65"/>
+  <!-- engine -->
+  <ellipse cx="40" cy="53" rx="5" ry="2.5" fill="#00c853" opacity="0.55"/>
+  <ellipse cx="40" cy="54" rx="3" ry="1.5" fill="#00e676" opacity="0.4"/>
+</svg>
+<div>COLLECTOR</div><div class="small">Resource Salvage</div>
+</div>
+
+<!-- 6. FIGHTER -->
+<div class="ship" style="--glow:rgba(255,51,51,0.55)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg6" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff3333" stop-opacity="0.14"/><stop offset="100%" stop-color="#ff3333" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg6)"/>
+  <polygon points="40,4 43,14 40,18 37,14" fill="#ff3333" opacity="0.9"/>
+  <path d="M37,14 L40,18 L43,14 L46,32 L44,52 L40,58 L36,52 L34,32 Z" fill="#1e0505" stroke="#ff3333" stroke-width="1.2"/>
+  <ellipse cx="40" cy="22" rx="4" ry="5.5" fill="#2a0808" stroke="#ff6644" stroke-width="0.9"/>
+  <ellipse cx="40" cy="21" rx="2.5" ry="3.5" fill="#3d1010" stroke="#ff9977" stroke-width="0.5"/>
+  <path d="M37,20 L8,54 L18,50 L34,36 Z" fill="#150305" stroke="#ff3333" stroke-width="1"/>
+  <path d="M43,20 L72,54 L62,50 L46,36 Z" fill="#150305" stroke="#ff3333" stroke-width="1"/>
+  <line x1="24" y1="40" x2="34" y2="30" stroke="#ff3333" stroke-width="0.6" opacity="0.5"/>
+  <line x1="56" y1="40" x2="46" y2="30" stroke="#ff3333" stroke-width="0.6" opacity="0.5"/>
+  <rect x="8" y="46" width="10" height="3" rx="1" fill="#2a0505" stroke="#ff3333" stroke-width="0.8"/>
+  <rect x="4" y="47" width="6" height="2" rx="0.5" fill="#ff3333" opacity="0.8"/>
+  <rect x="62" y="46" width="10" height="3" rx="1" fill="#2a0505" stroke="#ff3333" stroke-width="0.8"/>
+  <rect x="70" y="47" width="6" height="2" rx="0.5" fill="#ff3333" opacity="0.8"/>
+  <rect x="35" y="52" width="4.5" height="9" rx="1.5" fill="#200508" stroke="#ff3333" stroke-width="0.8"/>
+  <rect x="40.5" y="52" width="4.5" height="9" rx="1.5" fill="#200508" stroke="#ff3333" stroke-width="0.8"/>
+  <ellipse cx="37" cy="62" rx="2.5" ry="1.5" fill="#ff6600" opacity="0.9"/>
+  <ellipse cx="43" cy="62" rx="2.5" ry="1.5" fill="#ff6600" opacity="0.9"/>
+</svg>
+<div>FIGHTER</div><div class="small">Fast Attack</div>
+</div>
+
+<!-- 7. GUNSHIP -->
+<div class="ship" style="--glow:rgba(255,102,0,0.55)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg7" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#ff6600" stop-opacity="0.14"/><stop offset="100%" stop-color="#ff6600" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg7)"/>
+  <polygon points="40,5 44,16 40,20 36,16" fill="#ff6600" opacity="0.9"/>
+  <path d="M35,14 L40,20 L45,14 L50,34 L48,54 L40,60 L32,54 L30,34 Z" fill="#1e0900" stroke="#ff6600" stroke-width="1.3"/>
+  <ellipse cx="40" cy="24" rx="5" ry="6" fill="#2a0e00" stroke="#ff8800" stroke-width="0.9"/>
+  <ellipse cx="40" cy="23" rx="3" ry="4" fill="#3a1800" stroke="#ffaa44" stroke-width="0.6"/>
+  <path d="M36,22 L6,50 L16,48 L32,36 Z" fill="#1a0800" stroke="#ff6600" stroke-width="1.1"/>
+  <path d="M44,22 L74,50 L64,48 L48,36 Z" fill="#1a0800" stroke="#ff6600" stroke-width="1.1"/>
+  <rect x="8" y="42" width="12" height="3.5" rx="1" fill="#2a0e00" stroke="#ff6600" stroke-width="0.9"/>
+  <rect x="8" y="46" width="12" height="3.5" rx="1" fill="#2a0e00" stroke="#ff6600" stroke-width="0.9"/>
+  <rect x="3" y="43" width="7" height="2" rx="0.5" fill="#ff6600" opacity="0.8"/>
+  <rect x="3" y="47" width="7" height="2" rx="0.5" fill="#ff6600" opacity="0.8"/>
+  <rect x="60" y="42" width="12" height="3.5" rx="1" fill="#2a0e00" stroke="#ff6600" stroke-width="0.9"/>
+  <rect x="60" y="46" width="12" height="3.5" rx="1" fill="#2a0e00" stroke="#ff6600" stroke-width="0.9"/>
+  <rect x="70" y="43" width="7" height="2" rx="0.5" fill="#ff6600" opacity="0.8"/>
+  <rect x="70" y="47" width="7" height="2" rx="0.5" fill="#ff6600" opacity="0.8"/>
+  <rect x="33" y="53" width="6" height="10" rx="2" fill="#200800" stroke="#ff6600" stroke-width="0.9"/>
+  <rect x="41" y="53" width="6" height="10" rx="2" fill="#200800" stroke="#ff6600" stroke-width="0.9"/>
+  <ellipse cx="36" cy="64" rx="3.5" ry="2" fill="#ff8800" opacity="0.9"/>
+  <ellipse cx="44" cy="64" rx="3.5" ry="2" fill="#ff8800" opacity="0.9"/>
+</svg>
+<div>GUNSHIP</div><div class="small">Heavy Fighter</div>
+</div>
+
+<!-- 8. DESTROYER -->
+<div class="ship" style="--glow:rgba(0,136,255,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg8" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#0088ff" stop-opacity="0.13"/><stop offset="100%" stop-color="#0088ff" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg8)"/>
+  <path d="M40,4 L46,10 L48,58 L40,66 L32,58 L34,10 Z" fill="#000d22" stroke="#0088ff" stroke-width="1.2"/>
+  <polygon points="40,4 46,10 42,13 40,10 38,13 34,10" fill="#001e40" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="35" y="13" width="10" height="10" rx="1" fill="#001e40" stroke="#00aaff" stroke-width="0.8"/>
+  <rect x="37" y="10" width="6" height="5" rx="1" fill="#002a55" stroke="#00ccff" stroke-width="0.6"/>
+  <rect x="14" y="20" width="22" height="4" rx="1" fill="#001533" stroke="#0088ff" stroke-width="0.9"/>
+  <rect x="8" y="21" width="9" height="2.5" rx="0.5" fill="#0055aa"/>
+  <circle cx="7" cy="22" r="2.5" fill="#0088ff" stroke="#00aaff" stroke-width="0.5"/>
+  <rect x="44" y="20" width="22" height="4" rx="1" fill="#001533" stroke="#0088ff" stroke-width="0.9"/>
+  <rect x="63" y="21" width="9" height="2.5" rx="0.5" fill="#0055aa"/>
+  <circle cx="73" cy="22" r="2.5" fill="#0088ff" stroke="#00aaff" stroke-width="0.5"/>
+  <rect x="24" y="30" width="10" height="6" rx="0.5" fill="#001228" stroke="#0066aa" stroke-width="0.6"/>
+  <rect x="46" y="30" width="10" height="6" rx="0.5" fill="#001228" stroke="#0066aa" stroke-width="0.6"/>
+  <rect x="24" y="40" width="10" height="6" rx="0.5" fill="#001228" stroke="#0066aa" stroke-width="0.6"/>
+  <rect x="46" y="40" width="10" height="6" rx="0.5" fill="#001228" stroke="#0066aa" stroke-width="0.6"/>
+  <circle cx="28" cy="38" r="4" fill="#001533" stroke="#0088ff" stroke-width="0.8"/>
+  <rect x="20" y="37" width="10" height="2" rx="1" fill="#004488"/>
+  <circle cx="52" cy="38" r="4" fill="#001533" stroke="#0088ff" stroke-width="0.8"/>
+  <rect x="50" y="37" width="10" height="2" rx="1" fill="#004488"/>
+  <line x1="40" y1="24" x2="40" y2="58" stroke="#0088ff" stroke-width="0.4" opacity="0.3"/>
+  <rect x="34" y="58" width="5.5" height="10" rx="2" fill="#001228" stroke="#0088ff" stroke-width="0.8"/>
+  <rect x="40.5" y="58" width="5.5" height="10" rx="2" fill="#001228" stroke="#0088ff" stroke-width="0.8"/>
+  <ellipse cx="37" cy="69" rx="3" ry="1.8" fill="#0066ff" opacity="0.8"/>
+  <ellipse cx="43" cy="69" rx="3" ry="1.8" fill="#0066ff" opacity="0.8"/>
+</svg>
+<div>DESTROYER</div><div class="small">Anti-Fighter</div>
+</div>
+
+<!-- 9. FRIGATE -->
+<div class="ship" style="--glow:rgba(68,119,255,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg9" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#4477ff" stop-opacity="0.12"/><stop offset="100%" stop-color="#4477ff" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg9)"/>
+  <path d="M40,5 L50,12 L54,55 L40,65 L26,55 L30,12 Z" fill="#070a16" stroke="#4477ff" stroke-width="1.2"/>
+  <path d="M40,5 L50,12 L46,16 L40,12 L34,16 L30,12 Z" fill="#0d1235" stroke="#5588ff" stroke-width="0.9"/>
+  <rect x="34" y="14" width="12" height="11" rx="1" fill="#0d1535" stroke="#5599ff" stroke-width="0.9"/>
+  <rect x="36" y="11" width="8" height="5" rx="1" fill="#121a42" stroke="#77aaff" stroke-width="0.6"/>
+  <rect x="38" y="9" width="4" height="3" rx="0.5" fill="#5588ff" opacity="0.5"/>
+  <!-- side weapon blisters -->
+  <ellipse cx="26" cy="28" rx="6" ry="4" fill="#0a0d24" stroke="#4477ff" stroke-width="0.8"/>
+  <rect x="16" y="27" width="12" height="2.5" rx="1" fill="#2244aa"/>
+  <ellipse cx="54" cy="28" rx="6" ry="4" fill="#0a0d24" stroke="#4477ff" stroke-width="0.8"/>
+  <rect x="52" y="27" width="12" height="2.5" rx="1" fill="#2244aa"/>
+  <!-- hull armor panels -->
+  <path d="M30,34 L22,38 L22,50 L30,52 Z" fill="#080b20" stroke="#3366dd" stroke-width="0.7"/>
+  <path d="M50,34 L58,38 L58,50 L50,52 Z" fill="#080b20" stroke="#3366dd" stroke-width="0.7"/>
+  <!-- mid turrets -->
+  <circle cx="26" cy="44" r="4.5" fill="#0a0d24" stroke="#4477ff" stroke-width="0.8"/>
+  <rect x="18" y="43" width="10" height="2" rx="1" fill="#2244aa"/>
+  <circle cx="54" cy="44" r="4.5" fill="#0a0d24" stroke="#4477ff" stroke-width="0.8"/>
+  <rect x="52" y="43" width="10" height="2" rx="1" fill="#2244aa"/>
+  <line x1="36" y1="28" x2="44" y2="28" stroke="#4477ff" stroke-width="0.4" opacity="0.4"/>
+  <line x1="35" y1="42" x2="45" y2="42" stroke="#4477ff" stroke-width="0.4" opacity="0.4"/>
+  <rect x="33" y="56" width="6.5" height="10" rx="2" fill="#080b20" stroke="#4477ff" stroke-width="0.8"/>
+  <rect x="40.5" y="56" width="6.5" height="10" rx="2" fill="#080b20" stroke="#4477ff" stroke-width="0.8"/>
+  <ellipse cx="36" cy="67" rx="3.5" ry="2" fill="#3366ff" opacity="0.8"/>
+  <ellipse cx="44" cy="67" rx="3.5" ry="2" fill="#3366ff" opacity="0.8"/>
+</svg>
+<div>FRIGATE</div><div class="small">Balanced Warship</div>
+</div>
+
+<!-- 10. CRUISER -->
+<div class="ship" style="--glow:rgba(119,85,238,0.5)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg10" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#7755ee" stop-opacity="0.14"/><stop offset="100%" stop-color="#7755ee" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg10)"/>
+  <path d="M40,5 L54,11 L58,56 L40,66 L22,56 L26,11 Z" fill="#0a0018" stroke="#7755ee" stroke-width="1.3"/>
+  <path d="M40,5 L54,11 L50,16 L40,13 L30,16 L26,11 Z" fill="#100020" stroke="#8866ff" stroke-width="0.9"/>
+  <rect x="33" y="14" width="14" height="13" rx="1" fill="#100020" stroke="#9977ff" stroke-width="1"/>
+  <rect x="36" y="10" width="8" height="6" rx="1" fill="#180030" stroke="#aa88ff" stroke-width="0.7"/>
+  <circle cx="27" cy="24" r="5.5" fill="#0d001a" stroke="#7755ee" stroke-width="1"/>
+  <rect x="16" y="23" width="13" height="2.5" rx="1" fill="#5533bb"/>
+  <circle cx="16" cy="24" r="2" fill="#7755ee"/>
+  <circle cx="53" cy="24" r="5.5" fill="#0d001a" stroke="#7755ee" stroke-width="1"/>
+  <rect x="51" y="23" width="13" height="2.5" rx="1" fill="#5533bb"/>
+  <circle cx="64" cy="24" r="2" fill="#7755ee"/>
+  <path d="M22,32 L14,36 L14,52 L22,56 L28,50 L28,36 Z" fill="#0a0318" stroke="#6644cc" stroke-width="0.8"/>
+  <path d="M58,32 L66,36 L66,52 L58,56 L52,50 L52,36 Z" fill="#0a0318" stroke="#6644cc" stroke-width="0.8"/>
+  <circle cx="18" cy="40" r="4" fill="#0d001a" stroke="#7755ee" stroke-width="0.8"/>
+  <rect x="10" y="39" width="10" height="2" rx="1" fill="#5533bb"/>
+  <circle cx="62" cy="40" r="4" fill="#0d001a" stroke="#7755ee" stroke-width="0.8"/>
+  <rect x="60" y="39" width="10" height="2" rx="1" fill="#5533bb"/>
+  <circle cx="28" cy="52" r="4" fill="#0d001a" stroke="#7755ee" stroke-width="0.8"/>
+  <circle cx="52" cy="52" r="4" fill="#0d001a" stroke="#7755ee" stroke-width="0.8"/>
+  <rect x="31" y="57" width="6" height="10" rx="2" fill="#0a0318" stroke="#7755ee" stroke-width="0.8"/>
+  <rect x="37" y="57" width="6" height="10" rx="2" fill="#0a0318" stroke="#7755ee" stroke-width="0.8"/>
+  <rect x="43" y="57" width="6" height="10" rx="2" fill="#0a0318" stroke="#7755ee" stroke-width="0.8"/>
+  <ellipse cx="34" cy="68" rx="3" ry="2" fill="#6633ee" opacity="0.8"/>
+  <ellipse cx="40" cy="68" rx="3.5" ry="2" fill="#8855ff" opacity="0.9"/>
+  <ellipse cx="46" cy="68" rx="3" ry="2" fill="#6633ee" opacity="0.8"/>
+</svg>
+<div>CRUISER</div><div class="small">Heavy Warship</div>
+</div>
+
+<!-- 11. BATTLESHIP -->
+<div class="ship" style="--glow:rgba(204,17,51,0.55)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg11" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#cc1133" stop-opacity="0.15"/><stop offset="100%" stop-color="#cc1133" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg11)"/>
+  <path d="M40,4 L58,10 L62,56 L40,68 L18,56 L22,10 Z" fill="#120205" stroke="#cc1133" stroke-width="1.5"/>
+  <path d="M40,4 L58,10 L54,15 L40,11 L26,15 L22,10 Z" fill="#200408" stroke="#dd2244" stroke-width="1"/>
+  <rect x="31" y="13" width="18" height="15" rx="1" fill="#200408" stroke="#cc1133" stroke-width="1"/>
+  <rect x="34" y="9" width="12" height="7" rx="1" fill="#2a0808" stroke="#ee3355" stroke-width="0.8"/>
+  <rect x="8" y="16" width="26" height="5" rx="1" fill="#1a0306" stroke="#cc1133" stroke-width="1.1"/>
+  <rect x="8" y="22" width="26" height="5" rx="1" fill="#1a0306" stroke="#cc1133" stroke-width="1.1"/>
+  <rect x="2" y="17" width="9" height="3" rx="0.5" fill="#ff2244" opacity="0.8"/>
+  <rect x="2" y="23" width="9" height="3" rx="0.5" fill="#ff2244" opacity="0.8"/>
+  <rect x="46" y="16" width="26" height="5" rx="1" fill="#1a0306" stroke="#cc1133" stroke-width="1.1"/>
+  <rect x="46" y="22" width="26" height="5" rx="1" fill="#1a0306" stroke="#cc1133" stroke-width="1.1"/>
+  <rect x="69" y="17" width="9" height="3" rx="0.5" fill="#ff2244" opacity="0.8"/>
+  <rect x="69" y="23" width="9" height="3" rx="0.5" fill="#ff2244" opacity="0.8"/>
+  <path d="M22,30 L12,34 L10,54 L22,58 L28,52 L28,34 Z" fill="#150305" stroke="#aa0022" stroke-width="0.9"/>
+  <path d="M58,30 L68,34 L70,54 L58,58 L52,52 L52,34 Z" fill="#150305" stroke="#aa0022" stroke-width="0.9"/>
+  <circle cx="16" cy="40" r="5" fill="#1a0306" stroke="#cc1133" stroke-width="0.9"/>
+  <rect x="7" y="39" width="11" height="2.5" rx="1" fill="#880011"/>
+  <circle cx="64" cy="40" r="5" fill="#1a0306" stroke="#cc1133" stroke-width="0.9"/>
+  <rect x="62" y="39" width="11" height="2.5" rx="1" fill="#880011"/>
+  <circle cx="26" cy="52" r="4.5" fill="#1a0306" stroke="#cc1133" stroke-width="0.8"/>
+  <circle cx="54" cy="52" r="4.5" fill="#1a0306" stroke="#cc1133" stroke-width="0.8"/>
+  <rect x="29" y="59" width="7" height="10" rx="2" fill="#150305" stroke="#cc1133" stroke-width="0.9"/>
+  <rect x="36.5" y="59" width="7" height="10" rx="2" fill="#150305" stroke="#cc1133" stroke-width="0.9"/>
+  <rect x="44" y="59" width="7" height="10" rx="2" fill="#150305" stroke="#cc1133" stroke-width="0.9"/>
+  <ellipse cx="33" cy="70" rx="3.5" ry="2" fill="#ee2200" opacity="0.8"/>
+  <ellipse cx="40" cy="70" rx="4" ry="2.2" fill="#ff3300" opacity="0.9"/>
+  <ellipse cx="47" cy="70" rx="3.5" ry="2" fill="#ee2200" opacity="0.8"/>
+</svg>
+<div>BATTLESHIP</div><div class="small">Siege Specialist</div>
+</div>
+
+<!-- 12. DREADNOUGHT -->
+<div class="ship" style="--glow:rgba(221,68,0,0.55)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg12" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#dd4400" stop-opacity="0.15"/><stop offset="100%" stop-color="#dd4400" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg12)"/>
+  <path d="M40,3 L60,9 L66,58 L40,72 L14,58 L20,9 Z" fill="#100600" stroke="#dd4400" stroke-width="1.5"/>
+  <rect x="36" y="3" width="8" height="50" rx="2" fill="#150600" stroke="#ff4400" stroke-width="1"/>
+  <rect x="38" y="3" width="4" height="50" rx="1" fill="#220900" stroke="#ff6600" stroke-width="0.5"/>
+  <path d="M40,3 L60,9 L56,14 L40,10 L24,14 L20,9 Z" fill="#200800" stroke="#ee5500" stroke-width="1"/>
+  <rect x="30" y="12" width="20" height="16" rx="2" fill="#200800" stroke="#ee5500" stroke-width="1.1"/>
+  <rect x="33" y="8" width="14" height="7" rx="1" fill="#2a1000" stroke="#ff6600" stroke-width="0.8"/>
+  <path d="M22,22 L8,30 L6,50 L20,56 L28,48 L26,28 Z" fill="#180700" stroke="#cc3300" stroke-width="0.9"/>
+  <path d="M58,22 L72,30 L74,50 L60,56 L52,48 L54,28 Z" fill="#180700" stroke="#cc3300" stroke-width="0.9"/>
+  <circle cx="14" cy="34" r="5" fill="#1a0800" stroke="#dd4400" stroke-width="0.9"/>
+  <rect x="5" y="33" width="11" height="2.5" rx="1" fill="#aa2200"/>
+  <circle cx="12" cy="46" r="4.5" fill="#1a0800" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="4" y="45" width="10" height="2" rx="1" fill="#aa2200"/>
+  <circle cx="66" cy="34" r="5" fill="#1a0800" stroke="#dd4400" stroke-width="0.9"/>
+  <rect x="64" y="33" width="11" height="2.5" rx="1" fill="#aa2200"/>
+  <circle cx="68" cy="46" r="4.5" fill="#1a0800" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="66" y="45" width="10" height="2" rx="1" fill="#aa2200"/>
+  <circle cx="26" cy="54" r="4.5" fill="#1a0800" stroke="#dd4400" stroke-width="0.8"/>
+  <circle cx="54" cy="54" r="4.5" fill="#1a0800" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="24" y="62" width="8" height="10" rx="2" fill="#150600" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="32" y="63" width="8" height="10" rx="2" fill="#150600" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="40" y="63" width="8" height="10" rx="2" fill="#150600" stroke="#dd4400" stroke-width="0.8"/>
+  <rect x="48" y="62" width="8" height="10" rx="2" fill="#150600" stroke="#dd4400" stroke-width="0.8"/>
+  <ellipse cx="28" cy="73" rx="4" ry="2" fill="#ff4400" opacity="0.8"/>
+  <ellipse cx="36" cy="74" rx="4" ry="2.2" fill="#ff5500" opacity="0.9"/>
+  <ellipse cx="44" cy="74" rx="4" ry="2.2" fill="#ff5500" opacity="0.9"/>
+  <ellipse cx="52" cy="73" rx="4" ry="2" fill="#ff4400" opacity="0.8"/>
+</svg>
+<div>DREADNOUGHT</div><div class="small">Fleet Killer</div>
+</div>
+
+<!-- 13. LEVIATHAN -->
+<div class="ship" style="--glow:rgba(170,0,238,0.6)">
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <defs><radialGradient id="bg13" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#aa00ee" stop-opacity="0.18"/><stop offset="100%" stop-color="#aa00ee" stop-opacity="0"/></radialGradient></defs>
+  <rect width="80" height="80" fill="url(#bg13)"/>
+  <path d="M40,2 L64,8 L70,60 L40,76 L10,60 L20,8 Z" fill="#0c0018" stroke="#aa00ee" stroke-width="1.8"/>
+  <rect x="36.5" y="2" width="7" height="68" rx="2" fill="#1c0030" stroke="#cc00ff" stroke-width="1.3"/>
+  <rect x="38.5" y="2" width="3" height="68" rx="1" fill="#2a0045" stroke="#ee44ff" stroke-width="0.5"/>
+  <ellipse cx="40" cy="3" rx="5" ry="3" fill="#cc00ff" opacity="0.7"/>
+  <path d="M40,2 L64,8 L58,14 L40,8 L22,14 L16,8 Z" fill="#1c0030" stroke="#aa00ee" stroke-width="1"/>
+  <rect x="28" y="10" width="24" height="18" rx="2" fill="#1c0030" stroke="#bb00ee" stroke-width="1.1"/>
+  <line x1="20" y1="16" x2="8" y2="11" stroke="#aa00ee" stroke-width="1.8"/><circle cx="7" cy="10" r="2.5" fill="#cc00ff" opacity="0.9"/>
+  <line x1="18" y1="26" x2="4" y2="23" stroke="#aa00ee" stroke-width="1.5"/><circle cx="3" cy="22" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="16" y1="36" x2="2" y2="35" stroke="#aa00ee" stroke-width="1.5"/><circle cx="1" cy="35" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="16" y1="46" x2="2" y2="47" stroke="#aa00ee" stroke-width="1.5"/><circle cx="1" cy="47" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="18" y1="54" x2="6" y2="58" stroke="#aa00ee" stroke-width="1.5"/><circle cx="5" cy="59" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="60" y1="16" x2="72" y2="11" stroke="#aa00ee" stroke-width="1.8"/><circle cx="73" cy="10" r="2.5" fill="#cc00ff" opacity="0.9"/>
+  <line x1="62" y1="26" x2="76" y2="23" stroke="#aa00ee" stroke-width="1.5"/><circle cx="77" cy="22" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="64" y1="36" x2="78" y2="35" stroke="#aa00ee" stroke-width="1.5"/><circle cx="79" cy="35" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="64" y1="46" x2="78" y2="47" stroke="#aa00ee" stroke-width="1.5"/><circle cx="79" cy="47" r="2" fill="#cc00ff" opacity="0.8"/>
+  <line x1="62" y1="54" x2="74" y2="58" stroke="#aa00ee" stroke-width="1.5"/><circle cx="75" cy="59" r="2" fill="#cc00ff" opacity="0.8"/>
+  <path d="M16,20 L10,24 L8,54 L18,60 L26,52 L24,26 Z" fill="#110020" stroke="#880099" stroke-width="0.8"/>
+  <path d="M64,20 L70,24 L72,54 L62,60 L54,52 L56,26 Z" fill="#110020" stroke="#880099" stroke-width="0.8"/>
+  <circle cx="14" cy="32" r="4.5" fill="#1c0030" stroke="#aa00ee" stroke-width="0.9"/><rect x="6" y="31" width="10" height="2" rx="1" fill="#770099"/>
+  <circle cx="12" cy="44" r="4" fill="#1c0030" stroke="#aa00ee" stroke-width="0.8"/><rect x="5" y="43" width="9" height="2" rx="1" fill="#770099"/>
+  <circle cx="66" cy="32" r="4.5" fill="#1c0030" stroke="#aa00ee" stroke-width="0.9"/><rect x="64" y="31" width="10" height="2" rx="1" fill="#770099"/>
+  <circle cx="68" cy="44" r="4" fill="#1c0030" stroke="#aa00ee" stroke-width="0.8"/><rect x="64" y="43" width="9" height="2" rx="1" fill="#770099"/>
+  <rect x="20" y="63" width="10" height="11" rx="2" fill="#130020" stroke="#aa00ee" stroke-width="0.9"/>
+  <rect x="30" y="64" width="10" height="11" rx="2" fill="#130020" stroke="#aa00ee" stroke-width="0.9"/>
+  <rect x="40" y="64" width="10" height="11" rx="2" fill="#130020" stroke="#aa00ee" stroke-width="0.9"/>
+  <rect x="50" y="63" width="10" height="11" rx="2" fill="#130020" stroke="#aa00ee" stroke-width="0.9"/>
+  <ellipse cx="25" cy="75" rx="5" ry="2.5" fill="#8800cc" opacity="0.8"/>
+  <ellipse cx="35" cy="76" rx="5" ry="2.5" fill="#aa00ee" opacity="0.9"/>
+  <ellipse cx="45" cy="76" rx="5" ry="2.5" fill="#aa00ee" opacity="0.9"/>
+  <ellipse cx="55" cy="75" rx="5" ry="2.5" fill="#8800cc" opacity="0.8"/>
+</svg>
+<div>LEVIATHAN</div><div class="small">Planet Destroyer</div>
+</div>
+
+</body>
+</html>
