@@ -831,7 +831,7 @@ const SHIP_DEFS=[
 
 // ══ MULTI-SELECT ATTACK STATE ══
 // atkSelected = {shipId: qty} — multiple ships selected
-let atkSelected={}, atkTargetDef=0;
+let atkSelected={}, atkTargetDef=0, atkTargetPlanet=null, atkLocked=false;
 
 function calcTotalAtk(){
   let total=0;
@@ -864,7 +864,9 @@ window.doAttack=function(){
   const defVal=scoutData?scoutData.defPower:(status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50));
   atkTargetDef=defVal;
   atkSelected={};
-  closePanel(true); // keep selPlanet!
+  atkTargetPlanet=selPlanet; // SAVE before any close
+  atkLocked=false;
+  closePanel(true);
   renderAtkModal(fleet,combatShips,defVal);
   $('atk-modal').classList.add('open');
 };
@@ -991,11 +993,16 @@ function closeAtkModal(){
 }
 
 // ══ EXECUTE ATTACK (multi-ship) ══
+let atkLocked=false; // prevent double-fire
+let atkTargetPlanet=null; // stored separately from selPlanet
+
 function executeAtk(defVal){
-  // Step 1: Validate
+  // Prevent double execution
+  if(atkLocked){return;}
+  
   const keys=Object.keys(atkSelected);
   if(!keys.length){toast('Tick karo ships pehle!','err');return;}
-  if(!selPlanet){toast('No target planet!','err');return;}
+  if(!atkTargetPlanet){toast('No target! Select planet first.','err');return;}
 
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
@@ -1008,41 +1015,40 @@ function executeAtk(defVal){
     }
   }
 
-  // Step 2: Snapshot everything needed
-  const shipsCopy=JSON.parse(JSON.stringify(atkSelected));
-  const myAtk=Object.entries(shipsCopy).reduce((tot,[id,qty])=>{
-    return tot+(SHIP_DEFS.find(s=>s.id===id)?.atk||0)*qty;
-  },0);
-  const totalShips=Object.values(shipsCopy).reduce((a,b)=>a+b,0);
-  const tp=selPlanet; // target planet ref
+  // LOCK to prevent double execution
+  atkLocked=true;
 
-  // Step 3: Deduct ships
+  // Snapshot
+  const shipsCopy=JSON.parse(JSON.stringify(atkSelected));
+  const myAtk=Object.entries(shipsCopy).reduce((tot,[id,qty])=>
+    tot+(SHIP_DEFS.find(s=>s.id===id)?.atk||0)*qty, 0);
+  const totalShips=Object.values(shipsCopy).reduce((a,b)=>a+b,0);
+  const tp=atkTargetPlanet; // use dedicated variable
+
+  // Deduct ships
   for(const [id,qty] of Object.entries(shipsCopy)){
     fleet[id]=Math.max(0,(fleet[id]||0)-qty);
   }
   fleetData.fleet=fleet;
   localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
 
-  // Step 4: Close UI — keepSel=true so selPlanet stays valid for tp ref
+  // Close UI completely
   $('atk-modal').classList.remove('open');
   atkSelected={};
-  closePanel(true);
+  $('planet-panel').classList.remove('open');
+  // DON'T touch selPlanet — not needed anymore
 
-  // Step 5: Dominant ship color
-  let domCol=[255,60,60];
-  let maxA=0;
+  // Dominant ship color
+  let domCol=[255,60,60];let maxA=0;
   for(const [id] of Object.entries(shipsCopy)){
     const s=SHIP_DEFS.find(x=>x.id===id);
     if(s&&s.atk>maxA){maxA=s.atk;domCol=s.col||[255,60,60];}
   }
 
-  // Step 6: Fleet travel animation
-  // screenX/Y are world coords — use them directly (drawFleetMissions runs in world space)
+  // Fleet animation
   const hp=planets.find(p=>p.isHome)||planets[0];
-  const fx=hp?.screenX||0;
-  const fy=hp?.screenY||0;
-  const tx2=tp?.screenX||100;
-  const ty2=tp?.screenY||100;
+  const fx=hp?.screenX||0, fy=hp?.screenY||0;
+  const tx2=tp?.screenX||100, ty2=tp?.screenY||100;
   const dist=Math.hypot(tx2-fx,ty2-fy);
   const dur=Math.max(2000,dist*30);
 
@@ -1050,19 +1056,18 @@ function executeAtk(defVal){
 
   fleetMissions.push({
     id:Date.now(),
-    fromX:fx,fromY:fy,
-    toX:tx2,toY:ty2,
-    startTime:Date.now(),
-    duration:dur,
-    qty:totalShips,
-    type:'attack',
-    shipCol:domCol,
-    done:false,
-    targetPlanet:tp,
+    fromX:fx,fromY:fy,toX:tx2,toY:ty2,
+    startTime:Date.now(),duration:dur,
+    qty:totalShips,type:'attack',shipCol:domCol,
+    done:false,targetPlanet:tp,
     onArrival:function(){
+      atkLocked=false; // unlock after battle
       resolveBattle(myAtk,defVal,shipsCopy,tp);
     },
   });
+
+  // Fallback unlock after 30s
+  setTimeout(()=>{atkLocked=false;},30000);
 }
 
 // ══ RESOLVE BATTLE (multi-ship) ══
