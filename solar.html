@@ -287,7 +287,7 @@ function buildPlanets(seed, count){
       id:i,
       ...typeObj,
       // Orbit properties
-      orbitR: 70 + (i/(count-1))*(MAX_ORB_R-70) + (rng()-.5)*20,
+      orbitR: 70 + (count>1?(i/(count-1)):0.5)*(MAX_ORB_R-70) + (rng()-.5)*20,
       orbitSpeed: 0.0004/(1+i*.15) * (rng()>.5?1:-1),
       orbitAngle: rng()*Math.PI*2,
       orbitTilt: (rng()-.5)*0.08,
@@ -1008,9 +1008,24 @@ async function init(){
 
   // Build planets
   setLoad(70,'Generating planets...');await delay(100);
-  const sysSeed=hashStr(systemData.name+systemData.id);
-  const planetCount=systemData.planets||7;
-  planets=buildPlanets(sysSeed,planetCount);
+  let sysSeed, planetCount;
+  try{
+    sysSeed=hashStr((systemData.name||'default')+(systemData.id||0));
+    planetCount=Math.max(2,Math.min(12,parseInt(systemData.planets)||7));
+    planets=buildPlanets(sysSeed,planetCount);
+  }catch(e){
+    console.error('buildPlanets error:',e);
+    // Fallback: generate simple planets
+    planets=[];
+    for(let i=0;i<6;i++){
+      const t=PLANET_TYPES[i%PLANET_TYPES.length];
+      const ry=RESOURCE_YIELDS[t.type];
+      planets.push({id:i,...t,orbitR:80+i*55,orbitSpeed:0.0004/(1+i*.15),
+        orbitAngle:i*(Math.PI*2/6),orbitTilt:0,size:t.type==='Gas Giant'?18:8,
+        crYield:ry.cr[0],mnYield:ry.mn[0],enYield:ry.en[0],
+        atm:'Unknown',temp:'Unknown',grav:'1.0g',moons:0,colonized:false,isHome:false});
+    }
+  }
 
   // ═══ HOME PLANET FIX ═══
   // Home planet = ONLY the planet saved in vd_home_planet_{userId}
