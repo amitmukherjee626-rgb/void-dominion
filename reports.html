@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION — Reports</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:'Exo 2',sans-serif;color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 70% 40% at 50% 100%,rgba(0,229,255,0.04) 0%,transparent 65%);}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;height:50px;z-index:20;background:rgba(0,1,10,0.97);border-bottom:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;padding:0 10px;gap:6px;}
+.hl{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:2px;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,0.6);padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+.hvw{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(0,229,255,0.4);text-transform:uppercase;}
+.hbtn{padding:5px 8px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.3);background:transparent;color:#00e5ff;cursor:pointer;text-transform:uppercase;margin-left:auto;}
+
+/* MAIN */
+#main{position:fixed;top:50px;left:0;right:0;bottom:0;z-index:5;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.12) transparent;padding-bottom:16px;}
+
+/* FILTER TABS */
+.filter-bar{display:flex;gap:6px;padding:12px 12px 8px;overflow-x:auto;scrollbar-width:none;}
+.filter-bar::-webkit-scrollbar{display:none;}
+.ftab{padding:5px 12px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.2);background:transparent;color:rgba(0,229,255,0.45);cursor:pointer;white-space:nowrap;transition:all .2s;text-transform:uppercase;}
+.ftab.active{background:rgba(0,229,255,0.1);border-color:#00e5ff;color:#00e5ff;}
+.ftab.scout{border-color:rgba(124,58,237,0.4);color:rgba(160,100,255,0.7);}
+.ftab.scout.active{background:rgba(124,58,237,0.1);border-color:#9b5cf6;color:#a78bfa;}
+.ftab.attack{border-color:rgba(255,23,68,0.4);color:rgba(255,80,80,0.7);}
+.ftab.attack.active{background:rgba(255,23,68,0.08);border-color:#ff1744;color:#ff4466;}
+.ftab.defense{border-color:rgba(0,230,118,0.4);color:rgba(0,200,100,0.7);}
+.ftab.defense.active{background:rgba(0,230,118,0.08);border-color:#00e676;color:#00e676;}
+
+/* EMPTY STATE */
+.empty-state{margin:30px 14px;padding:30px;text-align:center;background:rgba(0,5,20,0.6);border:1px dashed rgba(0,229,255,0.12);border-radius:3px;}
+.es-icon{font-size:32px;margin-bottom:8px;opacity:0.5;}
+.es-text{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:2px;color:rgba(0,229,255,0.3);text-transform:uppercase;line-height:1.8;}
+
+/* REPORT CARD */
+.report-card{margin:0 12px 10px;background:rgba(0,5,20,0.88);border-radius:3px;overflow:hidden;cursor:pointer;transition:opacity .2s;}
+.report-card:active{opacity:.8;}
+.rc-header{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;}
+.rc-type-icon{width:36px;height:36px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.rc-type-icon.scout{background:rgba(124,58,237,0.15);border:1px solid rgba(124,58,237,0.3);}
+.rc-type-icon.win{background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);}
+.rc-type-icon.loss{background:rgba(255,23,68,0.1);border:1px solid rgba(255,23,68,0.3);}
+.rc-type-icon.defense-win{background:rgba(0,230,118,0.12);border:1px solid rgba(0,230,118,0.3);}
+.rc-type-icon.defense-loss{background:rgba(255,23,68,0.1);border:1px solid rgba(255,23,68,0.3);}
+.rc-info{flex:1;min-width:0;}
+.rc-title{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:2px;}
+.rc-sub{font-size:9px;color:rgba(0,229,255,0.45);letter-spacing:1px;}
+.rc-time{font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,255,255,0.25);flex-shrink:0;}
+.rc-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:2px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;text-transform:uppercase;margin-left:auto;}
+.rc-badge.win{background:rgba(0,230,118,0.1);border:1px solid rgba(0,230,118,0.3);color:#00e676;}
+.rc-badge.loss{background:rgba(255,23,68,0.1);border:1px solid rgba(255,23,68,0.3);color:#ff4466;}
+.rc-badge.scout{background:rgba(124,58,237,0.1);border:1px solid rgba(124,58,237,0.3);color:#a78bfa;}
+.rc-badge.info{background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);color:#00e5ff;}
+
+/* REPORT DIVIDER */
+.rc-divider{height:1px;background:rgba(0,229,255,0.06);margin:0 14px;}
+
+/* SCOUT REPORT BODY */
+.scout-body{padding:10px 14px 14px;}
+.sb-row{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);}
+.sb-row:last-child{border:none;}
+.sb-label{font-size:9px;color:rgba(255,255,255,0.35);}
+.sb-val{font-family:'Orbitron',monospace;font-size:9px;color:#fff;}
+.sb-val.danger{color:#ff4466;}
+.sb-val.safe{color:#00e676;}
+.sb-val.warn{color:#ffc400;}
+
+/* BATTLE REPORT BODY */
+.battle-body{padding:10px 14px 14px;}
+.battle-compare{display:grid;grid-template-columns:1fr auto 1fr;gap:6px;margin-bottom:12px;align-items:center;}
+.bc-side{background:rgba(0,229,255,0.04);border-radius:2px;padding:10px 8px;text-align:center;}
+.bc-side.attacker{border:1px solid rgba(255,23,68,0.2);}
+.bc-side.defender{border:1px solid rgba(0,230,118,0.2);}
+.bc-label{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-bottom:4px;}
+.bc-name{font-size:9px;color:#fff;margin-bottom:6px;font-weight:600;}
+.bc-power{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;margin-bottom:2px;}
+.bc-power.atk{color:#ff4466;}
+.bc-power.def{color:#00e676;}
+.bc-sub{font-size:8px;color:rgba(255,255,255,0.3);}
+.bc-vs{font-family:'Orbitron',monospace;font-size:12px;font-weight:900;color:rgba(0,229,255,0.4);text-align:center;}
+
+/* Ship casualties */
+.casualties{background:rgba(0,0,0,0.2);border-radius:2px;padding:8px 10px;margin:8px 0;}
+.cas-title{font-family:'Orbitron',monospace;font-size:7px;letter-spacing:2px;color:rgba(0,229,255,0.4);text-transform:uppercase;margin-bottom:6px;}
+.cas-row{display:flex;justify-content:space-between;align-items:center;padding:3px 0;}
+.cas-ship{font-size:9px;color:rgba(255,255,255,0.5);}
+.cas-nums{display:flex;gap:8px;}
+.cas-lost{font-family:'Orbitron',monospace;font-size:9px;color:#ff4466;}
+.cas-surv{font-family:'Orbitron',monospace;font-size:9px;color:#00e676;}
+
+/* OUTCOME */
+.outcome-bar{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:2px;margin-top:8px;}
+.outcome-bar.win{background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.25);}
+.outcome-bar.loss{background:rgba(255,23,68,0.06);border:1px solid rgba(255,23,68,0.2);}
+.outcome-icon{font-size:20px;}
+.outcome-text{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;}
+.outcome-text.win{color:#00e676;}
+.outcome-text.loss{color:#ff4466;}
+
+/* TOASTS */
+#toasts{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,.97);border:1px solid rgba(0,229,255,.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.show{opacity:1;pointer-events:all;}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="zt"></div>
+
+<div id="hud">
+  <div class="hl">REPORTS</div>
+  <div class="hvw">Mission Intel</div>
+  <button class="hbtn" onclick="goBack()">&#8592; BACK</button>
+</div>
+
+<div id="main">
+  <!-- Filter tabs -->
+  <div class="filter-bar">
+    <button class="ftab active" id="ftab-all" onclick="filterReports('all')">ALL</button>
+    <button class="ftab scout" id="ftab-scout" onclick="filterReports('scout')">&#128065; SCOUT</button>
+    <button class="ftab attack" id="ftab-attack" onclick="filterReports('attack')">&#9876; ATTACK</button>
+    <button class="ftab defense" id="ftab-defense" onclick="filterReports('defense')">&#128737; DEFENSE</button>
+  </div>
+  <div id="reports-list"></div>
+</div>
+
+<div id="toasts"></div>
+
+<script>
+function toast(m,type='inf'){const el=document.createElement('div');el.className='toast '+type;el.textContent=m;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function goBack(){document.getElementById('zt').classList.add('show');setTimeout(()=>window.history.back(),500);}
+
+// ═══════════════════════════════════
+//  REPORTS STORAGE
+// ═══════════════════════════════════
+let userId = null;
+let allReports = [];
+let currentFilter = 'all';
+
+function getReportsKey(){ return 'vd_reports_'+userId; }
+
+function loadReports(){
+  const raw = localStorage.getItem(getReportsKey());
+  return raw ? JSON.parse(raw) : [];
+}
+
+function saveReports(reports){
+  localStorage.setItem(getReportsKey(), JSON.stringify(reports.slice(0,100))); // keep last 100
+}
+
+// ═══════════════════════════════════
+//  ADD REPORT (called from other pages)
+// ═══════════════════════════════════
+window.addReport = function(report){
+  if(!userId) return;
+  const reports = loadReports();
+  reports.unshift({
+    ...report,
+    id: Date.now(),
+    time: new Date().toISOString(),
+    read: false,
+  });
+  saveReports(reports);
+};
+
+// ═══════════════════════════════════
+//  FORMAT TIME
+// ═══════════════════════════════════
+function timeAgo(iso){
+  const diff = (Date.now() - new Date(iso).getTime())/1000;
+  if(diff<60) return Math.floor(diff)+'s ago';
+  if(diff<3600) return Math.floor(diff/60)+'m ago';
+  if(diff<86400) return Math.floor(diff/3600)+'h ago';
+  return Math.floor(diff/86400)+'d ago';
+}
+
+// ═══════════════════════════════════
+//  RENDER REPORTS
+// ═══════════════════════════════════
+function filterReports(type){
+  currentFilter = type;
+  ['all','scout','attack','defense'].forEach(t=>{
+    document.getElementById('ftab-'+t).classList.toggle('active', t===type);
+  });
+  renderReports();
+}
+
+function renderReports(){
+  const list = document.getElementById('reports-list');
+  const filtered = currentFilter==='all'
+    ? allReports
+    : allReports.filter(r=>r.type===currentFilter);
+
+  if(!filtered.length){
+    const labels={all:'No reports yet',scout:'No scout missions',attack:'No battles',defense:'No defense events'};
+    const icons={all:'&#128196;',scout:'&#128065;',attack:'&#9876;&#65039;',defense:'&#128737;&#65039;'};
+    list.innerHTML=`<div class="empty-state"><div class="es-icon">${icons[currentFilter]}</div><div class="es-text">${labels[currentFilter]}<br>Send scouts and launch attacks to get reports</div></div>`;
+    return;
+  }
+
+  list.innerHTML = filtered.map(r => renderReport(r)).join('');
+}
+
+function renderReport(r){
+  if(r.type==='scout') return renderScoutReport(r);
+  if(r.type==='attack') return renderBattleReport(r, false);
+  if(r.type==='defense') return renderBattleReport(r, true);
+  return '';
+}
+
+function renderScoutReport(r){
+  const defColor = r.defPower > 200 ? 'danger' : r.defPower > 50 ? 'warn' : 'safe';
+  return `<div class="report-card">
+    <div class="rc-header">
+      <div class="rc-type-icon scout">&#128065;</div>
+      <div class="rc-info">
+        <div class="rc-title">${r.targetName||'Unknown Planet'}</div>
+        <div class="rc-sub">Scout Mission — ${r.systemName||''}</div>
+      </div>
+      <span class="rc-badge scout">SCOUT</span>
+    </div>
+    <div class="rc-time" style="padding:0 14px 4px;font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,255,255,.25);">${timeAgo(r.time)}</div>
+    <div class="rc-divider"></div>
+    <div class="scout-body">
+      <div class="sb-row"><span class="sb-label">Defense Power</span><span class="sb-val ${defColor}">${r.defPower||'???'}</span></div>
+      <div class="sb-row"><span class="sb-label">Enemy Fleet</span><span class="sb-val">${r.enemyFleet||'None detected'}</span></div>
+      <div class="sb-row"><span class="sb-label">Buildings</span><span class="sb-val">${r.buildings||'None'}</span></div>
+      <div class="sb-row"><span class="sb-label">Resources</span><span class="sb-val">${r.resources||'Unknown'}</span></div>
+      <div class="sb-row"><span class="sb-label">Planet Type</span><span class="sb-val">${r.planetType||'Unknown'}</span></div>
+      <div class="sb-row"><span class="sb-label">Status</span><span class="sb-val" style="color:#a78bfa">${r.targetStatus||'Neutral'}</span></div>
+    </div>
+  </div>`;
+}
+
+function renderBattleReport(r, isDefense){
+  const won = r.outcome==='win';
+  const iconWon = isDefense ? (won?'&#128737;':'&#128128;') : (won?'&#9876;':'&#128128;');
+  const typeLabel = isDefense ? 'DEFENSE' : 'ATTACK';
+  const typeCls = isDefense ? (won?'defense-win':'defense-loss') : (won?'win':'loss');
+
+  // Ship casualties html
+  let casHtml = '';
+  if(r.casualties && r.casualties.length){
+    casHtml = `<div class="casualties">
+      <div class="cas-title">Ship Casualties</div>
+      ${r.casualties.map(c=>`
+        <div class="cas-row">
+          <span class="cas-ship">${c.name}</span>
+          <div class="cas-nums">
+            <span class="cas-lost">-${c.lost} lost</span>
+            <span class="cas-surv">${c.survived} survived</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }
+
+  return `<div class="report-card">
+    <div class="rc-header">
+      <div class="rc-type-icon ${typeCls}">${iconWon}</div>
+      <div class="rc-info">
+        <div class="rc-title">${r.targetName||'Unknown Planet'}</div>
+        <div class="rc-sub">${typeLabel} — ${r.systemName||''}</div>
+      </div>
+      <span class="rc-badge ${won?'win':'loss'}">${won?'VICTORY':'DEFEAT'}</span>
+    </div>
+    <div class="rc-time" style="padding:0 14px 4px;font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,255,255,.25);">${timeAgo(r.time)}</div>
+    <div class="rc-divider"></div>
+    <div class="battle-body">
+      <div class="battle-compare">
+        <div class="bc-side attacker">
+          <div class="bc-label">${isDefense?'Attacker':'Your Fleet'}</div>
+          <div class="bc-name">${isDefense?(r.attackerName||'Enemy'):'You'}</div>
+          <div class="bc-power atk">${r.attackPower||0}</div>
+          <div class="bc-sub">Attack Power</div>
+        </div>
+        <div class="bc-vs">VS</div>
+        <div class="bc-side defender">
+          <div class="bc-label">${isDefense?'Your Defense':'Defender'}</div>
+          <div class="bc-name">${isDefense?'Planet Defense':(r.targetName||'Enemy')}</div>
+          <div class="bc-power def">${r.defPower||0}</div>
+          <div class="bc-sub">Defense Power</div>
+        </div>
+      </div>
+      ${casHtml}
+      <div class="outcome-bar ${won?'win':'loss'}">
+        <span class="outcome-icon">${won?'&#127942;':'&#128128;'}</span>
+        <span class="outcome-text ${won?'win':'loss'}">${won?(isDefense?'ATTACK REPELLED':'PLANET CAPTURED'):(isDefense?'DEFENSE BREACHED':'ASSAULT FAILED')}</span>
+      </div>
+      ${r.outcome==='win'&&!isDefense&&!r.colonized?`<div style="font-size:8px;color:rgba(255,196,0,.7);margin-top:6px;font-family:'Orbitron',monospace;text-align:center;letter-spacing:1px;">Send Colonizer to claim this planet!</div>`:''}
+    </div>
+  </div>`;
+}
+
+// ═══════════════════════════════════
+//  INIT
+// ═══════════════════════════════════
+async function init(){
+  // Get userId from sessionStorage or localStorage
+  userId = localStorage.getItem('vd_userId');
+  if(!userId){
+    // Try to get from Supabase session stored in localStorage
+    const sbSession = Object.keys(localStorage).find(k=>k.includes('auth-token'));
+    if(sbSession) userId = 'unknown';
+  }
+
+  // Add some demo reports if empty (for testing)
+  if(userId){
+    let reports = loadReports();
+    if(reports.length===0){
+      // Add demo reports
+      reports = [
+        {
+          id:1, type:'scout', time:new Date(Date.now()-300000).toISOString(), read:true,
+          targetName:'Planet 3: Rocky', systemName:'Sigma Draconis',
+          defPower:25, enemyFleet:'None detected', buildings:'None',
+          resources:'~500 CR estimated', planetType:'Rocky', targetStatus:'Neutral',
+        },
+        {
+          id:2, type:'attack', time:new Date(Date.now()-600000).toISOString(), read:true,
+          targetName:'Planet 2: Ice', systemName:'Sigma Draconis',
+          attackPower:180, defPower:22, outcome:'win',
+          casualties:[
+            {name:'Fighter',lost:2,survived:18},
+            {name:'Light Carrier',lost:0,survived:1},
+          ],
+          colonized:false,
+        },
+        {
+          id:3, type:'defense', time:new Date(Date.now()-1800000).toISOString(), read:true,
+          targetName:'Planet 1: Ocean (HOME)', systemName:'Theta Prime',
+          attackerName:'Unknown Commander',
+          attackPower:95, defPower:0, outcome:'loss',
+          casualties:[],
+        },
+      ];
+      saveReports(reports);
+    }
+    allReports = reports;
+  } else {
+    allReports = [];
+  }
+
+  renderReports();
+}
+
+init();
+</script>
+</body>
+</html>
