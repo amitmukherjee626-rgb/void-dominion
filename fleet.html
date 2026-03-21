@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION — Fleet</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:'Exo 2',sans-serif;color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
+
+/* BG */
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(ellipse 80% 50% at 50% 100%,rgba(0,229,255,0.04) 0%,transparent 70%),
+             radial-gradient(ellipse 60% 40% at 20% 30%,rgba(124,58,237,0.05) 0%,transparent 60%);}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;height:50px;z-index:20;background:rgba(0,1,10,0.97);border-bottom:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;padding:0 10px;gap:6px;}
+.hl{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:2px;color:#00e5ff;text-shadow:0 0 8px rgba(0,229,255,0.6);padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+.hres{display:flex;gap:0;flex:1;overflow:hidden;}
+.hri{display:flex;flex-direction:column;align-items:center;padding:0 7px;border-right:1px solid rgba(0,229,255,0.1);}
+.hri:last-child{border:none;}
+.hrl{font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.hrv{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;}
+.hrv.cr{color:#ffc400;}.hrv.mn{color:#78909c;}.hrv.en{color:#80cbc4;}
+.hright{margin-left:auto;display:flex;gap:5px;flex-shrink:0;}
+.hbtn{padding:5px 8px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.3);background:transparent;color:#00e5ff;cursor:pointer;text-transform:uppercase;}
+
+/* MAIN SCROLL */
+#main{position:fixed;top:50px;left:0;right:0;bottom:56px;z-index:5;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.12) transparent;}
+
+/* SECTION HEADERS */
+.sec-title{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.4);text-transform:uppercase;padding:14px 14px 8px;display:flex;align-items:center;gap:8px;}
+.sec-title::after{content:'';flex:1;height:1px;background:rgba(0,229,255,0.08);}
+
+/* FLEET OVERVIEW */
+.fleet-overview{margin:10px 12px;background:rgba(0,5,20,0.85);border:1px solid rgba(0,229,255,0.12);border-radius:3px;padding:12px;}
+.fo-title{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,0.4);text-transform:uppercase;margin-bottom:10px;}
+.fo-stats{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
+.fo-stat{background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.1);border-radius:2px;padding:8px;text-align:center;}
+.fo-stat-v{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;color:#00e5ff;}
+.fo-stat-l{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;margin-top:2px;}
+.fo-stat.atk .fo-stat-v{color:#ff1744;}
+.fo-stat.def .fo-stat-v{color:#00e676;}
+
+/* SHIP CARD */
+.ship-card{
+  margin:0 12px 10px;
+  background:rgba(0,5,20,0.85);
+  border:1px solid rgba(0,229,255,0.1);
+  border-radius:3px;
+  overflow:hidden;
+  transition:border-color .2s;
+  position:relative;
+}
+.ship-card.locked{opacity:0.45;}
+.ship-card.locked .ship-body{filter:grayscale(.8);}
+
+/* Ship header */
+.ship-head{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;}
+.ship-num{
+  width:28px;height:28px;border-radius:2px;
+  background:rgba(0,229,255,0.08);border:1px solid rgba(0,229,255,0.2);
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Orbitron',monospace;font-size:10px;font-weight:700;
+  color:rgba(0,229,255,0.6);flex-shrink:0;
+}
+.ship-info{flex:1;min-width:0;}
+.ship-name{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#fff;letter-spacing:1px;}
+.ship-role{font-size:9px;color:rgba(0,229,255,0.45);letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+.ship-count-wrap{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;}
+.ship-count-lbl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.ship-count{font-family:'Orbitron',monospace;font-size:22px;font-weight:900;color:#00e5ff;line-height:1;}
+.ship-count.zero{color:rgba(255,255,255,0.15);}
+
+/* Ship stats bar */
+.ship-stats{display:flex;gap:6px;padding:0 14px 8px;flex-wrap:wrap;}
+.sstat{padding:3px 8px;border-radius:2px;font-size:8px;font-family:'Orbitron',monospace;}
+.sstat.atk{background:rgba(255,23,68,0.08);border:1px solid rgba(255,23,68,0.2);color:rgba(255,80,80,0.8);}
+.sstat.def{background:rgba(0,230,118,0.07);border:1px solid rgba(0,230,118,0.2);color:rgba(0,200,100,0.8);}
+.sstat.spd{background:rgba(0,229,255,0.06);border:1px solid rgba(0,229,255,0.15);color:rgba(0,229,255,0.7);}
+.sstat.sp{background:rgba(255,196,0,0.07);border:1px solid rgba(255,196,0,0.2);color:rgba(255,196,0,0.7);}
+.sstat.lock{background:rgba(255,100,50,0.08);border:1px solid rgba(255,100,50,0.2);color:rgba(255,120,60,0.7);}
+
+/* Ship description */
+.ship-desc{font-size:9px;color:rgba(255,255,255,0.3);padding:0 14px 8px;line-height:1.5;}
+
+/* Build section */
+.ship-build{padding:0 14px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.build-qty{display:flex;align-items:center;gap:6px;}
+.qty-btn{width:28px;height:28px;background:rgba(0,229,255,0.07);border:1px solid rgba(0,229,255,0.2);border-radius:2px;color:#00e5ff;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;font-family:'Orbitron',monospace;flex-shrink:0;}
+.qty-val{font-family:'Orbitron',monospace;font-size:14px;font-weight:700;color:#fff;min-width:24px;text-align:center;}
+.build-btn{flex:1;padding:9px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.85),rgba(124,58,237,.85));color:#fff;border:none;border-radius:2px;cursor:pointer;transition:all .2s;min-width:100px;}
+.build-btn:disabled{opacity:.3;cursor:not-allowed;}
+.build-cost{font-size:8px;color:rgba(255,255,255,0.3);font-family:'Orbitron',monospace;width:100%;}
+.build-cost span{color:rgba(255,196,0,0.7);}
+.locked-msg{font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,100,50,0.7);letter-spacing:1px;}
+
+/* BUILD QUEUE */
+.queue-empty{margin:0 12px 10px;padding:20px;text-align:center;background:rgba(0,5,20,0.6);border:1px dashed rgba(0,229,255,0.12);border-radius:3px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,0.25);letter-spacing:2px;text-transform:uppercase;}
+.queue-item{margin:0 12px 8px;background:rgba(0,5,20,0.88);border:1px solid rgba(0,229,255,0.15);border-radius:3px;padding:10px 14px;}
+.qi-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+.qi-name{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;}
+.qi-qty{font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,0.6);}
+.qi-bar-wrap{height:4px;background:rgba(255,255,255,0.06);border-radius:2px;overflow:hidden;}
+.qi-bar{height:100%;background:linear-gradient(90deg,#00e5ff,#7c3aed);border-radius:2px;transition:width .5s linear;}
+.qi-time{font-size:8px;color:rgba(255,255,255,0.3);margin-top:4px;font-family:'Orbitron',monospace;}
+
+/* FLEET TABS */
+#bot-tabs{position:fixed;bottom:0;left:0;right:0;height:56px;z-index:20;background:rgba(0,1,10,0.97);border-top:1px solid rgba(0,229,255,0.15);display:flex;}
+.btab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(0,229,255,0.35);cursor:pointer;transition:all .2s;text-transform:uppercase;border-right:1px solid rgba(0,229,255,0.08);}
+.btab:last-child{border:none;}
+.btab.active{color:#00e5ff;background:rgba(0,229,255,0.05);}
+.btab-icon{font-size:16px;}
+
+/* DEPLOY PANEL */
+.deploy-card{margin:0 12px 10px;background:rgba(0,5,20,0.88);border:1px solid rgba(0,229,255,0.15);border-radius:3px;padding:14px;}
+.deploy-title{font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;margin-bottom:10px;}
+.deploy-row{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.deploy-ship-name{flex:1;font-size:10px;color:rgba(255,255,255,0.6);}
+.deploy-count{font-family:'Orbitron',monospace;font-size:10px;color:#fff;min-width:30px;text-align:center;}
+.deploy-avail{font-size:8px;color:rgba(0,229,255,0.4);font-family:'Orbitron',monospace;}
+.deploy-btn-wrap{display:flex;gap:8px;margin-top:12px;}
+.deploy-main-btn{flex:1;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:#fff;border:none;border-radius:2px;cursor:pointer;transition:all .2s;}
+.deploy-main-btn.colonize{background:linear-gradient(90deg,rgba(0,200,100,.9),rgba(0,150,80,.9));}
+.deploy-main-btn.attack{background:linear-gradient(90deg,rgba(255,23,68,.9),rgba(180,0,40,.9));}
+.deploy-main-btn:disabled{opacity:.35;cursor:not-allowed;}
+
+/* TOASTS */
+#toasts{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,0.97);border:1px solid rgba(0,229,255,0.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,0.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,0.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,0.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+
+/* LOADING */
+#loadscr{position:fixed;inset:0;z-index:100;background:#00010a;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;}
+.lt{font-family:'Orbitron',monospace;font-size:clamp(20px,5vw,34px);font-weight:900;letter-spacing:3px;color:#00e5ff;text-shadow:0 0 20px rgba(0,229,255,0.7);animation:lp 2s ease-in-out infinite;}
+@keyframes lp{0%,100%{opacity:.7}50%{opacity:1}}
+.lbw{width:180px;height:3px;background:rgba(0,229,255,0.1);border-radius:2px;overflow:hidden;}
+.lb2{height:100%;width:0%;background:linear-gradient(90deg,#00e5ff,#7c3aed);transition:width .4s;border-radius:2px;}
+.ltx{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,0.4);text-transform:uppercase;}
+
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,0.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.show{opacity:1;pointer-events:all;}
+</style>
+</head>
+<body>
+<div id="bg"></div>
+<div id="loadscr">
+  <div class="lt">FLEET COMMAND</div>
+  <div class="lbw"><div class="lb2" id="lbar"></div></div>
+  <div class="ltx" id="ltxt">Loading fleet data...</div>
+</div>
+<div id="zt"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hl">FLEET</div>
+  <div class="hres">
+    <div class="hri"><div class="hrl">CR</div><div class="hrv cr" id="hcr">0</div></div>
+    <div class="hri"><div class="hrl">MIN</div><div class="hrv mn" id="hmn">0</div></div>
+    <div class="hri"><div class="hrl">ENE</div><div class="hrv en" id="hen">0</div></div>
+    <div class="hri"><div class="hrl">Ships</div><div class="hrv" style="color:#a78bfa" id="h-ships">0</div></div>
+    <div class="hri"><div class="hrl">ATK</div><div class="hrv" style="color:#ff4444" id="h-atk">0</div></div>
+  </div>
+  <div class="hright">
+    <button class="hbtn" onclick="nav('planet.html')">&#8592; PLANET</button>
+  </div>
+</div>
+
+<!-- Main Content -->
+<div id="main">
+  <!-- Tab: Shipyard -->
+  <div id="tab-shipyard">
+    <!-- Fleet Overview -->
+    <div class="fleet-overview">
+      <div class="fo-title">Fleet Overview</div>
+      <div class="fo-stats">
+        <div class="fo-stat">
+          <div class="fo-stat-v" id="ov-total">0</div>
+          <div class="fo-stat-l">Total Ships</div>
+        </div>
+        <div class="fo-stat atk">
+          <div class="fo-stat-v" id="ov-atk">0</div>
+          <div class="fo-stat-l">Attack Power</div>
+        </div>
+        <div class="fo-stat def">
+          <div class="fo-stat-v" id="ov-def">0</div>
+          <div class="fo-stat-l">Defense Power</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="sec-title">Shipyard — Build Ships</div>
+    <div id="ships-list"></div>
+  </div>
+
+  <!-- Tab: Queue -->
+  <div id="tab-queue" style="display:none;">
+    <div class="sec-title">Build Queue</div>
+    <div id="queue-list"></div>
+  </div>
+
+  <!-- Tab: Deploy -->
+  <div id="tab-deploy" style="display:none;">
+    <div class="sec-title">Deploy Fleet</div>
+
+    <div class="deploy-card">
+      <div class="deploy-title">Select Target</div>
+      <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-bottom:12px;line-height:1.6;">
+        Choose a planet to attack or colonize. Neutral planets have weak defense. Enemy planets are heavily fortified.
+      </div>
+
+      <!-- Planet type selector -->
+      <div style="display:flex;gap:8px;margin-bottom:14px;">
+        <button class="hbtn" style="flex:1;padding:8px;font-size:8px;" onclick="setTarget('neutral')" id="btn-neutral">NEUTRAL</button>
+        <button class="hbtn" style="flex:1;padding:8px;font-size:8px;border-color:rgba(255,23,68,.4);color:#ff4444;" onclick="setTarget('enemy')" id="btn-enemy">ENEMY</button>
+      </div>
+
+      <div id="deploy-target-info" style="background:rgba(0,229,255,0.04);border:1px solid rgba(0,229,255,0.1);border-radius:2px;padding:10px;margin-bottom:12px;display:none;"></div>
+
+      <div class="deploy-title" style="margin-top:4px;">Fleet Composition</div>
+      <div id="deploy-fleet-rows"></div>
+
+      <div id="deploy-power" style="margin:10px 0;padding:8px;background:rgba(0,229,255,0.04);border-radius:2px;display:none;">
+        <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+          <span style="font-size:9px;color:rgba(255,255,255,0.4);">Your Attack Power</span>
+          <span class="hrv" style="color:#ff4444;font-size:10px;" id="dp-atk">0</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;">
+          <span style="font-size:9px;color:rgba(255,255,255,0.4);">Enemy Defense</span>
+          <span class="hrv" style="color:#00e676;font-size:10px;" id="dp-def">0</span>
+        </div>
+      </div>
+
+      <div class="deploy-btn-wrap">
+        <button class="deploy-main-btn attack" id="btn-attack" onclick="launchAttack()" disabled>LAUNCH ATTACK</button>
+        <button class="deploy-main-btn colonize" id="btn-colonize" onclick="launchColonize()" disabled style="display:none;">SEND COLONIZER</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Bottom Tabs -->
+<div id="bot-tabs">
+  <div class="btab active" id="nav-shipyard" onclick="switchTab('shipyard')">
+    <div class="btab-icon">&#128676;</div>Shipyard
+  </div>
+  <div class="btab" id="nav-queue" onclick="switchTab('queue')">
+    <div class="btab-icon">&#9203;</div>Queue
+    <span id="queue-badge" style="display:none;background:#ff1744;border-radius:10px;padding:1px 5px;font-size:7px;position:absolute;margin-top:-8px;margin-left:10px;"></span>
+  </div>
+  <div class="btab" id="nav-deploy" onclick="switchTab('deploy')">
+    <div class="btab-icon">&#128640;</div>Deploy
+  </div>
+</div>
+
+<div id="toasts"></div>
+
+<script type="module">
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+const SB = createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
+
+// ════ SHIP DEFINITIONS (12 types) ════
+const SHIPS = [
+  {
+    id:'probe', name:'Probe', role:'Scout',
+    desc:'Explores unknown systems and reveals planet info before attacking.',
+    atk:0,  def:1,  spd:10, hp:10,
+    cost:{cr:50,  mn:30,  en:10}, buildTime:15,
+    special:'Scout — Reveals enemy defense stats before battle.',
+    unlockShipyard:1,
+  },
+  {
+    id:'colonizer', name:'Colonizer', role:'Colonization',
+    desc:'Colonizes neutral or captured planets. Required to build on any planet.',
+    atk:0,  def:2,  spd:4,  hp:50,
+    cost:{cr:200, mn:150, en:80}, buildTime:60,
+    special:'Colonize — Captures neutral/conquered planets.',
+    unlockShipyard:2,
+  },
+  {
+    id:'fighter', name:'Fighter', role:'Light Combat',
+    desc:'Fastest combat ship. Cheap and effective in large swarms.',
+    atk:4,  def:2,  spd:9,  hp:20,
+    cost:{cr:80,  mn:60,  en:20}, buildTime:20,
+    special:null,
+    unlockShipyard:1,
+  },
+  {
+    id:'gunship', name:'Gunship', role:'Medium Combat',
+    desc:'Upgraded fighter with better armor and firepower.',
+    atk:8,  def:5,  spd:8,  hp:45,
+    cost:{cr:150, mn:120, en:40}, buildTime:35,
+    special:null,
+    unlockShipyard:3,
+  },
+  {
+    id:'destroyer', name:'Destroyer', role:'Anti-Fighter',
+    desc:'Specialized against small ships. High fire rate.',
+    atk:12, def:8,  spd:7,  hp:80,
+    cost:{cr:280, mn:220, en:70}, buildTime:55,
+    special:'Anti-Fighter — 2x damage vs Fighters/Gunships.',
+    unlockShipyard:4,
+  },
+  {
+    id:'frigate', name:'Frigate', role:'Balanced Warship',
+    desc:'Well-balanced ship for mixed fleet compositions.',
+    atk:18, def:14, spd:6,  hp:130,
+    cost:{cr:450, mn:380, en:120}, buildTime:90,
+    special:null,
+    unlockShipyard:5,
+  },
+  {
+    id:'cruiser', name:'Cruiser', role:'Heavy Warship',
+    desc:'Heavy firepower. Backbone of any serious fleet.',
+    atk:28, def:22, spd:5,  hp:220,
+    cost:{cr:700, mn:600, en:200}, buildTime:140,
+    special:null,
+    unlockShipyard:6,
+  },
+  {
+    id:'battleship', name:'Battleship', role:'Siege Specialist',
+    desc:'Siege weapon. Massive damage to planet defenses.',
+    atk:45, def:30, spd:3,  hp:380,
+    cost:{cr:1200,mn:1000,en:350}, buildTime:210,
+    special:'Siege — 3x damage to defense turrets.',
+    unlockShipyard:7,
+  },
+  {
+    id:'dreadnought', name:'Dreadnought', role:'Fleet Killer',
+    desc:'The ultimate warship. Designed to destroy entire fleets.',
+    atk:70, def:50, spd:2,  hp:600,
+    cost:{cr:2000,mn:1800,en:600}, buildTime:320,
+    special:'Fleet Kill — Area damage hits multiple enemy ships.',
+    unlockShipyard:8,
+  },
+  {
+    id:'carrier', name:'Fleet Carrier', role:'Fleet Support',
+    desc:'Carries fighters into battle. Boosts nearby ship attack.',
+    atk:20, def:40, spd:3,  hp:500,
+    cost:{cr:1800,mn:1500,en:500}, buildTime:280,
+    special:'Carrier — Boosts all Fighter/Gunship ATK by 50%.',
+    unlockShipyard:9,
+  },
+  {
+    id:'collector', name:'Garbage Collector', role:'Resource Salvage',
+    desc:'Collects wreckage after battle for bonus resources.',
+    atk:2,  def:5,  spd:6,  hp:60,
+    cost:{cr:300, mn:200, en:100}, buildTime:50,
+    special:'Salvage — Collects 30% of destroyed ships as resources.',
+    unlockShipyard:10,
+  },
+  {
+    id:'leviathan', name:'Leviathan', role:'Planet Destroyer',
+    desc:'The most powerful ship ever built. Can destroy planet defenses in one strike.',
+    atk:150,def:100,spd:1,  hp:2000,
+    cost:{cr:8000,mn:7000,en:2500}, buildTime:900,
+    special:'Devastate — Can bombard planets, destroying buildings.',
+    unlockShipyard:12,
+  },
+];
+
+// ════ STATE ════
+let resources={cr:0,mn:0,en:0};
+let fleet={}; // {shipId: count}
+let buildQueue=[]; // [{shipId,qty,totalTime,elapsed}]
+let shipyardLevel=1;
+let queueTimer=null;
+let userId=null;
+let deployQty={}; // {shipId: qty to deploy}
+let targetType='neutral';
+let targetDef=0;
+
+// Build qty selectors
+let buildQty={}; // {shipId: qty}
+
+// ════ UTILS ════
+const $=id=>document.getElementById(id);
+function setLoad(p,t){$('lbar').style.width=p+'%';$('ltxt').textContent=t;}
+function toast(m,type='inf'){const el=document.createElement('div');el.className='toast '+type;el.textContent=m;$('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n)+'';}
+window.nav=function(url){$('zt').classList.add('show');setTimeout(()=>window.location.href=url,500);};
+
+// ════ TAB SWITCHING ════
+window.switchTab=function(tab){
+  ['shipyard','queue','deploy'].forEach(t=>{
+    $('tab-'+t).style.display=t===tab?'block':'none';
+    $('nav-'+t).classList.toggle('active',t===tab);
+  });
+  if(tab==='shipyard') renderShips();
+  if(tab==='queue') renderQueue();
+  if(tab==='deploy') renderDeploy();
+};
+
+// ════ RENDER SHIPS ════
+function renderShips(){
+  const list=$('ships-list');
+  list.innerHTML='';
+
+  let totalShips=0,totalAtk=0,totalDef=0;
+  for(const s of SHIPS){
+    const cnt=fleet[s.id]||0;
+    totalShips+=cnt;
+    totalAtk+=cnt*s.atk;
+    totalDef+=cnt*s.def;
+  }
+  $('ov-total').textContent=totalShips;
+  $('ov-atk').textContent=totalAtk;
+  $('ov-def').textContent=totalDef;
+  $('h-ships').textContent=totalShips;
+  $('h-atk').textContent=totalAtk;
+
+  for(const s of SHIPS){
+    const cnt=fleet[s.id]||0;
+    const locked=s.unlockShipyard>shipyardLevel;
+    const qty=buildQty[s.id]||1;
+    const totalCost={
+      cr:s.cost.cr*qty,
+      mn:s.cost.mn*qty,
+      en:s.cost.en*qty,
+    };
+    const canAfford=resources.cr>=totalCost.cr&&resources.mn>=totalCost.mn&&resources.en>=totalCost.en;
+
+    const card=document.createElement('div');
+    card.className='ship-card'+(locked?' locked':'');
+    card.innerHTML=`
+      <div class="ship-head">
+        <div class="ship-num">${SHIPS.indexOf(s)+1}</div>
+        <div class="ship-info">
+          <div class="ship-name">${s.name}</div>
+          <div class="ship-role">${s.role}</div>
+        </div>
+        <div class="ship-count-wrap">
+          <div class="ship-count-lbl">Owned</div>
+          <div class="ship-count ${cnt===0?'zero':''}">${cnt}</div>
+        </div>
+      </div>
+      <div class="ship-stats">
+        <span class="sstat atk">ATK: ${s.atk}</span>
+        <span class="sstat def">DEF: ${s.def}</span>
+        <span class="sstat spd">SPD: ${s.spd}</span>
+        <span class="sstat sp">HP: ${s.hp}</span>
+        ${locked?`<span class="sstat lock">Shipyard Lv${s.unlockShipyard} needed</span>`:''}
+      </div>
+      <div class="ship-desc">${s.desc}${s.special?`<br><span style="color:rgba(255,196,0,.65)">&#9889; ${s.special}</span>`:''}</div>
+      ${!locked?`
+      <div class="ship-build">
+        <div class="build-qty">
+          <button class="qty-btn" onclick="changeQty('${s.id}',-1)">&#8722;</button>
+          <div class="qty-val" id="qty-${s.id}">${qty}</div>
+          <button class="qty-btn" onclick="changeQty('${s.id}',1)">+</button>
+        </div>
+        <button class="build-btn" ${locked||!canAfford?'disabled':''} onclick="buildShip('${s.id}')">
+          BUILD ${qty>1?'x'+qty:''}
+        </button>
+        <div class="build-cost" style="width:100%;margin-top:4px;">
+          ${s.cost.cr?`CR: <span>${fmt(totalCost.cr)}</span> `:''}
+          ${s.cost.mn?`MIN: <span>${fmt(totalCost.mn)}</span> `:''}
+          ${s.cost.en?`ENE: <span>${fmt(totalCost.en)}</span> `:''}
+          &nbsp;&#8226;&nbsp; Build time: ${formatTime(s.buildTime*qty)}
+        </div>
+      </div>`:`
+      <div class="ship-build">
+        <span class="locked-msg">&#128274; Upgrade Shipyard to Level ${s.unlockShipyard} to unlock</span>
+      </div>`}
+    `;
+    list.appendChild(card);
+  }
+}
+
+window.changeQty=function(shipId, delta){
+  buildQty[shipId]=Math.max(1,Math.min(999,(buildQty[shipId]||1)+delta));
+  const el=$('qty-'+shipId);
+  if(el)el.textContent=buildQty[shipId];
+  renderShips();
+};
+
+window.buildShip=function(shipId){
+  const s=SHIPS.find(x=>x.id===shipId);
+  const qty=buildQty[shipId]||1;
+  const cost={cr:s.cost.cr*qty,mn:s.cost.mn*qty,en:s.cost.en*qty};
+  if(resources.cr<cost.cr||resources.mn<cost.mn||resources.en<cost.en){
+    toast('Not enough resources!','err');return;
+  }
+  resources.cr-=cost.cr;
+  resources.mn-=cost.mn;
+  resources.en-=cost.en;
+  buildQueue.push({shipId,qty,name:s.name,totalTime:s.buildTime*qty,elapsed:0});
+  updateHudRes();
+  renderShips();
+  toast(`Building ${qty}x ${s.name}...`,'ok');
+  saveFleet();
+};
+
+// ════ BUILD QUEUE TIMER ════
+function startQueueTimer(){
+  if(queueTimer)clearInterval(queueTimer);
+  queueTimer=setInterval(()=>{
+    if(!buildQueue.length)return;
+    buildQueue[0].elapsed++;
+    if(buildQueue[0].elapsed>=buildQueue[0].totalTime){
+      const done=buildQueue.shift();
+      fleet[done.shipId]=(fleet[done.shipId]||0)+done.qty;
+      toast(`${done.qty}x ${done.name} ready!`,'ok');
+      saveFleet();
+      renderShips();
+    }
+    renderQueue();
+    updateQueueBadge();
+  },1000);
+}
+
+function renderQueue(){
+  const el=$('queue-list');
+  if(!buildQueue.length){
+    el.innerHTML='<div class="queue-empty">No ships in production</div>';
+    return;
+  }
+  el.innerHTML=buildQueue.map((q,i)=>{
+    const pct=i===0?(q.elapsed/q.totalTime*100).toFixed(1):0;
+    const remaining=i===0?q.totalTime-q.elapsed:q.totalTime;
+    return `<div class="queue-item">
+      <div class="qi-head">
+        <div class="qi-name">${q.name}</div>
+        <div class="qi-qty">x${q.qty}</div>
+      </div>
+      <div class="qi-bar-wrap"><div class="qi-bar" style="width:${pct}%"></div></div>
+      <div class="qi-time">${i===0?'Building: '+formatTime(remaining)+' remaining':'Queued: '+formatTime(q.totalTime)}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateQueueBadge(){
+  const badge=$('queue-badge');
+  if(buildQueue.length>0){badge.style.display='block';badge.textContent=buildQueue.length;}
+  else badge.style.display='none';
+}
+
+// ════ DEPLOY ════
+window.setTarget=function(type){
+  targetType=type;
+  // Neutral: weak random defense, Enemy: strong defense
+  if(type==='neutral'){
+    targetDef=Math.floor(Math.random()*50)+10;
+    $('deploy-target-info').style.display='block';
+    $('deploy-target-info').innerHTML=`
+      <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,.5);letter-spacing:1px;margin-bottom:6px;">NEUTRAL PLANET</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;">
+        <span style="color:rgba(255,255,255,.4)">Defense Strength</span>
+        <span style="color:#00e676;font-family:'Orbitron',monospace">${targetDef}</span>
+      </div>
+      <div style="font-size:8px;color:rgba(255,255,255,.25);margin-top:4px;">Weak auto-defenses. Easy to capture with small fleet.</div>`;
+    $('btn-attack').style.display='block';
+    $('btn-colonize').style.display='none';
+  } else {
+    targetDef=Math.floor(Math.random()*400)+200;
+    $('deploy-target-info').style.display='block';
+    $('deploy-target-info').innerHTML=`
+      <div style="font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,23,68,.5);letter-spacing:1px;margin-bottom:6px;">ENEMY PLANET</div>
+      <div style="display:flex;justify-content:space-between;font-size:9px;">
+        <span style="color:rgba(255,255,255,.4)">Defense Strength</span>
+        <span style="color:#ff1744;font-family:'Orbitron',monospace">${targetDef}</span>
+      </div>
+      <div style="font-size:8px;color:rgba(255,255,255,.25);margin-top:4px;">Heavily fortified. Send a powerful fleet to break through.</div>`;
+    $('btn-attack').style.display='block';
+    $('btn-colonize').style.display='none';
+  }
+  $('deploy-power').style.display='block';
+  $('dp-def').textContent=targetDef;
+  renderDeploy();
+};
+
+function renderDeploy(){
+  const rows=$('deploy-fleet-rows');
+  const ownedShips=SHIPS.filter(s=>(fleet[s.id]||0)>0);
+  if(!ownedShips.length){
+    rows.innerHTML='<div style="font-size:9px;color:rgba(255,255,255,.25);padding:8px 0;">No ships available. Build ships in Shipyard first.</div>';
+    $('btn-attack').disabled=true;
+    return;
+  }
+  rows.innerHTML=ownedShips.map(s=>{
+    const avail=fleet[s.id]||0;
+    const dq=deployQty[s.id]||0;
+    return `<div class="deploy-row">
+      <span class="deploy-ship-name">${s.name}</span>
+      <button class="qty-btn" onclick="changeDeployQty('${s.id}',-1)">&#8722;</button>
+      <span class="deploy-count">${dq}</span>
+      <button class="qty-btn" onclick="changeDeployQty('${s.id}',1)">+</button>
+      <span class="deploy-avail">(${avail})</span>
+    </div>`;
+  }).join('');
+  updateAttackPower();
+}
+
+window.changeDeployQty=function(shipId,delta){
+  const avail=fleet[shipId]||0;
+  deployQty[shipId]=Math.max(0,Math.min(avail,(deployQty[shipId]||0)+delta));
+  renderDeploy();
+};
+
+function updateAttackPower(){
+  let myAtk=0;
+  for(const s of SHIPS){
+    myAtk+=(deployQty[s.id]||0)*s.atk;
+  }
+  $('dp-atk').textContent=myAtk;
+  $('btn-attack').disabled=myAtk===0;
+}
+
+window.launchAttack=function(){
+  let myAtk=0;
+  const deployedShips=[];
+  for(const s of SHIPS){
+    const qty=deployQty[s.id]||0;
+    if(qty>0){myAtk+=qty*s.atk;deployedShips.push({s,qty});}
+  }
+  if(myAtk===0){toast('Select ships to deploy!','err');return;}
+
+  // Combat resolution
+  const myPow=myAtk*(0.85+Math.random()*0.3);
+  const enemyPow=targetDef*(0.85+Math.random()*0.3);
+
+  if(myPow>enemyPow){
+    // Victory — deduct some ships as losses
+    const lossPct=Math.min(0.6,(enemyPow/myPow)*0.5);
+    for(const {s,qty} of deployedShips){
+      const losses=Math.floor(qty*lossPct);
+      fleet[s.id]=Math.max(0,(fleet[s.id]||qty)-qty+qty-losses);
+      deployQty[s.id]=0;
+    }
+    // Show colonizer option
+    $('btn-attack').style.display='none';
+    $('btn-colonize').style.display='block';
+    $('btn-colonize').disabled=!(fleet['colonizer']&&fleet['colonizer']>0);
+    toast('Victory! Planet captured. Send Colonizer to claim it!','ok');
+    const lossCount=Math.floor(deployedShips.reduce((a,x)=>a+x.qty,0)*lossPct);
+    if(lossCount>0)toast(`${lossCount} ships lost in battle`,'inf');
+  } else {
+    // Defeat — lose all deployed ships
+    for(const {s,qty} of deployedShips){
+      fleet[s.id]=Math.max(0,(fleet[s.id]||0)-qty);
+      deployQty[s.id]=0;
+    }
+    toast('Defeat! Your fleet was destroyed.','err');
+    toast('Reinforce and try again with a stronger fleet.','inf');
+  }
+  saveFleet();
+  renderShips();
+  renderDeploy();
+};
+
+window.launchColonize=function(){
+  if(!(fleet['colonizer']&&fleet['colonizer']>0)){
+    toast('No Colonizer ship available! Build one first.','err');return;
+  }
+  fleet['colonizer']=Math.max(0,(fleet['colonizer']||1)-1);
+  toast('Planet colonized! You can now build on it.','ok');
+  $('btn-colonize').style.display='none';
+  $('btn-attack').style.display='block';
+  $('deploy-target-info').style.display='none';
+  $('deploy-power').style.display='none';
+  saveFleet();
+  renderShips();
+};
+
+// ════ HELPERS ════
+function formatTime(secs){
+  if(secs<60)return secs+'s';
+  if(secs<3600)return Math.floor(secs/60)+'m '+( secs%60)+'s';
+  return Math.floor(secs/3600)+'h '+Math.floor((secs%3600)/60)+'m';
+}
+
+function updateHudRes(){
+  $('hcr').textContent=fmt(resources.cr);
+  $('hmn').textContent=fmt(resources.mn);
+  $('hen').textContent=fmt(resources.en);
+}
+
+function saveFleet(){
+  if(!userId)return;
+  const key='vd_fleet_'+userId;
+  localStorage.setItem(key,JSON.stringify({fleet,buildQueue,resources}));
+  SB.from('players').update({
+    credits:Math.floor(resources.cr),
+    minerals:Math.floor(resources.mn),
+    energy:Math.floor(resources.en),
+  }).eq('id',userId).then(()=>{});
+}
+
+// ════ INIT ════
+async function init(){
+  setLoad(10,'Connecting...');await delay(100);
+  let session=null;
+  try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
+  if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+  userId=session.user.id;
+
+  setLoad(35,'Loading fleet data...');await delay(100);
+  const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
+  resources={cr:prof?.credits||0,mn:prof?.minerals||0,en:prof?.energy||0};
+
+  // Load fleet from localStorage
+  const key='vd_fleet_'+userId;
+  const saved=localStorage.getItem(key);
+  if(saved){
+    const d=JSON.parse(saved);
+    fleet=d.fleet||{};
+    buildQueue=d.buildQueue||[];
+  }
+
+  // Get shipyard level from planet buildings
+  const planetRaw=sessionStorage.getItem('vd_planet');
+  const bldKey='vd_bld_'+userId+'_'+(planetRaw?JSON.parse(planetRaw).id:0);
+  const bldSaved=localStorage.getItem(bldKey);
+  if(bldSaved){
+    const blds=JSON.parse(bldSaved);
+    shipyardLevel=blds.shipyard||0;
+    if(shipyardLevel===0)shipyardLevel=0; // not built yet
+  }
+
+  setLoad(80,'Ready...');await delay(100);
+  updateHudRes();
+  renderShips();
+  startQueueTimer();
+  updateQueueBadge();
+
+  setLoad(100,'Fleet ready!');await delay(300);
+  const ls=$('loadscr');
+  ls.style.transition='opacity .4s';ls.style.opacity='0';
+  setTimeout(()=>ls.style.display='none',450);
+  toast('Fleet Command initialized','ok');
+}
+
+init();
+</script>
+</body>
+</html>
