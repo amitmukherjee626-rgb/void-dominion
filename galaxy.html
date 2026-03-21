@@ -299,6 +299,8 @@ function centerOn(x,y){
 // ════ DRAW ════
 function draw(ts){
   if(!CTX)return;
+  // Full clear every frame - prevents ghost trail glitch
+  CTX.setTransform(1,0,0,1,0,0);
   CTX.clearRect(0,0,W,H);
   CTX.fillStyle='#00010a';
   CTX.fillRect(0,0,W,H);
@@ -742,10 +744,11 @@ async function init(){
   MC.width=120;MC.height=92;
   window.addEventListener('resize',resize);
 
-  // Camera — center on home system
+  // Camera — fit full galaxy, center on home
   const pad=50;
-  camS=Math.min((W-pad*2)/GW,(H-100)/GH)*0.85;
+  camS=Math.min((W-pad*2)/GW,(H-100)/GH)*0.88;
   clampS();
+  // Center on home system
   camX=W/2-hs.x*camS;
   camY=H/2-hs.y*camS;
 
