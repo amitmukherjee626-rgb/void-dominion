@@ -855,7 +855,12 @@ window.buildFromModal=function(){
   const cost={cr:s.cost.cr*q,mn:s.cost.mn*q,en:s.cost.en*q};
   if(resources.cr<cost.cr||resources.mn<cost.mn||resources.en<cost.en){toast('Not enough resources!','err');return;}
   resources.cr-=cost.cr;resources.mn-=cost.mn;resources.en-=cost.en;
-  buildQueue.push({shipId:s.id,qty:q,name:s.name,icon:s.icon,totalTime:s.buildTime*q,elapsed:0});
+  buildQueue.push({
+    shipId:s.id, qty:q, name:s.name, icon:s.icon,
+    totalTime:s.buildTime*q,
+    startTime: buildQueue.length===0 ? Date.now() : null, // first item starts now
+    elapsed:0 // kept for compatibility
+  });
   updateHudRes();
   toast(`Building ${q}x ${s.name}...`,'ok');
   closeDetail();
@@ -868,13 +873,26 @@ window.buildFromModal=function(){
 // ══════════════════════════════════════════
 function startQueueTimer(){
   if(queueTimer)clearInterval(queueTimer);
+  
+  // On load: restore startTime for first item if missing
+  if(buildQueue.length>0 && !buildQueue[0].startTime){
+    buildQueue[0].startTime = Date.now() - (buildQueue[0].elapsed||0)*1000;
+  }
+  
   queueTimer=setInterval(()=>{
     if(!buildQueue.length)return;
-    buildQueue[0].elapsed++;
-    if(buildQueue[0].elapsed>=buildQueue[0].totalTime){
-      const done=buildQueue.shift();
-      fleet[done.shipId]=(fleet[done.shipId]||0)+done.qty;
-      toast(`${done.qty}x ${done.name} ready!`,'ok');
+    const q=buildQueue[0];
+    
+    // Calculate elapsed from timestamp (survives page reload)
+    const realElapsed = q.startTime ? Math.floor((Date.now()-q.startTime)/1000) : (q.elapsed||0);
+    q.elapsed = realElapsed;
+    
+    if(realElapsed >= q.totalTime){
+      buildQueue.shift();
+      // Give startTime to next item
+      if(buildQueue.length>0) buildQueue[0].startTime=Date.now();
+      fleet[q.shipId]=(fleet[q.shipId]||0)+q.qty;
+      toast(`${q.qty}x ${q.name} ready!`,'ok');
       saveFleet();renderShips();
     }
     const qt=$('tab-queue');
@@ -887,8 +905,9 @@ function renderQueue(){
   const el=$('queue-list');
   if(!buildQueue.length){el.innerHTML='<div class="queue-empty">No ships in production</div>';return;}
   el.innerHTML=buildQueue.map((q,i)=>{
-    const pct=i===0?(q.elapsed/q.totalTime*100).toFixed(1):0;
-    const rem=i===0?q.totalTime-q.elapsed:q.totalTime;
+    const realEl=(i===0&&q.startTime)?Math.floor((Date.now()-q.startTime)/1000):(q.elapsed||0);
+    const pct=i===0?Math.min(100,(realEl/q.totalTime*100)).toFixed(1):0;
+    const rem=i===0?Math.max(0,q.totalTime-realEl):q.totalTime;
     return `<div class="qi">
       <div class="qi-h"><div class="qi-n"><img src="${SHIP_ICONS[q.shipId]||''}" width="16" height="16" style="vertical-align:middle;"> ${q.name}</div><div class="qi-q">x${q.qty}</div></div>
       <div class="qi-bw"><div class="qi-b" style="width:${pct}%"></div></div>
@@ -1047,7 +1066,13 @@ function updateHudRes(){
 }
 function saveFleet(){
   if(!userId)return;
-  localStorage.setItem('vd_fleet_'+userId,JSON.stringify({fleet,buildQueue,resources}));
+  // Save with timestamps intact
+  const saveData = {
+    fleet, resources,
+    buildQueue: buildQueue.map(q=>({...q})), // preserve startTime
+    savedAt: Date.now(),
+  };
+  localStorage.setItem('vd_fleet_'+userId, JSON.stringify(saveData));
   SB.from('players').update({credits:Math.floor(resources.cr),minerals:Math.floor(resources.mn),energy:Math.floor(resources.en)}).eq('id',userId).then(()=>{});
 }
 
@@ -1069,7 +1094,21 @@ async function init(){
   resources={cr:prof?.credits||0,mn:prof?.minerals||0,en:prof?.energy||0};
 
   const saved=localStorage.getItem('vd_fleet_'+userId);
-  if(saved){const d=JSON.parse(saved);fleet=d.fleet||{};buildQueue=d.buildQueue||[];}
+  if(saved){
+    const d=JSON.parse(saved);
+    fleet=d.fleet||{};
+    resources=d.resources||resources;
+    buildQueue=(d.buildQueue||[]).map((q,i)=>{
+      // If first item has startTime, elapsed is already accurate on reload
+      // For queued items (i>0), calculate cumulative start times
+      if(i===0 && q.startTime){
+        // Recalculate elapsed based on real time passed
+        q.elapsed = Math.floor((Date.now()-q.startTime)/1000);
+        // If already done, it will be handled by timer
+      }
+      return q;
+    });
+  }
 
   // Get shipyard level from home planet buildings
   const homeBldKey = 'vd_bld_'+userId+'_home';
