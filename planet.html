@@ -200,10 +200,31 @@ html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:
     <div class="coming-soon"><div class="cs-icon">&#128640;</div><div class="cs-text">Fleet System<br>Tap Fleet tab to manage ships</div></div>
   </div>
   <div id="tab-research" style="display:none;">
-    <div class="coming-soon"><div class="cs-icon">&#128300;</div><div class="cs-text">Research Tree<br>Coming Soon</div></div>
+    <div style="padding:20px 14px;">
+      <div style="text-align:center;margin-bottom:16px;">
+        <div style="font-size:36px;margin-bottom:8px;">&#128300;</div>
+        <div style="font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:1px;">RESEARCH TREE</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);line-height:1.6;margin-bottom:14px;">Military, Economy & Exploration<br>technologies available to research.</div>
+        <div id="res-summary" style="background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;padding:12px;margin-bottom:14px;text-align:left;"></div>
+        <button onclick="nav('research.html')" style="padding:12px 24px;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));color:#fff;border:none;border-radius:2px;cursor:pointer;">OPEN RESEARCH LAB</button>
+      </div>
+    </div>
   </div>
   <div id="tab-defense" style="display:none;">
-    <div class="coming-soon"><div class="cs-icon">&#128737;</div><div class="cs-text">Defense System<br>Coming Soon</div></div>
+    <div class="res-card" style="margin-top:10px;">
+      <div class="rc-title">Planet Defense Status</div>
+      <div class="rc-grid">
+        <div class="rc-item"><div class="rc-lbl">Turrets</div><div class="rc-val" style="color:#ff4466" id="def-turrets">0</div></div>
+        <div class="rc-item"><div class="rc-lbl">Def Power</div><div class="rc-val" style="color:#00e676" id="def-power">0</div></div>
+        <div class="rc-item"><div class="rc-lbl">Upkeep</div><div class="rc-val" style="color:#ff6644" id="def-upkeep">0 ENE</div></div>
+      </div>
+    </div>
+    <div class="stitle">Defense Turrets</div>
+    <div id="defense-list"></div>
+    <div style="margin:10px 12px;padding:10px 14px;background:rgba(0,5,20,.6);border:1px solid rgba(0,229,255,.1);border-radius:3px;">
+      <div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:6px;">&#128302; Reports</div>
+      <button onclick="nav('reports.html')" style="padding:8px 16px;font-family:'Orbitron',monospace;font-size:8px;font-weight:700;letter-spacing:1px;text-transform:uppercase;background:rgba(0,229,255,.08);border:1px solid rgba(0,229,255,.25);color:#00e5ff;border-radius:2px;cursor:pointer;width:100%;">VIEW MISSION REPORTS</button>
+    </div>
   </div>
 </div>
 
@@ -778,6 +799,108 @@ function initBg(){
     });
   })();
 }
+
+// ═══════════════════════════════════════════════
+//  DEFENSE TURRETS SYSTEM
+// ═══════════════════════════════════════════════
+const TURRETS = [
+  {id:'laser',name:'Laser Turret',icon:'&#128308;',desc:'Fast-fire turret. Effective against Fighters and Gunships.',power:15,cost:{cr:100,mn:150},upkeep:1,unlockReslab:0,maxCount:20,color:'#ff4466'},
+  {id:'missile',name:'Missile Launcher',icon:'&#128640;',desc:'Area damage. Effective against medium ships.',power:35,cost:{cr:200,mn:300},upkeep:2,unlockReslab:1,maxCount:15,color:'#ff6600'},
+  {id:'railgun',name:'Railgun Battery',icon:'&#128481;',desc:'Long range, armor-piercing. Effective against large ships.',power:60,cost:{cr:400,mn:600},upkeep:3,unlockReslab:2,maxCount:10,color:'#00aaff'},
+  {id:'gauss',name:'Gauss Cannon',icon:'&#9889;',desc:'Magnetic accelerator. Devastating against Battleship class.',power:100,cost:{cr:800,mn:1000},upkeep:5,unlockReslab:3,maxCount:8,color:'#ffc400'},
+  {id:'ion',name:'Ion Turret',icon:'&#128161;',desc:'Disables ship systems. Support turret.',power:80,cost:{cr:1000,mn:1200},upkeep:6,unlockReslab:4,maxCount:6,color:'#a78bfa'},
+  {id:'plasma',name:'Plasma Defense Grid',icon:'&#127774;',desc:'Multi-ship plasma burst. Extremely powerful.',power:200,cost:{cr:2000,mn:2500},upkeep:10,unlockReslab:5,maxCount:4,color:'#00e5ff'},
+  {id:'orbital',name:'Orbital Defense Station',icon:'&#127759;',desc:'Ultimate planetary defense. Only on HQ planet.',power:500,cost:{cr:5000,mn:6000},upkeep:25,unlockReslab:6,maxCount:1,color:'#ff2244'},
+];
+
+function renderDefense(){
+  const reslabLv = buildings.reslab||0;
+  const defBlds = buildings.defense_turrets || {};
+  
+  // Update stats
+  let totalTurrets=0, totalPower=0, totalUpkeep=0;
+  for(const t of TURRETS){
+    const cnt=defBlds[t.id]||0;
+    totalTurrets+=cnt;
+    totalPower+=cnt*t.power;
+    totalUpkeep+=cnt*t.upkeep;
+  }
+  const d=document;
+  d.getElementById('def-turrets').textContent=totalTurrets;
+  d.getElementById('def-power').textContent=totalPower;
+  d.getElementById('def-upkeep').textContent=totalUpkeep+' ENE/s';
+
+  const list=document.getElementById('defense-list');
+  if(!list) return;
+  list.innerHTML='';
+  
+  for(const t of TURRETS){
+    const cnt=defBlds[t.id]||0;
+    const locked=reslabLv<t.unlockReslab;
+    const isOrbital=t.id==='orbital'&&!planetData?.isHome;
+    const maxed=cnt>=t.maxCount;
+    const canAfford=resources.cr>=t.cost.cr&&resources.mn>=t.cost.mn;
+    
+    if(isOrbital) continue;
+    
+    const card=document.createElement('div');
+    card.className='bld-card'+(locked?' locked-card':'');
+    card.innerHTML=`
+      <div class="bld-head">
+        <div class="bld-icon">${t.icon}</div>
+        <div class="bld-info">
+          <div class="bld-name">${t.name}</div>
+          <div class="bld-desc">${t.desc}</div>
+        </div>
+        <div class="bld-lv-wrap">
+          <div class="bld-lv-txt">Count</div>
+          <div class="bld-lv-num ${cnt===0?'zero':''}" style="color:${t.color}">${cnt}/${t.maxCount}</div>
+        </div>
+      </div>
+      ${cnt>0?`<div class="bld-stats">
+        <span class="bstat" style="background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.2);color:rgba(255,80,80,.8);">DEF: +${cnt*t.power}</span>
+        <span class="bstat drain">-${cnt*t.upkeep} ENE/s</span>
+      </div>`:''}
+      <div class="bld-action">
+        ${locked
+          ?`<div class="locked-msg">&#128274; Requires Research Lab Level ${t.unlockReslab}</div>`
+          :maxed
+            ?`<span class="maxed-txt">MAX (${t.maxCount})</span>`
+            :`<button class="upg-btn" ${!canAfford?'disabled':''} onclick="buildTurret('${t.id}')">
+                BUILD +1
+              </button>
+              <div class="bld-cost-txt">CR:<span>${fmt(t.cost.cr)}</span> MIN:<span>${fmt(t.cost.mn)}</span> | -${t.upkeep}ENE/s</div>`
+        }
+      </div>`;
+    list.appendChild(card);
+  }
+  
+  // Update research summary if on research tab
+  const rs=document.getElementById('res-summary');
+  if(rs){
+    const bns=JSON.parse(localStorage.getItem('vd_bonuses_'+userId)||'{}');
+    rs.innerHTML=`
+      <div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:6px;">Active Bonuses</div>
+      ${bns.shipAtkBonus?`<div style="font-size:9px;color:#ff4466;margin:2px 0;">&#9876; Ship ATK +${(bns.shipAtkBonus*100).toFixed(0)}%</div>`:''}
+      ${bns.crBonus?`<div style="font-size:9px;color:#ffc400;margin:2px 0;">&#128176; Credits +${(bns.crBonus*100).toFixed(0)}%</div>`:''}
+      ${bns.fleetSpeedBonus?`<div style="font-size:9px;color:#00e5ff;margin:2px 0;">&#128640; Fleet Speed +${(bns.fleetSpeedBonus*100).toFixed(0)}%</div>`:''}
+      ${!bns.shipAtkBonus&&!bns.crBonus&&!bns.fleetSpeedBonus?`<div style="font-size:9px;color:rgba(255,255,255,.3);font-style:italic;">No active bonuses — open Research Lab to unlock</div>`:''}`;
+  }
+}
+
+window.buildTurret=function(turretId){
+  const t=TURRETS.find(x=>x.id===turretId);
+  if(!t)return;
+  if(resources.cr<t.cost.cr||resources.mn<t.cost.mn){toast('Not enough resources!','err');return;}
+  resources.cr-=t.cost.cr;
+  resources.mn-=t.cost.mn;
+  if(!buildings.defense_turrets) buildings.defense_turrets={};
+  buildings.defense_turrets[turretId]=(buildings.defense_turrets[turretId]||0)+1;
+  toast(t.name+' built!','ok');
+  save();
+  renderDefense();
+  updateHUD();
+};
 
 // ═══════════════════════════════════════════════
 //  CLOSE MODAL ON BACKDROP TAP
