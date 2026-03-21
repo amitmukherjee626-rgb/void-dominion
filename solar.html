@@ -829,10 +829,20 @@ const SHIP_DEFS=[
   {id:'collector',n:'Collector',icon:'&#128640;',atk:2,col:[0,200,83]},
 ];
 
-let atkSelShip=null, atkSelQty=1, atkTargetDef=0;
+// ══ MULTI-SELECT ATTACK STATE ══
+// atkSelected = {shipId: qty} — multiple ships selected
+let atkSelected={}, atkTargetDef=0;
+
+function calcTotalAtk(){
+  let total=0;
+  for(const [id,qty] of Object.entries(atkSelected)){
+    const s=SHIP_DEFS.find(x=>x.id===id);
+    total+=(s?.atk||0)*qty;
+  }
+  return total;
+}
 
 // ══ PLANET STATUS RINGS ══
-// stored as: vd_pring_{userId}_{sysId}_{planetId} = 'green'|'red'|'gray'
 function getPlanetRing(p){
   const k='vd_pring_'+userId+'_'+(systemData?.id||0)+'_'+p.id;
   return localStorage.getItem(k)||null;
@@ -847,25 +857,32 @@ window.doAttack=function(){
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
   const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
-  
   if(!combatShips.length){toast('No combat ships! Build ships in Fleet.','err');return;}
-  
   const status=getPlanetStatus(selPlanet);
   const scoutKey='vd_scout_'+userId+'_sys'+(systemData?.id||0)+'_p'+selPlanet.id;
   const scoutData=JSON.parse(localStorage.getItem(scoutKey)||'null');
   const defVal=scoutData?scoutData.defPower:(status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50));
   atkTargetDef=defVal;
-  atkSelShip=null;atkSelQty=1;
-  
+  atkSelected={};
   closePanel();
   renderAtkModal(fleet,combatShips,defVal);
   $('atk-modal').classList.add('open');
 };
 
 function renderAtkModal(fleet,combatShips,defVal){
-  const myAtk=atkSelShip?(SHIP_DEFS.find(s=>s.id===atkSelShip)?.atk||0)*atkSelQty:0;
-  const atkColor=atkSelShip?(myAtk>=defVal?'#00e676':'#ff4466'):'rgba(255,255,255,.4)';
-  
+  const myAtk=calcTotalAtk();
+  const hasSelection=Object.keys(atkSelected).length>0;
+  const atkColor=!hasSelection?'rgba(255,255,255,.35)':myAtk>=defVal?'#00e676':'#ff4466';
+
+  // Build summary of selected ships
+  let selSummary='';
+  if(hasSelection){
+    selSummary=Object.entries(atkSelected).map(([id,qty])=>{
+      const s=SHIP_DEFS.find(x=>x.id===id);
+      return `<span style="font-family:'Orbitron',monospace;font-size:8px;color:#fff;margin-right:8px;">${qty}x ${s?.n||id}</span>`;
+    }).join('');
+  }
+
   $('am-content').innerHTML=`
     <div class="am-hdr">
       <div class="am-icon">&#9876;&#65039;</div>
@@ -875,11 +892,12 @@ function renderAtkModal(fleet,combatShips,defVal){
       </div>
       <button class="am-x" onclick="closeAtkModal()">&#10005;</button>
     </div>
+
     <!-- Power comparison -->
     <div class="pow-compare">
       <div class="pow-side" style="border:1px solid rgba(255,68,68,.2)">
         <div class="pow-lbl">YOUR ATK</div>
-        <div class="pow-val" style="color:${atkColor}">${atkSelShip?myAtk:'?'}</div>
+        <div class="pow-val" style="color:${atkColor}">${hasSelection?myAtk:'—'}</div>
       </div>
       <div class="pow-vs">VS</div>
       <div class="pow-side" style="border:1px solid rgba(0,229,255,.15)">
@@ -887,54 +905,71 @@ function renderAtkModal(fleet,combatShips,defVal){
         <div class="pow-val" style="color:#ffc400">${defVal}</div>
       </div>
     </div>
-    <!-- Ship selection -->
+
+    ${hasSelection?`<div style="padding:4px 14px 0;font-size:8px;color:rgba(0,229,255,.5);font-family:'Orbitron',monospace;">FLEET: ${selSummary}</div>`:''}
+
+    <!-- Multi-select ship list -->
     <div class="am-sec">
-      <div class="am-sec-t">Select Ship Type</div>
-      ${combatShips.map(s=>`
-        <div class="ship-sel-row ${atkSelShip===s.id?'active':''}" onclick="atkSelectShip('${s.id}',${fleet[s.id]||0},${defVal})">
+      <div class="am-sec-t">Select Ships (tick multiple)</div>
+      ${combatShips.map(s=>{
+        const isChecked=!!atkSelected[s.id];
+        const qty=atkSelected[s.id]||0;
+        const max=fleet[s.id]||0;
+        return `
+        <div class="ship-sel-row ${isChecked?'active':''}" onclick="atkToggle('${s.id}',${max},${defVal})">
+          <!-- Checkbox -->
+          <div style="width:22px;height:22px;border:2px solid ${isChecked?'#00e5ff':'rgba(255,255,255,.2)'};border-radius:3px;background:${isChecked?'rgba(0,229,255,.2)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px;color:#00e5ff;transition:all .15s;">
+            ${isChecked?'&#10003;':''}
+          </div>
           <div class="ssr-icon">${s.icon}</div>
           <div class="ssr-name">${s.n}</div>
-          <div class="ssr-cnt">x${fleet[s.id]||0}</div>
-          <div class="ssr-atk">ATK ${s.atk} each</div>
-        </div>`).join('')}
+          <div class="ssr-cnt">x${max}</div>
+          <div class="ssr-atk">ATK ${s.atk}</div>
+        </div>
+        ${isChecked?`
+        <!-- Qty row for this ship -->
+        <div style="display:flex;align-items:center;gap:6px;padding:4px 14px 8px;background:rgba(0,229,255,.03);">
+          <span style="font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,229,255,.4);flex-shrink:0;">SEND:</span>
+          <button class="qty-btn" style="padding:5px 12px;" onclick="event.stopPropagation();atkQtyChg('${s.id}',-1,${max},${defVal})">−</button>
+          <input class="qty-in" style="padding:5px;" type="number" value="${qty}" min="1" max="${max}"
+            onchange="event.stopPropagation();atkQtySet2('${s.id}',parseInt(this.value),${max},${defVal})"
+            onclick="event.stopPropagation()">
+          <button class="qty-btn" style="padding:5px 12px;" onclick="event.stopPropagation();atkQtyChg('${s.id}',1,${max},${defVal})">+</button>
+          <button class="qty-btn" style="padding:5px 10px;font-size:9px;letter-spacing:1px;" onclick="event.stopPropagation();atkQtyChg('${s.id}',${max},${max},${defVal})">ALL</button>
+          <span style="font-size:8px;color:rgba(255,80,80,.7);font-family:'Orbitron',monospace;margin-left:4px;">ATK:${s.atk*qty}</span>
+        </div>`:''}`
+      }).join('')}
     </div>
-    ${atkSelShip?`
-    <!-- Qty selector -->
-    <div class="qty-row">
-      <div class="qty-lbl">SEND:</div>
-      <button class="qty-btn" onclick="atkQty(-1,${fleet[atkSelShip]||1},${defVal})">−</button>
-      <input class="qty-in" id="qty-in" type="number" value="${atkSelQty}" min="1" max="${fleet[atkSelShip]||1}" onchange="atkQtySet(parseInt(this.value),${fleet[atkSelShip]||1},${defVal})">
-      <button class="qty-btn" onclick="atkQty(1,${fleet[atkSelShip]||1},${defVal})">+</button>
-      <button class="qty-btn" style="font-size:10px;letter-spacing:1px;" onclick="atkQty(${fleet[atkSelShip]||1},${fleet[atkSelShip]||1},${defVal})">ALL</button>
-    </div>
-    <div style="font-size:8px;color:rgba(255,255,255,.3);padding:4px 14px 0;font-family:'Orbitron',monospace;">
-      Sending ${atkSelQty}x ${SHIP_DEFS.find(s=>s.id===atkSelShip)?.n} — Total ATK: ${(SHIP_DEFS.find(s=>s.id===atkSelShip)?.atk||0)*atkSelQty}
-    </div>`:''}
-    <button class="am-confirm do-attack" style="display:block;" ${!atkSelShip?'disabled':''} onclick="executeAtk(${defVal})">
-      &#9876; LAUNCH ATTACK
+
+    <button class="am-confirm do-attack" style="display:block;" ${!hasSelection?'disabled':''} onclick="executeAtk(${defVal})">
+      &#9876; LAUNCH ATTACK ${hasSelection?'(ATK:'+myAtk+')':''}
     </button>`;
 }
 
-function atkSelectShip(id,max,defVal){
-  atkSelShip=id;
-  atkSelQty=Math.min(max,Math.max(1,Math.ceil(max/2)));
+function atkToggle(id,max,defVal){
+  if(atkSelected[id]){
+    delete atkSelected[id]; // deselect
+  } else {
+    atkSelected[id]=Math.max(1,Math.ceil(max/2)); // default: half
+  }
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
   const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
   renderAtkModal(fleet,combatShips,defVal);
 }
 
-function atkQty(delta,max,defVal){
-  if(delta===max){atkSelQty=max;}
-  else{atkSelQty=Math.max(1,Math.min(max,atkSelQty+delta));}
+function atkQtyChg(id,delta,max,defVal){
+  if(!atkSelected[id]) return;
+  if(delta===max){atkSelected[id]=max;}
+  else{atkSelected[id]=Math.max(1,Math.min(max,(atkSelected[id]||1)+delta));}
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
   const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
   renderAtkModal(fleet,combatShips,defVal);
 }
 
-function atkQtySet(v,max,defVal){
-  atkSelQty=Math.max(1,Math.min(max,v||1));
+function atkQtySet2(id,v,max,defVal){
+  atkSelected[id]=Math.max(1,Math.min(max,v||1));
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
   const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
@@ -943,118 +978,109 @@ function atkQtySet(v,max,defVal){
 
 function closeAtkModal(){
   $('atk-modal').classList.remove('open');
-  atkSelShip=null;atkSelQty=1;
+  atkSelected={};
 }
 
-// ══ EXECUTE ATTACK ══
+// ══ EXECUTE ATTACK (multi-ship) ══
 function executeAtk(defVal){
-  if(!atkSelShip||!selPlanet){toast('Select ships first!','err');return;}
+  if(!Object.keys(atkSelected).length||!selPlanet){toast('Select ships first!','err');return;}
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
   const fleet=fleetData.fleet||{};
-  const shipDef=SHIP_DEFS.find(s=>s.id===atkSelShip);
-  if(!shipDef||(fleet[atkSelShip]||0)<atkSelQty){toast('Not enough ships!','err');return;}
-  
+
+  // Validate all selected ships
+  for(const [id,qty] of Object.entries(atkSelected)){
+    if((fleet[id]||0)<qty){toast('Not enough '+SHIP_DEFS.find(s=>s.id===id)?.n+'!','err');return;}
+  }
+
   closeAtkModal();
-  
-  const myAtk=shipDef.atk*atkSelQty;
-  
-  // ── FLEET TRAVEL ANIMATION ──
-  // Find home planet position as source
+
+  const myAtk=calcTotalAtk();
+  const totalShips=Object.values(atkSelected).reduce((a,b)=>a+b,0);
+
+  // Deduct all selected ships immediately
+  for(const [id,qty] of Object.entries(atkSelected)){
+    fleet[id]=Math.max(0,(fleet[id]||0)-qty);
+  }
+  fleetData.fleet=fleet;
+  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+
+  // Dominant ship color for animation
+  let dominantShip=SHIP_DEFS[0];
+  let maxAtk=0;
+  for(const [id] of Object.entries(atkSelected)){
+    const s=SHIP_DEFS.find(x=>x.id===id);
+    if(s&&s.atk>maxAtk){maxAtk=s.atk;dominantShip=s;}
+  }
+
+  // Fleet travel animation
   const homePlanet=planets.find(p=>p.isHome)||planets[0];
   const targetPlanet=selPlanet;
-  
-  if(homePlanet&&targetPlanet&&homePlanet.screenX&&targetPlanet.screenX){
-    // Launch fleet animation
+
+  if(homePlanet?.screenX&&targetPlanet?.screenX){
     const dist=Math.hypot(targetPlanet.screenX-homePlanet.screenX,targetPlanet.screenY-homePlanet.screenY);
-    const duration=Math.max(2000,dist/0.06); // ms
-    
+    const duration=Math.max(2000,dist/0.06);
     fleetMissions.push({
       id:Date.now(),
       fromX:homePlanet.screenX,fromY:homePlanet.screenY,
       toX:targetPlanet.screenX,toY:targetPlanet.screenY,
       startTime:Date.now(),duration,
-      qty:atkSelQty,type:'attack',
-      shipCol:shipDef.col||[255,60,60],
-      done:false,
-      targetPlanet,
-      onArrival:()=>resolveBattle(myAtk,defVal,shipDef,targetPlanet),
+      qty:totalShips,type:'attack',
+      shipCol:dominantShip.col||[255,60,60],
+      done:false,targetPlanet,
+      onArrival:()=>resolveBattle(myAtk,defVal,atkSelected,targetPlanet),
     });
-    
-    toast('Fleet launched! '+atkSelQty+'x '+shipDef.n+' en route...','inf');
+    toast('Fleet launched! '+totalShips+' ships en route...','inf');
   } else {
-    // No position available, resolve immediately
-    setTimeout(()=>resolveBattle(myAtk,defVal,shipDef,targetPlanet),1500);
+    setTimeout(()=>resolveBattle(myAtk,defVal,atkSelected,targetPlanet),1500);
     toast('Fleet deployed!','inf');
   }
-  
-  // Deduct ships immediately (committed to battle)
-  fleet[atkSelShip]=Math.max(0,(fleet[atkSelShip]||0)-atkSelQty);
-  fleetData.fleet=fleet;
-  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
 }
 
-// ══ RESOLVE BATTLE ══
-function resolveBattle(myAtk,defVal,shipDef,targetPlanet){
+// ══ RESOLVE BATTLE (multi-ship) ══
+function resolveBattle(myAtk,defVal,selectedShips,targetPlanet){
   const myPow=myAtk*(0.8+Math.random()*0.4);
   const enPow=defVal*(0.85+Math.random()*0.3);
   const won=myPow>enPow;
-  const lossQty=won?Math.floor(atkSelQty*0.15):atkSelQty;
-  const survivedQty=won?atkSelQty-lossQty:0;
-  
+
+  // Build casualties summary
+  const casualties=[];
+  let totalSent=0;
+
+  for(const [id,qty] of Object.entries(selectedShips)){
+    const s=SHIP_DEFS.find(x=>x.id===id);
+    const lost=won?Math.floor(qty*0.15):qty;
+    const survived=won?qty-lost:0;
+    totalSent+=qty;
+    if(qty>0) casualties.push({name:s?.n||id,lost,survived});
+
+    // Return surviving ships on win
+    if(won&&survived>0){
+      const fd=JSON.parse(localStorage.getItem('vd_fleet_'+userId)||'{}');
+      fd.fleet=fd.fleet||{};
+      fd.fleet[id]=(fd.fleet[id]||0)+survived;
+      localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fd));
+    }
+  }
+
   if(won){
-    // ── WIN ──
     setPlanetStatus(targetPlanet,'conquered');
     targetPlanet.colonized=true;
     setPlanetRing(targetPlanet,'green');
-    
-    // Return surviving ships
-    if(survivedQty>0){
-      const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
-      const fd=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
-      fd.fleet[shipDef.id]=(fd.fleet[shipDef.id]||0)+survivedQty;
-      localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fd));
-    }
-    
-    toast('VICTORY! Planet '+(targetPlanet.id+1)+' captured!','ok');
-    if(lossQty>0) toast('Lost '+lossQty+'x '+shipDef.n+' in battle','inf');
+    const totalLost=casualties.reduce((a,c)=>a+c.lost,0);
+    toast('VICTORY! Planet '+(targetPlanet.id+1)+' captured! &#127942;','ok');
+    if(totalLost>0) toast('Lost '+totalLost+' ships in battle','inf');
     toast('Send a Colonizer to claim it!','inf');
-    
-    // Trigger blast animation on target planet
     startBattleAnimation(targetPlanet,true);
-    
-    saveReport({
-      type:'attack',
-      targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,
-      systemName:systemData?.name||'',
-      attackPower:Math.round(myPow),defPower:Math.round(enPow),
-      outcome:'win',
-      casualties:[{name:shipDef.n,lost:lossQty,survived:survivedQty}],
-    });
-    
-    // Auto-reopen panel
-    setTimeout(()=>openPanel(targetPlanet),800);
-    
+    saveReport({type:'attack',targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,systemName:systemData?.name||'',attackPower:Math.round(myPow),defPower:Math.round(enPow),outcome:'win',casualties});
+    setTimeout(()=>openPanel(targetPlanet),900);
   } else {
-    // ── LOSS ──
     const status=getPlanetStatus(targetPlanet);
     setPlanetRing(targetPlanet,status==='enemy'?'red':'gray');
-    
-    toast('DEFEAT! All '+atkSelQty+'x '+shipDef.n+' lost!','err');
+    toast('DEFEAT! All '+totalSent+' ships lost!','err');
     toast('Scout first to know exact defense strength.','inf');
-    
-    // Trigger small blast (failed attack)
     startBattleAnimation(targetPlanet,false);
-    
-    saveReport({
-      type:'attack',
-      targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,
-      systemName:systemData?.name||'',
-      attackPower:Math.round(myPow),defPower:Math.round(enPow),
-      outcome:'loss',
-      casualties:[{name:shipDef.n,lost:atkSelQty,survived:0}],
-    });
-    
+    saveReport({type:'attack',targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,systemName:systemData?.name||'',attackPower:Math.round(myPow),defPower:Math.round(enPow),outcome:'loss',casualties});
     setTimeout(()=>closePanel(),1000);
   }
 }
