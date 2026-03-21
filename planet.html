@@ -501,6 +501,24 @@ function renderBuildings(){
   const list = $('bld-list');
   list.innerHTML = '';
 
+  // Non-home planet with no CC yet - show colonization notice
+  if(!planetData.isHome && !(buildings.cc > 0)){
+    list.innerHTML = `
+      <div style="margin:16px 12px;padding:16px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.15);border-radius:3px;text-align:center;">
+        <div style="font-size:28px;margin-bottom:8px;">&#127963;</div>
+        <div style="font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;margin-bottom:6px;letter-spacing:1px;">BUILD COMMANDER CENTER</div>
+        <div style="font-size:9px;color:rgba(255,255,255,.4);line-height:1.6;margin-bottom:12px;">
+          This planet has no Commander Center yet.<br>
+          Build one to start developing this colony.
+        </div>
+        <button onclick="buildFirstCC()" style="padding:10px 20px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:linear-gradient(90deg,rgba(0,200,230,.9),rgba(124,58,237,.9));color:#fff;border:none;border-radius:2px;cursor:pointer;">
+          BUILD CC — CR:0 MIN:100 ENE:50
+        </button>
+      </div>`;
+    updateResCard();
+    return;
+  }
+
   for(const bld of BUILDINGS){
     // Skip if planet restricted and not applicable
     if(!isPlanetAllowed(bld)) continue;
@@ -700,6 +718,24 @@ async function save(){
 }
 
 // ═══════════════════════════════════════════════
+//  BUILD FIRST CC (non-home planet)
+// ═══════════════════════════════════════════════
+window.buildFirstCC = function(){
+  const cost = {cr:0, mn:100, en:50};
+  if(resources.mn < cost.mn || resources.en < cost.en){
+    toast('Need MIN:100 ENE:50 to build Commander Center!','err');
+    return;
+  }
+  resources.mn -= cost.mn;
+  resources.en -= cost.en;
+  buildings.cc = 1;
+  toast('Commander Center built! Colony established!','ok');
+  save();
+  renderBuildings();
+  updateHUD();
+};
+
+// ═══════════════════════════════════════════════
 //  TAB SWITCH
 // ═══════════════════════════════════════════════
 window.switchTab = function(tab){
@@ -766,13 +802,23 @@ async function init(){
   }
 
   // Load buildings from localStorage
-  bldKey = 'vd_bld_'+userId+'_'+planetData.id;
+  // Home planet has permanent key, other planets use system+planet id
+  if(planetData.isHome){
+    bldKey = 'vd_bld_'+userId+'_home';
+  } else {
+    // Non-home planets need to be conquered + colonized first
+    // Use system name + planet id as unique key
+    const sysName = (planetData.systemName||'unk').replace(/\s+/g,'_');
+    bldKey = 'vd_bld_'+userId+'_'+sysName+'_p'+planetData.id;
+  }
+  
   const savedBld = localStorage.getItem(bldKey);
   if(savedBld){
     buildings = JSON.parse(savedBld);
   } else {
-    // New planet — start with CC Lv1 only
-    buildings = {cc:1};
+    // Home planet starts with CC Lv1
+    // Conquered planets start empty (no CC yet)
+    buildings = planetData.isHome ? {cc:1} : {};
     localStorage.setItem(bldKey, JSON.stringify(buildings));
   }
 
