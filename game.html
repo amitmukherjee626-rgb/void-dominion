@@ -209,6 +209,54 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
 
 .empty-msg{padding:24px;text-align:center;font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,.25);letter-spacing:2px;line-height:1.8;}
 .view-all-btn{width:calc(100% - 24px);margin:4px 12px 12px;padding:10px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;background:rgba(0,229,255,.07);border:1px solid rgba(0,229,255,.18);color:#00e5ff;border-radius:2px;cursor:pointer;}
+
+/* ══ ACTION MODAL (scout/attack ship selector) ══ */
+#action-modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.85);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;}
+#action-modal.open{display:flex;}
+.am-box{background:rgba(0,2,18,.99);border:1px solid rgba(0,229,255,.2);border-radius:4px 4px 0 0;width:100%;max-width:480px;max-height:80vh;overflow-y:auto;animation:slideUp .28s ease;padding-bottom:20px;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.am-header{padding:16px 18px 12px;border-bottom:1px solid rgba(0,229,255,.08);display:flex;align-items:center;gap:10px;}
+.am-icon{font-size:24px;}
+.am-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:#fff;letter-spacing:1px;}
+.am-sub{font-size:9px;color:rgba(0,229,255,.4);letter-spacing:1px;margin-top:2px;}
+.am-close{margin-left:auto;background:none;border:none;color:rgba(0,229,255,.4);font-size:18px;cursor:pointer;padding:4px;}
+.am-section{padding:12px 18px 0;}
+.am-stitle{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.35);text-transform:uppercase;margin-bottom:8px;}
+/* Fleet row in modal */
+.am-ship-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,5,20,.8);border:1px solid rgba(0,229,255,.1);border-radius:2px;margin-bottom:6px;cursor:pointer;transition:all .2s;}
+.am-ship-row:active{border-color:rgba(0,229,255,.3);background:rgba(0,229,255,.06);}
+.am-ship-row.selected{border-color:#00e5ff;background:rgba(0,229,255,.08);}
+.am-ship-icon{font-size:20px;width:28px;text-align:center;flex-shrink:0;}
+.am-ship-name{flex:1;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;}
+.am-ship-count{font-family:'Orbitron',monospace;font-size:12px;color:#00e5ff;}
+.am-ship-atk{font-size:8px;color:rgba(255,80,80,.7);font-family:'Orbitron',monospace;}
+/* Qty selector */
+.am-qty-wrap{padding:12px 18px 0;}
+.am-qty-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+.am-qty-label{font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,229,255,.5);}
+.am-qty-input{flex:1;padding:8px;background:rgba(0,5,20,.9);border:1px solid rgba(0,229,255,.2);border-radius:2px;color:#00e5ff;font-family:'Orbitron',monospace;font-size:14px;text-align:center;}
+.am-qty-btn{padding:8px 14px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);border-radius:2px;color:#00e5ff;font-family:'Orbitron',monospace;font-size:14px;cursor:pointer;}
+/* Power comparison */
+.am-power{display:flex;gap:8px;padding:10px 18px 0;align-items:center;}
+.am-pow-side{flex:1;background:rgba(0,5,20,.8);border-radius:2px;padding:8px;text-align:center;}
+.am-pow-lbl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);font-family:'Orbitron',monospace;margin-bottom:3px;}
+.am-pow-val{font-family:'Orbitron',monospace;font-size:16px;font-weight:900;}
+.am-pow-val.atk{color:#ff4466;}
+.am-pow-val.def{color:#00e676;}
+.am-vs{font-family:'Orbitron',monospace;font-size:12px;color:rgba(0,229,255,.3);}
+/* Action button */
+.am-confirm{width:calc(100% - 36px);margin:12px 18px 0;padding:13px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;color:#fff;transition:all .2s;}
+.am-confirm.scout-btn{background:linear-gradient(90deg,rgba(124,58,237,.9),rgba(80,0,180,.9));}
+.am-confirm.attack-btn{background:linear-gradient(90deg,rgba(255,23,68,.9),rgba(180,0,40,.9));}
+.am-confirm:disabled{opacity:.35;cursor:not-allowed;}
+/* Result panel */
+.am-result{margin:10px 18px 0;padding:12px;border-radius:2px;}
+.am-result.win{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);}
+.am-result.loss{background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.2);}
+.am-result-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;letter-spacing:2px;margin-bottom:6px;}
+.am-result-title.win{color:#00e676;}
+.am-result-title.loss{color:#ff4466;}
+.am-result-row{font-size:9px;color:rgba(255,255,255,.5);padding:2px 0;}
 </style>
 </head>
 <body>
@@ -373,6 +421,13 @@ canvas#bg{position:fixed;inset:0;z-index:0;pointer-events:none;}
   <div class="btab" onclick="nav('fleet.html')"><div class="btab-icon">&#128640;</div>Fleet</div>
   <div class="btab" onclick="nav('research.html')"><div class="btab-icon">&#128300;</div>Research</div>
   <div class="btab" onclick="nav('planet.html#defense')"><div class="btab-icon">&#128737;</div>Defense</div>
+</div>
+
+<!-- ACTION MODAL -->
+<div id="action-modal">
+  <div class="am-box" id="am-box">
+    <!-- filled by JS -->
+  </div>
 </div>
 
 <div id="toasts"></div>
@@ -698,8 +753,8 @@ function doSearch(){
     <div class="sr-acts">
       ${status==='yours'
         ?`<button class="sra goto" onclick="nav('planet.html')">LAND ON PLANET</button>`
-        :`<button class="sra scout" onclick="toast('Send probe from Solar System view','inf')">&#128065; SCOUT</button>
-          <button class="sra atk" onclick="toast('Launch attack from Solar System view','inf')">&#9876; ATTACK</button>`
+        :`<button class="sra scout" onclick="openScoutModal('${coord}','${pType}')">&#128065; SCOUT</button>
+          <button class="sra atk" onclick="openAttackModal('${coord}','${pType}',${scout?scout.defPower:seed%400+20})">&#9876; ATTACK</button>`
       }
     </div>`;
 }
@@ -912,6 +967,280 @@ async function init(){
   setTimeout(()=>ls.style.display='none',450);
   toast('Welcome back, '+(prof?.username||'Commander')+'!','ok');
 }
+
+// ══ SHIP DEFINITIONS ══
+const SHIP_DEFS=[
+  {id:'probe',n:'Probe',icon:'&#128065;',atk:0,special:'scout'},
+  {id:'fighter',n:'Fighter',icon:'&#128640;',atk:4},
+  {id:'gunship',n:'Gunship',icon:'&#128640;',atk:8},
+  {id:'destroyer',n:'Destroyer',icon:'&#128640;',atk:12},
+  {id:'frigate',n:'Frigate',icon:'&#128640;',atk:18},
+  {id:'cruiser',n:'Cruiser',icon:'&#128640;',atk:28},
+  {id:'battleship',n:'Battleship',icon:'&#128640;',atk:45},
+  {id:'dreadnought',n:'Dreadnought',icon:'&#128640;',atk:70},
+  {id:'leviathan',n:'Leviathan',icon:'&#128640;',atk:150},
+  {id:'light_carrier',n:'Lt Carrier',icon:'&#128641;',atk:8},
+  {id:'fleet_carrier',n:'Fleet Carrier',icon:'&#128641;',atk:20},
+  {id:'colonizer',n:'Colonizer',icon:'&#128640;',atk:0,special:'colonize'},
+  {id:'collector',n:'Collector',icon:'&#128640;',atk:2},
+];
+
+let currentAction=null; // {type:'scout'|'attack', coord, pType, defPower}
+let selectedShipId=null;
+let selectedQty=1;
+
+function getFleet(){
+  const raw=localStorage.getItem('vd_fleet_'+userId);
+  return raw?JSON.parse(raw).fleet||{}:{};
+}
+
+// ══ OPEN SCOUT MODAL ══
+function openScoutModal(coord,pType){
+  currentAction={type:'scout',coord,pType};
+  selectedShipId=null;selectedQty=1;
+  const fleet=getFleet();
+  const probes=fleet.probe||0;
+  
+  const box=$('am-box');
+  box.innerHTML=`
+    <div class="am-header">
+      <div class="am-icon">&#128065;</div>
+      <div>
+        <div class="am-title">SCOUT MISSION</div>
+        <div class="am-sub">Target: ${coord} — ${pType} Planet</div>
+      </div>
+      <button class="am-close" onclick="closeActionModal()">&#10005;</button>
+    </div>
+    <div class="am-section">
+      <div class="am-stitle">Available Probes</div>
+      ${probes>0
+        ?`<div class="am-ship-row selected" onclick="selectShip('probe',1)">
+            <div class="am-ship-icon">&#128065;</div>
+            <div class="am-ship-name">Probe</div>
+            <div class="am-ship-count">x${probes}</div>
+            <div class="am-ship-atk" style="color:#a78bfa;">STEALTH</div>
+          </div>
+          <div style="font-size:9px;color:rgba(255,255,255,.3);padding:6px 0;line-height:1.5;">
+            &#128275; Probe is fully stealth — enemy cannot detect it.<br>
+            Enemy will be notified after mission completes (but not who sent it).
+          </div>`
+        :`<div style="text-align:center;padding:16px;font-size:9px;color:rgba(255,80,80,.6);font-family:'Orbitron',monospace;letter-spacing:1px;">
+            NO PROBES AVAILABLE<br>
+            <span style="color:rgba(255,255,255,.3);font-size:8px;">Build Probe in Fleet (Shipyard Lv1)</span>
+          </div>`
+      }
+    </div>
+    <button class="am-confirm scout-btn" ${probes<1?'disabled':''} onclick="executeScout('${coord}','${pType}')">
+      &#128065; LAUNCH PROBE
+    </button>`;
+  
+  if(probes>0) selectedShipId='probe';
+  $('action-modal').classList.add('open');
+}
+
+// ══ OPEN ATTACK MODAL ══
+function openAttackModal(coord,pType,defPower){
+  currentAction={type:'attack',coord,pType,defPower};
+  selectedShipId=null;selectedQty=1;
+  const fleet=getFleet();
+  const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&!s.special&&(fleet[s.id]||0)>0);
+  
+  renderAttackModal(fleet,combatShips,defPower,coord,pType);
+  $('action-modal').classList.add('open');
+}
+
+function renderAttackModal(fleet,combatShips,defPower,coord,pType){
+  const myTotalAtk=combatShips.reduce((a,s)=>{
+    const qty=selectedShipId===s.id?selectedQty:(fleet[s.id]||0);
+    return selectedShipId?a:(a+(fleet[s.id]||0)*s.atk);
+  },0);
+  const selAtk=selectedShipId?(SHIP_DEFS.find(s=>s.id===selectedShipId)?.atk||0)*selectedQty:0;
+  const displayAtk=selectedShipId?selAtk:myTotalAtk;
+  const atkColor=displayAtk>=defPower?'#00e676':'#ff4466';
+  
+  $('am-box').innerHTML=`
+    <div class="am-header">
+      <div class="am-icon">&#9876;</div>
+      <div>
+        <div class="am-title">LAUNCH ATTACK</div>
+        <div class="am-sub">Target: ${coord} — ${pType} Planet</div>
+      </div>
+      <button class="am-close" onclick="closeActionModal()">&#10005;</button>
+    </div>
+    ${combatShips.length===0
+      ?`<div style="text-align:center;padding:24px;font-family:'Orbitron',monospace;font-size:9px;color:rgba(255,80,80,.6);letter-spacing:1px;">
+          NO COMBAT SHIPS<br><span style="color:rgba(255,255,255,.3);font-size:8px;">Build ships in Fleet tab</span>
+        </div>`
+      :`<div class="am-power">
+          <div class="am-pow-side" style="border:1px solid rgba(255,68,68,.2)">
+            <div class="am-pow-lbl">YOUR ATK</div>
+            <div class="am-pow-val atk" style="color:${atkColor}">${displayAtk}</div>
+          </div>
+          <div class="am-vs">VS</div>
+          <div class="am-pow-side" style="border:1px solid rgba(0,229,255,.15)">
+            <div class="am-pow-lbl">EST. DEF</div>
+            <div class="am-pow-val def">${defPower}</div>
+          </div>
+        </div>
+        <div class="am-section" style="margin-top:10px;">
+          <div class="am-stitle">Select Ships to Deploy</div>
+          ${combatShips.map(s=>`
+            <div class="am-ship-row ${selectedShipId===s.id?'selected':''}" onclick="selectShip('${s.id}',${fleet[s.id]||0})">
+              <div class="am-ship-icon">${s.icon}</div>
+              <div class="am-ship-name">${s.n}</div>
+              <div class="am-ship-count">x${fleet[s.id]||0}</div>
+              <div class="am-ship-atk">ATK:${s.atk} ea</div>
+            </div>`).join('')}
+        </div>
+        ${selectedShipId?`
+        <div class="am-qty-wrap">
+          <div class="am-stitle">How many to send?</div>
+          <div class="am-qty-row">
+            <button class="am-qty-btn" onclick="changeQty(-1)">−</button>
+            <input class="am-qty-input" id="qty-input" type="number" value="${selectedQty}" min="1" max="${fleet[selectedShipId]||1}" onchange="setQty(parseInt(this.value))">
+            <button class="am-qty-btn" onclick="changeQty(1)">+</button>
+            <button class="am-qty-btn" onclick="changeQty(${(fleet[selectedShipId]||1)})">ALL</button>
+          </div>
+          <div style="font-size:8px;color:rgba(255,255,255,.3);font-family:'Orbitron',monospace;">
+            Sending ${selectedQty}x ${SHIP_DEFS.find(s=>s.id===selectedShipId)?.n} — ATK: ${(SHIP_DEFS.find(s=>s.id===selectedShipId)?.atk||0)*selectedQty}
+          </div>
+        </div>`:''}
+        <button class="am-confirm attack-btn" ${!selectedShipId?'disabled':''} onclick="executeAttack('${coord}','${pType}',${defPower})">
+          &#9876; LAUNCH ATTACK
+        </button>`
+    }`;
+}
+
+function selectShip(id,max){
+  selectedShipId=id;
+  selectedQty=Math.min(max,Math.floor(max/2)+1||1);
+  if(currentAction?.type==='attack'){
+    const fleet=getFleet();
+    const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&!s.special&&(fleet[s.id]||0)>0);
+    renderAttackModal(fleet,combatShips,currentAction.defPower,currentAction.coord,currentAction.pType);
+  }
+}
+
+function changeQty(delta){
+  const fleet=getFleet();
+  const max=fleet[selectedShipId]||1;
+  if(delta===max){selectedQty=max;}
+  else{selectedQty=Math.max(1,Math.min(max,selectedQty+delta));}
+  if($('qty-input'))$('qty-input').value=selectedQty;
+  if(currentAction?.type==='attack'){
+    const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&!s.special&&(fleet[s.id]||0)>0);
+    renderAttackModal(fleet,combatShips,currentAction.defPower,currentAction.coord,currentAction.pType);
+  }
+}
+
+function setQty(v){
+  const fleet=getFleet();
+  selectedQty=Math.max(1,Math.min(fleet[selectedShipId]||1,v||1));
+}
+
+// ══ EXECUTE SCOUT ══
+function executeScout(coord,pType){
+  const fleet=getFleet();
+  if(!(fleet.probe>0)){toast('No probes!','err');return;}
+  
+  // Consume probe
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  fleetData.fleet.probe=Math.max(0,(fleetData.fleet.probe||1)-1);
+  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+  
+  // Generate intel
+  function hc(s){let v=5381;for(let i=0;i<s.length;i++)v=(v*33^s.charCodeAt(i))>>>0;return v;}
+  const seed=hc(coord+userId);
+  const defVal=Math.floor(20+seed%580);
+  const isEnemy=hc(coord)%3===0;
+  const shipCount=isEnemy?Math.floor(defVal/8):0;
+  
+  const scoutKey='vd_scout_coord_'+userId+'_'+coord;
+  const scoutInfo={defPower:defVal,enemyFleet:shipCount>0?'~'+shipCount+' ships':'None',buildings:isEnemy?'Fortified':'None',pType};
+  localStorage.setItem(scoutKey,JSON.stringify(scoutInfo));
+  
+  // Save report
+  const reports=JSON.parse(localStorage.getItem('vd_reports_'+userId)||'[]');
+  reports.unshift({type:'scout',targetName:'Planet at '+coord,systemName:coord,defPower:defVal,enemyFleet:scoutInfo.enemyFleet,buildings:scoutInfo.buildings,planetType:pType,targetStatus:isEnemy?'enemy':'neutral',time:new Date().toISOString(),read:false,id:Date.now()});
+  localStorage.setItem('vd_reports_'+userId,JSON.stringify(reports.slice(0,100)));
+  
+  toast('Probe launched! Intel incoming...','inf');
+  $('action-modal').classList.remove('open');
+  
+  setTimeout(()=>{
+    toast('Scout report: Defense ~'+defVal,'ok');
+    if(isEnemy) toast('Enemy notified of scouting!','inf');
+    addNotif('info','Scout Report','Planet at '+coord+' — Defense: '+defVal);
+    // Refresh search result
+    doSearch();
+  },2500);
+}
+
+// ══ EXECUTE ATTACK ══
+function executeAttack(coord,pType,defPower){
+  if(!selectedShipId){toast('Select ships first!','err');return;}
+  const fleet=getFleet();
+  const shipDef=SHIP_DEFS.find(s=>s.id===selectedShipId);
+  if(!shipDef||(fleet[selectedShipId]||0)<selectedQty){toast('Not enough ships!','err');return;}
+  
+  const myAtk=shipDef.atk*selectedQty;
+  const myPow=myAtk*(0.8+Math.random()*0.4);
+  const enPow=defPower*(0.85+Math.random()*0.3);
+  
+  $('action-modal').classList.remove('open');
+  
+  setTimeout(()=>{
+    const won=myPow>enPow;
+    const lossQty=won?Math.max(0,Math.floor(selectedQty*0.15)):selectedQty;
+    
+    // Update fleet (remove losses)
+    const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+    const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+    fleetData.fleet[selectedShipId]=Math.max(0,(fleetData.fleet[selectedShipId]||0)-lossQty);
+    localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+    
+    if(won){
+      toast('VICTORY! Planet conquered!','ok');
+      if(lossQty>0) toast('Lost '+lossQty+'x '+shipDef.n+' in battle','inf');
+      addNotif('done','Victory!','Conquered planet at '+coord+'. Send a Colonizer!');
+      // Mark as conquered
+      const conquered=JSON.parse(localStorage.getItem('vd_conquered_'+userId)||'[]');
+      if(!conquered.find(p=>p.coord===coord)){
+        conquered.push({id:'c_'+Date.now(),name:'Planet at '+coord,type:pType,icon:'&#127756;',coord,isHome:false,status:'conquered'});
+        localStorage.setItem('vd_conquered_'+userId,JSON.stringify(conquered));
+      }
+    } else {
+      toast('DEFEAT! Reinforce and try again.','err');
+      toast('Lost '+lossQty+'x '+shipDef.n,'inf');
+      addNotif('war','Defeat','Attack on '+coord+' failed. Enemy holds strong.');
+    }
+    
+    // Save battle report
+    const reports=JSON.parse(localStorage.getItem('vd_reports_'+userId)||'[]');
+    reports.unshift({
+      type:'attack',targetName:'Planet at '+coord,systemName:coord,
+      attackPower:Math.round(myPow),defPower:Math.round(enPow),
+      outcome:won?'win':'loss',
+      casualties:[{name:shipDef.n,lost:lossQty,survived:selectedQty-lossQty}],
+      time:new Date().toISOString(),read:false,id:Date.now()
+    });
+    localStorage.setItem('vd_reports_'+userId,JSON.stringify(reports.slice(0,100)));
+    
+    // Refresh search
+    doSearch();
+  },600);
+}
+
+function closeActionModal(){
+  $('action-modal').classList.remove('open');
+  currentAction=null;selectedShipId=null;
+}
+
+// Close on backdrop
+document.getElementById('action-modal').addEventListener('click',e=>{
+  if(e.target===document.getElementById('action-modal'))closeActionModal();
+});
 
 init();
 </script>
