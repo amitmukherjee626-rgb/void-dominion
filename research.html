@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>VOID DOMINION — Research</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;}
+html,body{width:100%;height:100%;background:#00010a;overflow:hidden;font-family:'Exo 2',sans-serif;color:#d0eeff;-webkit-tap-highlight-color:transparent;user-select:none;}
+#bg{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(ellipse 60% 40% at 50% 30%,rgba(0,229,255,0.04) 0%,transparent 65%),radial-gradient(ellipse 50% 35% at 20% 70%,rgba(124,58,237,0.05) 0%,transparent 60%);}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;height:50px;z-index:20;background:rgba(0,1,10,0.97);border-bottom:1px solid rgba(0,229,255,0.15);display:flex;align-items:center;padding:0 10px;gap:8px;}
+.hl{font-family:'Orbitron',monospace;font-size:11px;font-weight:900;letter-spacing:2px;color:#00e5ff;padding-right:8px;border-right:1px solid rgba(0,229,255,0.15);flex-shrink:0;}
+.htp{display:flex;flex-direction:column;align-items:center;padding:0 8px;border-right:1px solid rgba(0,229,255,0.1);}
+.htp-l{font-size:6px;letter-spacing:1px;color:rgba(255,255,255,0.3);text-transform:uppercase;}
+.htp-v{font-family:'Orbitron',monospace;font-size:12px;font-weight:700;color:#00e5ff;}
+.hbtn{padding:5px 8px;font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;border-radius:2px;border:1px solid rgba(0,229,255,0.3);background:transparent;color:#00e5ff;cursor:pointer;text-transform:uppercase;margin-left:auto;}
+
+/* MAIN */
+#main{position:fixed;top:50px;left:0;right:0;bottom:0;z-index:5;overflow-y:auto;padding-bottom:20px;scrollbar-width:thin;scrollbar-color:rgba(0,229,255,0.12) transparent;}
+
+/* BRANCH TABS */
+.branch-tabs{display:flex;gap:0;border-bottom:1px solid rgba(0,229,255,0.1);margin-bottom:0;}
+.btab{flex:1;padding:10px 6px;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;text-align:center;cursor:pointer;transition:all .2s;text-transform:uppercase;border-bottom:2px solid transparent;color:rgba(0,229,255,0.35);}
+.btab.active{color:#fff;border-bottom-color:var(--tc,#00e5ff);}
+.btab.mil{--tc:#ff4466;}
+.btab.eco{--tc:#ffc400;}
+.btab.exp{--tc:#00e676;}
+
+/* TP DISPLAY */
+.tp-bar{margin:12px 12px 8px;background:rgba(0,5,20,.88);border:1px solid rgba(0,229,255,.12);border-radius:3px;padding:10px 14px;display:flex;align-items:center;gap:12px;}
+.tp-icon{font-size:22px;}
+.tp-info{flex:1;}
+.tp-label{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:2px;}
+.tp-vals{display:flex;align-items:baseline;gap:8px;}
+.tp-amount{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;color:#00e5ff;}
+.tp-rate{font-size:9px;color:rgba(0,230,118,.7);font-family:'Orbitron',monospace;}
+
+/* TECH CARD */
+.tech-card{margin:0 12px 8px;border-radius:3px;overflow:hidden;transition:opacity .2s;}
+.tech-card.locked{opacity:.5;}
+.tc-header{display:flex;align-items:center;gap:10px;padding:12px 14px 8px;cursor:pointer;}
+.tc-icon{width:38px;height:38px;border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.tc-info{flex:1;min-width:0;}
+.tc-name{font-family:'Orbitron',monospace;font-size:11px;font-weight:700;color:#fff;letter-spacing:1px;margin-bottom:2px;}
+.tc-desc{font-size:9px;color:rgba(255,255,255,.35);line-height:1.4;}
+.tc-lv-wrap{display:flex;flex-direction:column;align-items:flex-end;flex-shrink:0;}
+.tc-lv-t{font-size:7px;letter-spacing:1px;color:rgba(0,229,255,.35);text-transform:uppercase;}
+.tc-lv-n{font-family:'Orbitron',monospace;font-size:20px;font-weight:900;line-height:1;}
+.tc-lv-n.zero{color:rgba(255,255,255,.15);}
+.tc-lv-n.max{color:#00e676;}
+
+.tc-bar-wrap{padding:0 14px 6px;}
+.tc-bar-track{height:3px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;}
+.tc-bar-fill{height:100%;border-radius:2px;transition:width .4s;}
+
+/* Effect pill */
+.tc-effect{margin:0 14px 8px;padding:6px 10px;border-radius:2px;font-size:9px;line-height:1.5;}
+.tc-action{padding:0 14px 12px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+.res-btn{flex:1;min-width:100px;padding:9px;font-family:'Orbitron',monospace;font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;transition:all .2s;color:#fff;}
+.res-btn:disabled{opacity:.3;cursor:not-allowed;}
+.cost-txt{font-size:8px;color:rgba(255,255,255,.3);font-family:'Orbitron',monospace;}
+.cost-txt span{color:rgba(0,229,255,.7);}
+.maxed-txt{font-family:'Orbitron',monospace;font-size:9px;color:rgba(0,230,118,.7);letter-spacing:1px;}
+.locked-txt{font-family:'Orbitron',monospace;font-size:8px;color:rgba(255,100,50,.6);letter-spacing:1px;}
+
+/* SECTION TITLE */
+.stitle{font-family:'Orbitron',monospace;font-size:9px;letter-spacing:3px;color:rgba(0,229,255,.35);text-transform:uppercase;padding:12px 14px 6px;display:flex;align-items:center;gap:8px;}
+.stitle::after{content:'';flex:1;height:1px;background:rgba(0,229,255,.07);}
+
+/* TOASTS */
+#toasts{position:fixed;top:58px;left:50%;transform:translateX(-50%);z-index:50;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none;}
+.toast{padding:6px 14px;background:rgba(0,1,15,.97);border:1px solid rgba(0,229,255,.2);border-radius:2px;font-family:'Orbitron',monospace;font-size:9px;letter-spacing:1px;white-space:nowrap;animation:tIn .2s ease,tOut .3s ease 2.5s forwards;}
+.toast.ok{border-color:rgba(0,230,118,.5);color:#00e676;}
+.toast.err{border-color:rgba(255,23,68,.5);color:#ff1744;}
+.toast.inf{border-color:rgba(0,229,255,.4);color:#00e5ff;}
+@keyframes tIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes tOut{to{opacity:0}}
+#zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
+#zt.show{opacity:1;pointer-events:all;}
+</style>
+</head>
+<body>
+<div id="bg"></div><div id="zt"></div>
+
+<!-- HUD -->
+<div id="hud">
+  <div class="hl">RESEARCH</div>
+  <div class="htp"><div class="htp-l">Tech Points</div><div class="htp-v" id="htp">0</div></div>
+  <div class="htp" style="border:none"><div class="htp-l">TP/sec</div><div class="htp-v" style="color:rgba(0,230,118,.8);font-size:10px;" id="htp-rate">+0</div></div>
+  <button class="hbtn" onclick="nav('planet.html')">&#8592; PLANET</button>
+</div>
+
+<!-- Branch tabs -->
+<div id="branch-tabs" style="position:fixed;top:50px;left:0;right:0;z-index:15;background:rgba(0,1,10,.97);">
+  <div class="branch-tabs">
+    <div class="btab mil active" id="btab-mil" onclick="switchBranch('mil')">&#9876; Military</div>
+    <div class="btab eco" id="btab-eco" onclick="switchBranch('eco')">&#127981; Economy</div>
+    <div class="btab exp" id="btab-exp" onclick="switchBranch('exp')">&#128065; Exploration</div>
+  </div>
+</div>
+
+<!-- Main content -->
+<div id="main" style="top:94px;">
+  <div id="branch-content"></div>
+</div>
+
+<div id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB = supabase.createClient(
+  'https://xeetrcygnlpjzkkwpnvf.supabase.co',
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InhlZXRyY3lnbmxwanpra3dwbnZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5OTYzMjksImV4cCI6MjA4OTU3MjMyOX0.fMB2eCVdXDYrcgcVyuwIjbYH2-yatEGaMa2NzZdkh4o'
+);
+
+// ═══════════════════════════════════════════════
+//  RESEARCH TREE DEFINITIONS
+// ═══════════════════════════════════════════════
+const RESEARCH = {
+  mil: [
+    {
+      id:'mil_atk', name:'Weapons Technology', icon:'&#128481;',
+      desc:'Improves all ship weapons. Each level increases attack power of all ships.',
+      maxLevel:10, tpCost:50, tpMul:1.8,
+      effect: lv => `+${lv*10}% Ship Attack Power`,
+      effectVal: lv => ({shipAtkBonus: lv*0.1}),
+      color:'#ff4466', bg:'rgba(255,23,68,0.08)', border:'rgba(255,23,68,0.2)',
+      requires: null,
+    },
+    {
+      id:'mil_def', name:'Armor Plating', icon:'&#128737;',
+      desc:'Reinforces all ship hull plates. Each level increases defense power of all ships.',
+      maxLevel:10, tpCost:50, tpMul:1.8,
+      effect: lv => `+${lv*10}% Ship Defense Power`,
+      effectVal: lv => ({shipDefBonus: lv*0.1}),
+      color:'#00e676', bg:'rgba(0,230,118,0.06)', border:'rgba(0,230,118,0.2)',
+      requires: null,
+    },
+    {
+      id:'mil_spd', name:'Thruster Drive', icon:'&#128640;',
+      desc:'Improves ship engine efficiency. Reduces all fleet travel time.',
+      maxLevel:10, tpCost:80, tpMul:1.9,
+      effect: lv => `-${lv*8}% Fleet Travel Time`,
+      effectVal: lv => ({fleetSpeedBonus: lv*0.08}),
+      color:'#00e5ff', bg:'rgba(0,229,255,0.06)', border:'rgba(0,229,255,0.18)',
+      requires: {id:'mil_atk', level:3},
+    },
+    {
+      id:'mil_siege', name:'Siege Technology', icon:'&#128302;',
+      desc:'Specialized siege weapons. Battleships deal more damage to planet defenses.',
+      maxLevel:5, tpCost:150, tpMul:2.2,
+      effect: lv => `+${lv*20}% Battleship Siege Damage`,
+      effectVal: lv => ({siegeBonus: lv*0.2}),
+      color:'#ff6600', bg:'rgba(255,102,0,0.07)', border:'rgba(255,102,0,0.2)',
+      requires: {id:'mil_atk', level:5},
+    },
+    {
+      id:'mil_carrier', name:'Fleet Coordination', icon:'&#9832;',
+      desc:'Improves carrier efficiency. Increases Fleet Carrier capacity.',
+      maxLevel:5, tpCost:120, tpMul:2.0,
+      effect: lv => `+${lv*20} Fleet Carrier Capacity`,
+      effectVal: lv => ({carrierCapBonus: lv*20}),
+      color:'#ffc400', bg:'rgba(255,196,0,0.07)', border:'rgba(255,196,0,0.2)',
+      requires: {id:'mil_def', level:3},
+    },
+  ],
+  eco: [
+    {
+      id:'eco_cr', name:'Economic Development', icon:'&#128176;',
+      desc:'Improves resource generation on all planets. CC produces more Credits.',
+      maxLevel:10, tpCost:60, tpMul:1.8,
+      effect: lv => `+${lv*15}% Credits Generation`,
+      effectVal: lv => ({crBonus: lv*0.15}),
+      color:'#ffc400', bg:'rgba(255,196,0,0.07)', border:'rgba(255,196,0,0.2)',
+      requires: null,
+    },
+    {
+      id:'eco_mn', name:'Mining Technology', icon:'&#9935;',
+      desc:'Advanced mining drills. Improves Mineral production on all planets.',
+      maxLevel:10, tpCost:60, tpMul:1.8,
+      effect: lv => `+${lv*15}% Minerals Generation`,
+      effectVal: lv => ({mnBonus: lv*0.15}),
+      color:'#78909c', bg:'rgba(120,144,156,0.07)', border:'rgba(120,144,156,0.2)',
+      requires: null,
+    },
+    {
+      id:'eco_en', name:'Energy Efficiency', icon:'&#9889;',
+      desc:'Better power systems. Reduces energy upkeep for all buildings.',
+      maxLevel:10, tpCost:60, tpMul:1.8,
+      effect: lv => `-${lv*10}% Building Energy Upkeep`,
+      effectVal: lv => ({enUpkeepReduction: lv*0.1}),
+      color:'#80cbc4', bg:'rgba(128,203,196,0.07)', border:'rgba(128,203,196,0.2)',
+      requires: null,
+    },
+    {
+      id:'eco_build', name:'Construction Speed', icon:'&#127959;',
+      desc:'Better construction methods. Reduces all building construction time.',
+      maxLevel:8, tpCost:100, tpMul:1.9,
+      effect: lv => `-${lv*10}% Build Time`,
+      effectVal: lv => ({buildSpeedBonus: lv*0.1}),
+      color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.2)',
+      requires: {id:'eco_cr', level:3},
+    },
+    {
+      id:'eco_colony', name:'Colonization Expertise', icon:'&#127758;',
+      desc:'Improves colonization process. Colonizer ships are more efficient.',
+      maxLevel:5, tpCost:120, tpMul:2.0,
+      effect: lv => `+${lv*20}% Colonizer Speed`,
+      effectVal: lv => ({colonizerSpeedBonus: lv*0.2}),
+      color:'#00e676', bg:'rgba(0,230,118,0.06)', border:'rgba(0,230,118,0.2)',
+      requires: {id:'eco_mn', level:3},
+    },
+  ],
+  exp: [
+    {
+      id:'exp_probe', name:'Stealth Systems', icon:'&#128065;',
+      desc:'Advanced probe stealth technology. Probes are harder to detect.',
+      maxLevel:5, tpCost:80, tpMul:1.9,
+      effect: lv => `+${lv*20}% Probe Stealth Rating`,
+      effectVal: lv => ({probeStealthBonus: lv*0.2}),
+      color:'#9b5cf6', bg:'rgba(124,58,237,0.07)', border:'rgba(124,58,237,0.2)',
+      requires: null,
+    },
+    {
+      id:'exp_scan', name:'Long Range Sensors', icon:'&#128225;',
+      desc:'Improved sensors allow scouting planets further away.',
+      maxLevel:8, tpCost:70, tpMul:1.8,
+      effect: lv => `+${lv*25}% Scout Range`,
+      effectVal: lv => ({scoutRangeBonus: lv*0.25}),
+      color:'#00e5ff', bg:'rgba(0,229,255,0.06)', border:'rgba(0,229,255,0.18)',
+      requires: null,
+    },
+    {
+      id:'exp_warp', name:'Warp Drive', icon:'&#127756;',
+      desc:'Experimental warp technology. Drastically reduces fleet travel time.',
+      maxLevel:5, tpCost:200, tpMul:2.5,
+      effect: lv => `-${lv*15}% All Travel Time`,
+      effectVal: lv => ({warpBonus: lv*0.15}),
+      color:'#a78bfa', bg:'rgba(167,139,250,0.07)', border:'rgba(167,139,250,0.2)',
+      requires: {id:'exp_scan', level:4},
+    },
+    {
+      id:'exp_fog', name:'Galactic Mapping', icon:'&#128506;',
+      desc:'Advanced star charts. Reveals more of the unexplored galaxy.',
+      maxLevel:5, tpCost:100, tpMul:2.0,
+      effect: lv => `+${lv*20}% Fog of War Reveal Rate`,
+      effectVal: lv => ({fogRevealBonus: lv*0.2}),
+      color:'#ffc400', bg:'rgba(255,196,0,0.07)', border:'rgba(255,196,0,0.2)',
+      requires: {id:'exp_scan', level:2},
+    },
+    {
+      id:'exp_intel', name:'Intelligence Network', icon:'&#128373;',
+      desc:'Spy network across the galaxy. Get automatic reports on enemy activity.',
+      maxLevel:3, tpCost:300, tpMul:3.0,
+      effect: lv => `Intel Level ${lv}: ${['Basic','Advanced','Full Network'][lv-1]||''}`,
+      effectVal: lv => ({intelLevel: lv}),
+      color:'#ff9900', bg:'rgba(255,153,0,0.07)', border:'rgba(255,153,0,0.2)',
+      requires: {id:'exp_probe', level:3},
+    },
+  ],
+};
+
+// ═══════════════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════════════
+let userId = null;
+let techPoints = 0;
+let tpRate = 0;
+let researchLevels = {}; // {techId: level}
+let currentBranch = 'mil';
+let tpTimer = null;
+
+// ═══════════════════════════════════════════════
+//  UTILS
+// ═══════════════════════════════════════════════
+function toast(m,type='inf'){const el=document.createElement('div');el.className='toast '+type;el.textContent=m;document.getElementById('toasts').appendChild(el);setTimeout(()=>el.remove(),3200);}
+function fmt(n){if(n>=1e6)return(n/1e6).toFixed(1)+'M';if(n>=1e3)return(n/1e3).toFixed(1)+'K';return Math.floor(n)+'';}
+function nav(url){document.getElementById('zt').classList.add('show');setTimeout(()=>window.location.href=url,500);}
+
+function getResKey(){ return 'vd_research_'+userId; }
+function getTpKey(){ return 'vd_tp_'+userId; }
+
+function saveResearch(){
+  localStorage.setItem(getResKey(), JSON.stringify(researchLevels));
+  localStorage.setItem(getTpKey(), Math.floor(techPoints).toString());
+  // Also export bonuses for other pages
+  const bonuses = calcAllBonuses();
+  localStorage.setItem('vd_bonuses_'+userId, JSON.stringify(bonuses));
+}
+
+// ═══════════════════════════════════════════════
+//  CALC BONUSES (exported for other pages)
+// ═══════════════════════════════════════════════
+function calcAllBonuses(){
+  const bonuses = {};
+  for(const branch of Object.values(RESEARCH)){
+    for(const tech of branch){
+      const lv = researchLevels[tech.id]||0;
+      if(lv>0){
+        const vals = tech.effectVal(lv);
+        Object.assign(bonuses, vals);
+      }
+    }
+  }
+  return bonuses;
+}
+
+// ═══════════════════════════════════════════════
+//  TP GENERATION
+// ═══════════════════════════════════════════════
+function calcTPRate(){
+  // From home planet research lab
+  const bldRaw = localStorage.getItem('vd_bld_'+userId+'_home');
+  if(!bldRaw) return 0;
+  const bld = JSON.parse(bldRaw);
+  const labLv = bld.reslab||0;
+  return labLv * 2; // 2 TP/s per lab level
+}
+
+function startTPTick(){
+  if(tpTimer) clearInterval(tpTimer);
+  tpRate = calcTPRate();
+  document.getElementById('htp-rate').textContent = '+'+tpRate+'/s';
+  tpTimer = setInterval(()=>{
+    if(tpRate>0){
+      techPoints += tpRate;
+      document.getElementById('htp').textContent = fmt(techPoints);
+      localStorage.setItem(getTpKey(), Math.floor(techPoints).toString());
+    }
+  }, 1000);
+}
+
+// ═══════════════════════════════════════════════
+//  SWITCH BRANCH
+// ═══════════════════════════════════════════════
+function switchBranch(branch){
+  currentBranch = branch;
+  ['mil','eco','exp'].forEach(b=>{
+    document.getElementById('btab-'+b).classList.toggle('active', b===branch);
+  });
+  renderBranch();
+}
+
+// ═══════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════
+function renderBranch(){
+  const techs = RESEARCH[currentBranch];
+  const container = document.getElementById('branch-content');
+  container.innerHTML = '';
+
+  for(const tech of techs){
+    const lv = researchLevels[tech.id]||0;
+    const maxed = lv >= tech.maxLevel;
+    const locked = tech.requires && (researchLevels[tech.requires.id]||0) < tech.requires.level;
+    const cost = Math.floor(tech.tpCost * Math.pow(tech.tpMul, lv));
+    const canAfford = techPoints >= cost;
+    const pct = (lv/tech.maxLevel*100).toFixed(0);
+
+    const card = document.createElement('div');
+    card.className = 'tech-card' + (locked?' locked':'');
+    card.style.background = 'rgba(0,5,20,0.88)';
+    card.style.border = `1px solid ${locked?'rgba(255,255,255,0.06)':tech.border}`;
+
+    let actionHtml = '';
+    if(locked){
+      actionHtml = `<div class="locked-txt">&#128274; Requires ${RESEARCH[currentBranch].find(t=>t.id===tech.requires.id)?.name||tech.requires.id} Level ${tech.requires.level}</div>`;
+    } else if(maxed){
+      actionHtml = `<span class="maxed-txt">&#10003; MAX LEVEL — ${tech.effect(lv)}</span>`;
+    } else {
+      actionHtml = `
+        <button class="res-btn" style="background:linear-gradient(90deg,${tech.color}88,${tech.color}55);" ${!canAfford?'disabled':''} onclick="doResearch('${tech.id}')">
+          RESEARCH → Lv${lv+1}
+        </button>
+        <div class="cost-txt">Cost: <span>${fmt(cost)} TP</span></div>`;
+    }
+
+    card.innerHTML = `
+      <div class="tc-header">
+        <div class="tc-icon" style="background:${tech.bg};border:1px solid ${tech.border};">${tech.icon}</div>
+        <div class="tc-info">
+          <div class="tc-name">${tech.name}</div>
+          <div class="tc-desc">${tech.desc}</div>
+        </div>
+        <div class="tc-lv-wrap">
+          <div class="tc-lv-t">Level</div>
+          <div class="tc-lv-n ${lv===0?'zero':maxed?'max':''}" style="${!lv&&!maxed?'':'color:'+tech.color}">${lv}</div>
+        </div>
+      </div>
+      <div class="tc-bar-wrap">
+        <div class="tc-bar-track"><div class="tc-bar-fill" style="width:${pct}%;background:${tech.color}"></div></div>
+      </div>
+      ${lv>0?`<div class="tc-effect" style="background:${tech.bg};border:1px solid ${tech.border};">
+        <span style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:${tech.color};">ACTIVE: </span>
+        <span style="font-size:9px;color:rgba(255,255,255,0.6);">${tech.effect(lv)}</span>
+      </div>`:''}
+      <div class="tc-action">${actionHtml}</div>
+    `;
+    container.appendChild(card);
+  }
+}
+
+// ═══════════════════════════════════════════════
+//  DO RESEARCH
+// ═══════════════════════════════════════════════
+function doResearch(techId){
+  let tech = null;
+  for(const branch of Object.values(RESEARCH)){
+    tech = branch.find(t=>t.id===techId);
+    if(tech) break;
+  }
+  if(!tech) return;
+
+  const lv = researchLevels[techId]||0;
+  if(lv>=tech.maxLevel){ toast('Already max level!','inf'); return; }
+
+  const cost = Math.floor(tech.tpCost * Math.pow(tech.tpMul, lv));
+  if(techPoints < cost){ toast('Not enough Tech Points! Need '+fmt(cost)+' TP','err'); return; }
+
+  techPoints -= cost;
+  researchLevels[techId] = lv+1;
+  document.getElementById('htp').textContent = fmt(techPoints);
+
+  toast(tech.name+' upgraded to Level '+(lv+1)+'!','ok');
+  saveResearch();
+  renderBranch();
+}
+
+// ═══════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════
+async function init(){
+  let session = null;
+  try{const r=await SB.auth.getSession();session=r.data.session;}catch(e){}
+  if(!session?.user){window.location.href='https://amitmukherjee626-rgb.github.io/void-dominion/';return;}
+  userId = session.user.id;
+
+  // Load research levels
+  const savedRes = localStorage.getItem(getResKey());
+  researchLevels = savedRes ? JSON.parse(savedRes) : {};
+
+  // Load TP
+  const savedTp = localStorage.getItem(getTpKey());
+  techPoints = savedTp ? parseFloat(savedTp) : 0;
+  document.getElementById('htp').textContent = fmt(techPoints);
+
+  startTPTick();
+  renderBranch();
+}
+
+init();
+</script>
+</body>
+</html>
