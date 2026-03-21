@@ -725,9 +725,9 @@ window.openPanel = function openPanel(p){
   $('planet-panel').classList.add('open');
 }
 
-window.closePanel = function closePanel(){
+window.closePanel = function closePanel(keepSel){
   $('planet-panel').classList.remove('open');
-  selPlanet=null;
+  if(!keepSel) selPlanet=null;
 }
 
 // ════ PLANET ACTIONS ════
@@ -864,7 +864,7 @@ window.doAttack=function(){
   const defVal=scoutData?scoutData.defPower:(status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50));
   atkTargetDef=defVal;
   atkSelected={};
-  closePanel();
+  closePanel(true); // keep selPlanet!
   renderAtkModal(fleet,combatShips,defVal);
   $('atk-modal').classList.add('open');
 };
@@ -945,11 +945,14 @@ function renderAtkModal(fleet,combatShips,defVal){
       &#9876; LAUNCH ATTACK ${hasSelection?'(ATK:'+myAtk+')':''}
     </button>`;
   
-  // Attach click listener AFTER innerHTML set
-  setTimeout(()=>{
+  // Attach click listener after render
+  requestAnimationFrame(()=>{
     const btn=document.getElementById('atk-confirm-btn');
-    if(btn) btn.onclick=function(){executeAtk(defVal);};
-  },0);
+    if(btn){
+      btn.onclick=null; // remove old
+      btn.onclick=function(){executeAtk(defVal);};
+    }
+  });
 }
 
 function atkToggle(id,max,defVal){
@@ -1020,10 +1023,10 @@ function executeAtk(defVal){
   fleetData.fleet=fleet;
   localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
 
-  // Step 4: Close UI
+  // Step 4: Close UI — keepSel=true so selPlanet stays valid for tp ref
   $('atk-modal').classList.remove('open');
   atkSelected={};
-  closePanel();
+  closePanel(true);
 
   // Step 5: Dominant ship color
   let domCol=[255,60,60];
