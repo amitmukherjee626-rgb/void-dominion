@@ -941,9 +941,15 @@ function renderAtkModal(fleet,combatShips,defVal){
       }).join('')}
     </div>
 
-    <button class="am-confirm do-attack" style="display:block;" ${!hasSelection?'disabled':''} onclick="executeAtk(${defVal})">
+    <button class="am-confirm do-attack" style="display:block;" id="atk-confirm-btn" ${!hasSelection?'disabled':''}>
       &#9876; LAUNCH ATTACK ${hasSelection?'(ATK:'+myAtk+')':''}
     </button>`;
+  
+  // Attach click listener AFTER innerHTML set
+  setTimeout(()=>{
+    const btn=document.getElementById('atk-confirm-btn');
+    if(btn) btn.onclick=function(){executeAtk(defVal);};
+  },0);
 }
 
 function atkToggle(id,max,defVal){
