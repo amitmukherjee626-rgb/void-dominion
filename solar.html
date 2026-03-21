@@ -352,6 +352,15 @@ function draw(ts){
 
   CTX.restore();
 
+  // Draw fleet travel animations (in world space)
+  if(fleetMissions.length>0){
+    CTX.save();
+    CTX.translate(camX,camY);
+    CTX.scale(camS,camS);
+    drawFleetMissions(ts);
+    CTX.restore();
+  }
+
   $('bzoom').textContent=camS.toFixed(2)+'x';
 }
 
@@ -694,14 +703,33 @@ window.doAttack=function(){
     if(myPow>enPow){
       setPlanetStatus(selPlanet,'conquered');
       selPlanet.colonized=true;
-      const loss=Math.floor(myAtk*.15+Math.random()*myAtk*.2);
+      const lossAmt=Math.floor(myAtk*.15+Math.random()*myAtk*.2);
       toast('VICTORY! Planet captured!','ok');
-      if(loss>0) toast('Lost ~'+loss+' attack power in battle','inf');
+      if(lossAmt>0) toast('Lost ~'+lossAmt+' attack power in battle','inf');
+      saveReport({
+        type:'attack',
+        targetName:selPlanet?'Planet '+(selPlanet.id+1)+': '+selPlanet.type:'Unknown',
+        systemName:systemData?.name||'',
+        attackPower:Math.round(myPow),
+        defPower:Math.round(enPow),
+        outcome:'win',
+        casualties:[{name:'Various Ships',lost:Math.floor(lossAmt/10),survived:Math.floor(myAtk/10)}],
+        colonized:false,
+      });
       // Reopen panel with new status
       openPanel(selPlanet);
     } else {
       toast('DEFEAT! Reinforce and try again.','err');
       toast('Tip: Scout first to know exact defense strength.','inf');
+      saveReport({
+        type:'attack',
+        targetName:selPlanet?'Planet '+(selPlanet.id+1)+': '+selPlanet.type:'Unknown',
+        systemName:systemData?.name||'',
+        attackPower:Math.round(myPow),
+        defPower:Math.round(enPow),
+        outcome:'loss',
+        casualties:[{name:'All Deployed Ships',lost:Object.values(deployQty||{}).reduce((a,b)=>a+b,0),survived:0}],
+      });
       closePanel();
     }
   },800);
@@ -731,6 +759,77 @@ function zoom(f){
   const cx=W/2,cy=H/2;
   const wx=(cx-camX)/camS,wy=(cy-camY)/camS;
   camS*=f;clampS();camX=cx-wx*camS;camY=cy-wy*camS;
+}
+
+// ════ SAVE REPORT ════
+function saveReport(report){
+  const key='vd_reports_'+userId;
+  const raw=localStorage.getItem(key);
+  const reports=raw?JSON.parse(raw):[];
+  reports.unshift({...report,id:Date.now(),time:new Date().toISOString(),read:false});
+  localStorage.setItem(key,JSON.stringify(reports.slice(0,100)));
+}
+
+// ════ FLEET TRAVEL ANIMATIONS ════
+let fleetMissions=[]; // active fleet animations on canvas
+
+function addFleetMission(fromPlanet, toPlanet, qty, type){
+  // Get research speed bonus
+  const bonuses=JSON.parse(localStorage.getItem('vd_bonuses_'+userId)||'{}');
+  const speedBonus=(bonuses.fleetSpeedBonus||0)+(bonuses.warpBonus||0);
+  // Distance in world units
+  const dist=Math.hypot(toPlanet.screenX-fromPlanet.screenX, toPlanet.screenY-fromPlanet.screenY);
+  // Time = distance * base_time_factor / speed_bonus
+  const baseFactor=80; // px per second
+  const duration=Math.max(3,(dist/baseFactor)*(1-speedBonus));
+  fleetMissions.push({
+    id:Date.now(),
+    fromX:fromPlanet.screenX, fromY:fromPlanet.screenY,
+    toX:toPlanet.screenX, toY:toPlanet.screenY,
+    startTime:Date.now(),
+    duration:duration*1000,
+    qty, type, // 'friendly','attack'
+    done:false,
+    targetPlanet:toPlanet,
+  });
+  toast('Fleet launched! ETA: '+Math.ceil(duration)+'s','inf');
+}
+
+function drawFleetMissions(ts){
+  const now=Date.now();
+  fleetMissions=fleetMissions.filter(m=>!m.done);
+  for(const m of fleetMissions){
+    const prog=Math.min(1,(now-m.startTime)/m.duration);
+    const x=m.fromX+(m.toX-m.fromX)*prog;
+    const y=m.fromY+(m.toY-m.fromY)*prog;
+    // Draw fleet dot
+    CTX.save();CTX.translate(x,y);
+    // Trail
+    CTX.beginPath();
+    CTX.moveTo(m.fromX-x+(m.toX-m.fromX)*Math.max(0,prog-.1), m.fromY-y+(m.toY-m.fromY)*Math.max(0,prog-.1));
+    CTX.lineTo(0,0);
+    CTX.strokeStyle=m.type==='attack'?'rgba(255,68,68,0.4)':'rgba(0,229,255,0.4)';
+    CTX.lineWidth=1/camS;CTX.stroke();
+    // Ship icon dot
+    CTX.beginPath();CTX.arc(0,0,4/camS,0,Math.PI*2);
+    CTX.fillStyle=m.type==='attack'?'#ff4444':'#00e5ff';CTX.fill();
+    // Quantity label
+    if(camS>0.3){
+      CTX.textAlign='center';CTX.textBaseline='bottom';
+      CTX.font=`bold ${8/camS}px Orbitron,monospace`;
+      CTX.fillStyle='rgba(255,255,255,0.8)';
+      CTX.fillText('x'+m.qty,0,-6/camS);
+    }
+    CTX.restore();
+    // Check arrival
+    if(prog>=1){
+      m.done=true;
+      if(m.type==='attack'){
+        // Trigger attack on arrival
+        toast('Fleet arrived at '+m.targetPlanet.type+'!','ok');
+      }
+    }
+  }
 }
 
 // ════ INPUT ════
