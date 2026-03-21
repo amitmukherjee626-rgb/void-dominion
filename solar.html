@@ -126,6 +126,49 @@ canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 /* Transition */
 #zt{position:fixed;inset:0;z-index:90;background:radial-gradient(circle at 50% 50%,rgba(0,229,255,0.2) 0%,rgba(0,1,10,1) 65%);opacity:0;pointer-events:none;transition:opacity .5s;}
 #zt.show{opacity:1;pointer-events:all;}
+
+/* ══ ATTACK MODAL ══ */
+#atk-modal{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.87);backdrop-filter:blur(6px);display:none;align-items:flex-end;justify-content:center;}
+#atk-modal.open{display:flex;}
+.am-box{background:rgba(0,2,18,.99);border:1px solid rgba(0,229,255,.18);border-radius:4px 4px 0 0;width:100%;max-width:480px;max-height:82vh;overflow-y:auto;animation:slideUp .28s ease;padding-bottom:20px;}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.am-hdr{padding:14px 16px 10px;border-bottom:1px solid rgba(0,229,255,.08);display:flex;align-items:center;gap:10px;}
+.am-icon{font-size:22px;}.am-title{font-family:'Orbitron',monospace;font-size:13px;font-weight:900;color:#fff;letter-spacing:1px;}
+.am-sub{font-size:8px;color:rgba(0,229,255,.4);letter-spacing:1px;margin-top:2px;}
+.am-x{margin-left:auto;background:none;border:none;color:rgba(0,229,255,.4);font-size:18px;cursor:pointer;padding:4px;}
+/* Power bar */
+.pow-compare{display:flex;gap:6px;padding:10px 14px;align-items:center;}
+.pow-side{flex:1;background:rgba(0,5,20,.8);border-radius:2px;padding:8px;text-align:center;}
+.pow-lbl{font-size:7px;letter-spacing:1px;color:rgba(255,255,255,.3);font-family:'Orbitron',monospace;margin-bottom:3px;}
+.pow-val{font-family:'Orbitron',monospace;font-size:18px;font-weight:900;}
+.pow-vs{font-family:'Orbitron',monospace;font-size:11px;color:rgba(0,229,255,.3);}
+/* Ship rows */
+.am-sec{padding:10px 14px 0;}
+.am-sec-t{font-family:'Orbitron',monospace;font-size:8px;letter-spacing:2px;color:rgba(0,229,255,.35);text-transform:uppercase;margin-bottom:8px;}
+.ship-sel-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(0,5,20,.8);border:1px solid rgba(0,229,255,.1);border-radius:2px;margin-bottom:6px;cursor:pointer;transition:all .2s;}
+.ship-sel-row.active{border-color:#00e5ff;background:rgba(0,229,255,.07);}
+.ship-sel-row:active{opacity:.8;}
+.ssr-icon{font-size:20px;width:26px;text-align:center;flex-shrink:0;}
+.ssr-name{flex:1;font-family:'Orbitron',monospace;font-size:10px;font-weight:700;color:#fff;}
+.ssr-cnt{font-family:'Orbitron',monospace;font-size:12px;color:#00e5ff;}
+.ssr-atk{font-size:8px;color:rgba(255,80,80,.7);font-family:'Orbitron',monospace;}
+/* Qty */
+.qty-row{display:flex;align-items:center;gap:8px;padding:10px 14px 0;}
+.qty-lbl{font-family:'Orbitron',monospace;font-size:8px;color:rgba(0,229,255,.4);flex-shrink:0;}
+.qty-btn{padding:8px 14px;background:rgba(0,229,255,.1);border:1px solid rgba(0,229,255,.2);border-radius:2px;color:#00e5ff;font-family:'Orbitron',monospace;font-size:16px;cursor:pointer;}
+.qty-in{flex:1;padding:8px;background:rgba(0,5,20,.9);border:1px solid rgba(0,229,255,.2);border-radius:2px;color:#00e5ff;font-family:'Orbitron',monospace;font-size:15px;text-align:center;}
+/* Confirm */
+.am-confirm{width:calc(100%-28px);margin:12px 14px 0;padding:13px;font-family:'Orbitron',monospace;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;border:none;border-radius:2px;cursor:pointer;color:#fff;}
+.am-confirm.do-scout{background:linear-gradient(90deg,rgba(124,58,237,.9),rgba(80,0,180,.9));}
+.am-confirm.do-attack{background:linear-gradient(90deg,rgba(255,23,68,.9),rgba(180,0,40,.9));}
+.am-confirm:disabled{opacity:.35;cursor:not-allowed;}
+/* Battle result */
+.battle-result{margin:10px 14px 0;padding:14px;border-radius:2px;}
+.br-win{background:rgba(0,230,118,.08);border:1px solid rgba(0,230,118,.25);}
+.br-loss{background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.2);}
+.br-title{font-family:'Orbitron',monospace;font-size:14px;font-weight:900;letter-spacing:2px;margin-bottom:8px;}
+.br-win .br-title{color:#00e676;}.br-loss .br-title{color:#ff4466;}
+.br-row{font-size:9px;color:rgba(255,255,255,.5);padding:3px 0;font-family:'Orbitron',monospace;}
 </style>
 </head>
 <body>
@@ -137,6 +180,11 @@ canvas#cv{display:block;position:fixed;top:0;left:0;width:100%;height:100%;z-ind
 
 <canvas id="cv"></canvas>
 <div id="zt"></div>
+
+<!-- ATTACK/SCOUT MODAL -->
+<div id="atk-modal">
+  <div class="am-box" id="am-content"></div>
+</div>
 
 <!-- HUD -->
 <div id="hud">
@@ -361,6 +409,9 @@ function draw(ts){
     CTX.restore();
   }
 
+  // Draw battle particles (screen space)
+  if(battleParticles.length>0) drawBattleParticles();
+
   $('bzoom').textContent=camS.toFixed(2)+'x';
 }
 
@@ -506,6 +557,20 @@ function drawPlanet(p,ts){
     CTX.beginPath();CTX.arc(0,0,sz*2.1,0,Math.PI*2);
     CTX.strokeStyle=`rgba(255,255,255,${.2+pulse*.1})`;CTX.lineWidth=.6/camS;CTX.stroke();
     CTX.setLineDash([]);
+  }
+
+  // Planet ownership ring
+  const ring=typeof getPlanetRing==='function'?getPlanetRing(p):null;
+  if(ring){
+    const ringCols={green:[0,230,118],red:[255,23,68],gray:[150,150,150]};
+    const rc=ringCols[ring]||ringCols.gray;
+    CTX.beginPath();CTX.arc(0,0,sz*1.9,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(${rc[0]},${rc[1]},${rc[2]},${.6+pulse*.25})`;
+    CTX.lineWidth=2.5/camS;CTX.stroke();
+    // Outer glow
+    CTX.beginPath();CTX.arc(0,0,sz*2.2,0,Math.PI*2);
+    CTX.strokeStyle=`rgba(${rc[0]},${rc[1]},${rc[2]},${.15+pulse*.08})`;
+    CTX.lineWidth=4/camS;CTX.stroke();
   }
 
   // Label
@@ -749,59 +814,304 @@ window.doScout=function(){
   },2500);
 };
 
+// ══ SHIP DEFINITIONS ══
+const SHIP_DEFS=[
+  {id:'fighter',n:'Fighter',icon:'&#128640;',atk:4,col:[255,60,60]},
+  {id:'gunship',n:'Gunship',icon:'&#128640;',atk:8,col:[255,100,0]},
+  {id:'destroyer',n:'Destroyer',icon:'&#128640;',atk:12,col:[0,136,255]},
+  {id:'frigate',n:'Frigate',icon:'&#128640;',atk:18,col:[68,119,255]},
+  {id:'cruiser',n:'Cruiser',icon:'&#128640;',atk:28,col:[119,85,238]},
+  {id:'battleship',n:'Battleship',icon:'&#128640;',atk:45,col:[204,17,51]},
+  {id:'dreadnought',n:'Dreadnought',icon:'&#128640;',atk:70,col:[221,68,0]},
+  {id:'leviathan',n:'Leviathan',icon:'&#128640;',atk:150,col:[170,0,238]},
+  {id:'light_carrier',n:'Lt Carrier',icon:'&#128641;',atk:8,col:[204,160,0]},
+  {id:'fleet_carrier',n:'Fleet Carrier',icon:'&#128641;',atk:20,col:[212,168,0]},
+  {id:'collector',n:'Collector',icon:'&#128640;',atk:2,col:[0,200,83]},
+];
+
+let atkSelShip=null, atkSelQty=1, atkTargetDef=0;
+
+// ══ PLANET STATUS RINGS ══
+// stored as: vd_pring_{userId}_{sysId}_{planetId} = 'green'|'red'|'gray'
+function getPlanetRing(p){
+  const k='vd_pring_'+userId+'_'+(systemData?.id||0)+'_'+p.id;
+  return localStorage.getItem(k)||null;
+}
+function setPlanetRing(p,color){
+  const k='vd_pring_'+userId+'_'+(systemData?.id||0)+'_'+p.id;
+  localStorage.setItem(k,color);
+}
+
 window.doAttack=function(){
-  if(!selPlanet)return;
-  // Check fleet power
+  if(!selPlanet) return;
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
-  let myAtk=0;
-  const SHIP_ATK={probe:0,colonizer:0,light_carrier:8,fleet_carrier:20,collector:2,fighter:4,gunship:8,destroyer:12,frigate:18,cruiser:28,battleship:45,dreadnought:70,leviathan:150};
-  for(const [id,cnt] of Object.entries(fleet)) myAtk+=(cnt||0)*(SHIP_ATK[id]||0);
+  const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
   
-  if(myAtk===0){toast('No combat ships! Build ships first.','err');return;}
+  if(!combatShips.length){toast('No combat ships! Build ships in Fleet.','err');return;}
   
   const status=getPlanetStatus(selPlanet);
-  const defVal=status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50);
+  const scoutKey='vd_scout_'+userId+'_sys'+(systemData?.id||0)+'_p'+selPlanet.id;
+  const scoutData=JSON.parse(localStorage.getItem(scoutKey)||'null');
+  const defVal=scoutData?scoutData.defPower:(status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50));
+  atkTargetDef=defVal;
+  atkSelShip=null;atkSelQty=1;
   
-  $('zt').classList.add('show');
-  setTimeout(()=>{
-    $('zt').classList.remove('show');
-    const myPow=myAtk*(0.8+Math.random()*0.4);
-    const enPow=defVal*(0.85+Math.random()*0.3);
-    if(myPow>enPow){
-      setPlanetStatus(selPlanet,'conquered');
-      selPlanet.colonized=true;
-      const lossAmt=Math.floor(myAtk*.15+Math.random()*myAtk*.2);
-      toast('VICTORY! Planet captured!','ok');
-      if(lossAmt>0) toast('Lost ~'+lossAmt+' attack power in battle','inf');
-      saveReport({
-        type:'attack',
-        targetName:selPlanet?'Planet '+(selPlanet.id+1)+': '+selPlanet.type:'Unknown',
-        systemName:systemData?.name||'',
-        attackPower:Math.round(myPow),
-        defPower:Math.round(enPow),
-        outcome:'win',
-        casualties:[{name:'Various Ships',lost:Math.floor(lossAmt/10),survived:Math.floor(myAtk/10)}],
-        colonized:false,
-      });
-      // Reopen panel with new status
-      openPanel(selPlanet);
-    } else {
-      toast('DEFEAT! Reinforce and try again.','err');
-      toast('Tip: Scout first to know exact defense strength.','inf');
-      saveReport({
-        type:'attack',
-        targetName:selPlanet?'Planet '+(selPlanet.id+1)+': '+selPlanet.type:'Unknown',
-        systemName:systemData?.name||'',
-        attackPower:Math.round(myPow),
-        defPower:Math.round(enPow),
-        outcome:'loss',
-        casualties:[{name:'All Deployed Ships',lost:Object.values(deployQty||{}).reduce((a,b)=>a+b,0),survived:0}],
-      });
-      closePanel();
-    }
-  },800);
+  closePanel();
+  renderAtkModal(fleet,combatShips,defVal);
+  $('atk-modal').classList.add('open');
 };
+
+function renderAtkModal(fleet,combatShips,defVal){
+  const myAtk=atkSelShip?(SHIP_DEFS.find(s=>s.id===atkSelShip)?.atk||0)*atkSelQty:0;
+  const atkColor=atkSelShip?(myAtk>=defVal?'#00e676':'#ff4466'):'rgba(255,255,255,.4)';
+  
+  $('am-content').innerHTML=`
+    <div class="am-hdr">
+      <div class="am-icon">&#9876;&#65039;</div>
+      <div>
+        <div class="am-title">LAUNCH ATTACK</div>
+        <div class="am-sub">Planet ${(selPlanet?.id||0)+1}: ${selPlanet?.type||''} — ${systemData?.name||''}</div>
+      </div>
+      <button class="am-x" onclick="closeAtkModal()">&#10005;</button>
+    </div>
+    <!-- Power comparison -->
+    <div class="pow-compare">
+      <div class="pow-side" style="border:1px solid rgba(255,68,68,.2)">
+        <div class="pow-lbl">YOUR ATK</div>
+        <div class="pow-val" style="color:${atkColor}">${atkSelShip?myAtk:'?'}</div>
+      </div>
+      <div class="pow-vs">VS</div>
+      <div class="pow-side" style="border:1px solid rgba(0,229,255,.15)">
+        <div class="pow-lbl">EST. DEF</div>
+        <div class="pow-val" style="color:#ffc400">${defVal}</div>
+      </div>
+    </div>
+    <!-- Ship selection -->
+    <div class="am-sec">
+      <div class="am-sec-t">Select Ship Type</div>
+      ${combatShips.map(s=>`
+        <div class="ship-sel-row ${atkSelShip===s.id?'active':''}" onclick="atkSelectShip('${s.id}',${fleet[s.id]||0},${defVal})">
+          <div class="ssr-icon">${s.icon}</div>
+          <div class="ssr-name">${s.n}</div>
+          <div class="ssr-cnt">x${fleet[s.id]||0}</div>
+          <div class="ssr-atk">ATK ${s.atk} each</div>
+        </div>`).join('')}
+    </div>
+    ${atkSelShip?`
+    <!-- Qty selector -->
+    <div class="qty-row">
+      <div class="qty-lbl">SEND:</div>
+      <button class="qty-btn" onclick="atkQty(-1,${fleet[atkSelShip]||1},${defVal})">−</button>
+      <input class="qty-in" id="qty-in" type="number" value="${atkSelQty}" min="1" max="${fleet[atkSelShip]||1}" onchange="atkQtySet(parseInt(this.value),${fleet[atkSelShip]||1},${defVal})">
+      <button class="qty-btn" onclick="atkQty(1,${fleet[atkSelShip]||1},${defVal})">+</button>
+      <button class="qty-btn" style="font-size:10px;letter-spacing:1px;" onclick="atkQty(${fleet[atkSelShip]||1},${fleet[atkSelShip]||1},${defVal})">ALL</button>
+    </div>
+    <div style="font-size:8px;color:rgba(255,255,255,.3);padding:4px 14px 0;font-family:'Orbitron',monospace;">
+      Sending ${atkSelQty}x ${SHIP_DEFS.find(s=>s.id===atkSelShip)?.n} — Total ATK: ${(SHIP_DEFS.find(s=>s.id===atkSelShip)?.atk||0)*atkSelQty}
+    </div>`:''}
+    <button class="am-confirm do-attack" style="display:block;" ${!atkSelShip?'disabled':''} onclick="executeAtk(${defVal})">
+      &#9876; LAUNCH ATTACK
+    </button>`;
+}
+
+function atkSelectShip(id,max,defVal){
+  atkSelShip=id;
+  atkSelQty=Math.min(max,Math.max(1,Math.ceil(max/2)));
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
+  renderAtkModal(fleet,combatShips,defVal);
+}
+
+function atkQty(delta,max,defVal){
+  if(delta===max){atkSelQty=max;}
+  else{atkSelQty=Math.max(1,Math.min(max,atkSelQty+delta));}
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
+  renderAtkModal(fleet,combatShips,defVal);
+}
+
+function atkQtySet(v,max,defVal){
+  atkSelQty=Math.max(1,Math.min(max,v||1));
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  const combatShips=SHIP_DEFS.filter(s=>s.atk>0&&(fleet[s.id]||0)>0);
+  renderAtkModal(fleet,combatShips,defVal);
+}
+
+function closeAtkModal(){
+  $('atk-modal').classList.remove('open');
+  atkSelShip=null;atkSelQty=1;
+}
+
+// ══ EXECUTE ATTACK ══
+function executeAtk(defVal){
+  if(!atkSelShip||!selPlanet){toast('Select ships first!','err');return;}
+  const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  const fleet=fleetData.fleet||{};
+  const shipDef=SHIP_DEFS.find(s=>s.id===atkSelShip);
+  if(!shipDef||(fleet[atkSelShip]||0)<atkSelQty){toast('Not enough ships!','err');return;}
+  
+  closeAtkModal();
+  
+  const myAtk=shipDef.atk*atkSelQty;
+  
+  // ── FLEET TRAVEL ANIMATION ──
+  // Find home planet position as source
+  const homePlanet=planets.find(p=>p.isHome)||planets[0];
+  const targetPlanet=selPlanet;
+  
+  if(homePlanet&&targetPlanet&&homePlanet.screenX&&targetPlanet.screenX){
+    // Launch fleet animation
+    const dist=Math.hypot(targetPlanet.screenX-homePlanet.screenX,targetPlanet.screenY-homePlanet.screenY);
+    const duration=Math.max(2000,dist/0.06); // ms
+    
+    fleetMissions.push({
+      id:Date.now(),
+      fromX:homePlanet.screenX,fromY:homePlanet.screenY,
+      toX:targetPlanet.screenX,toY:targetPlanet.screenY,
+      startTime:Date.now(),duration,
+      qty:atkSelQty,type:'attack',
+      shipCol:shipDef.col||[255,60,60],
+      done:false,
+      targetPlanet,
+      onArrival:()=>resolveBattle(myAtk,defVal,shipDef,targetPlanet),
+    });
+    
+    toast('Fleet launched! '+atkSelQty+'x '+shipDef.n+' en route...','inf');
+  } else {
+    // No position available, resolve immediately
+    setTimeout(()=>resolveBattle(myAtk,defVal,shipDef,targetPlanet),1500);
+    toast('Fleet deployed!','inf');
+  }
+  
+  // Deduct ships immediately (committed to battle)
+  fleet[atkSelShip]=Math.max(0,(fleet[atkSelShip]||0)-atkSelQty);
+  fleetData.fleet=fleet;
+  localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
+}
+
+// ══ RESOLVE BATTLE ══
+function resolveBattle(myAtk,defVal,shipDef,targetPlanet){
+  const myPow=myAtk*(0.8+Math.random()*0.4);
+  const enPow=defVal*(0.85+Math.random()*0.3);
+  const won=myPow>enPow;
+  const lossQty=won?Math.floor(atkSelQty*0.15):atkSelQty;
+  const survivedQty=won?atkSelQty-lossQty:0;
+  
+  if(won){
+    // ── WIN ──
+    setPlanetStatus(targetPlanet,'conquered');
+    targetPlanet.colonized=true;
+    setPlanetRing(targetPlanet,'green');
+    
+    // Return surviving ships
+    if(survivedQty>0){
+      const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
+      const fd=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+      fd.fleet[shipDef.id]=(fd.fleet[shipDef.id]||0)+survivedQty;
+      localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fd));
+    }
+    
+    toast('VICTORY! Planet '+(targetPlanet.id+1)+' captured!','ok');
+    if(lossQty>0) toast('Lost '+lossQty+'x '+shipDef.n+' in battle','inf');
+    toast('Send a Colonizer to claim it!','inf');
+    
+    // Trigger blast animation on target planet
+    startBattleAnimation(targetPlanet,true);
+    
+    saveReport({
+      type:'attack',
+      targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,
+      systemName:systemData?.name||'',
+      attackPower:Math.round(myPow),defPower:Math.round(enPow),
+      outcome:'win',
+      casualties:[{name:shipDef.n,lost:lossQty,survived:survivedQty}],
+    });
+    
+    // Auto-reopen panel
+    setTimeout(()=>openPanel(targetPlanet),800);
+    
+  } else {
+    // ── LOSS ──
+    const status=getPlanetStatus(targetPlanet);
+    setPlanetRing(targetPlanet,status==='enemy'?'red':'gray');
+    
+    toast('DEFEAT! All '+atkSelQty+'x '+shipDef.n+' lost!','err');
+    toast('Scout first to know exact defense strength.','inf');
+    
+    // Trigger small blast (failed attack)
+    startBattleAnimation(targetPlanet,false);
+    
+    saveReport({
+      type:'attack',
+      targetName:'Planet '+(targetPlanet.id+1)+': '+targetPlanet.type,
+      systemName:systemData?.name||'',
+      attackPower:Math.round(myPow),defPower:Math.round(enPow),
+      outcome:'loss',
+      casualties:[{name:shipDef.n,lost:atkSelQty,survived:0}],
+    });
+    
+    setTimeout(()=>closePanel(),1000);
+  }
+}
+
+// ══ BATTLE ANIMATION (smoke/blast particles on planet) ══
+let battleParticles=[];
+
+function startBattleAnimation(targetPlanet,won){
+  const px=targetPlanet.screenX, py=targetPlanet.screenY;
+  const sz=targetPlanet.size||8;
+  const count=won?40:20;
+  
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const speed=won?(0.3+Math.random()*1.2):(0.2+Math.random()*0.6);
+    const col=won
+      ?[255,Math.floor(100+Math.random()*100),0]  // orange/fire
+      :[120,120,120]; // gray smoke for loss
+    battleParticles.push({
+      x:px+(Math.random()-.5)*sz*2,
+      y:py+(Math.random()-.5)*sz*2,
+      vx:Math.cos(angle)*speed,
+      vy:Math.sin(angle)*speed-0.5,
+      life:1.0,
+      decay:0.015+Math.random()*0.02,
+      r:2+Math.random()*(won?5:3),
+      col,
+      worldX:px,worldY:py, // store in screen coords
+    });
+  }
+  
+  // Screen shake for wins
+  if(won){
+    let shakes=0;
+    const shakeInt=setInterval(()=>{
+      if(shakes++>8){clearInterval(shakeInt);return;}
+      const offsetX=(Math.random()-.5)*6;
+      const offsetY=(Math.random()-.5)*6;
+      if(CV){CV.style.transform=`translate(${offsetX}px,${offsetY}px)`;}
+    },50);
+    setTimeout(()=>{if(CV)CV.style.transform='';},500);
+  }
+}
+
+function drawBattleParticles(){
+  if(!battleParticles.length) return;
+  battleParticles=battleParticles.filter(p=>p.life>0);
+  for(const p of battleParticles){
+    p.x+=p.vx;p.y+=p.vy;p.vy+=0.02; // gravity
+    p.life-=p.decay;
+    const alpha=Math.max(0,p.life);
+    CTX.beginPath();
+    CTX.arc(p.x,p.y,p.r*alpha,0,Math.PI*2);
+    CTX.fillStyle=`rgba(${p.col[0]},${p.col[1]},${p.col[2]},${alpha})`;
+    CTX.fill();
+  }
+}
 
 window.doColonize=function(){
   if(!selPlanet)return;
@@ -880,8 +1190,12 @@ function drawFleetMissions(ts){
     CTX.strokeStyle=m.type==='attack'?'rgba(255,68,68,0.4)':'rgba(0,229,255,0.4)';
     CTX.lineWidth=1/camS;CTX.stroke();
     // Ship icon dot
+    const sc=m.shipCol||[0,229,255];
     CTX.beginPath();CTX.arc(0,0,4/camS,0,Math.PI*2);
-    CTX.fillStyle=m.type==='attack'?'#ff4444':'#00e5ff';CTX.fill();
+    CTX.fillStyle=`rgb(${sc[0]},${sc[1]},${sc[2]})`;CTX.fill();
+    // Inner bright
+    CTX.beginPath();CTX.arc(0,0,2/camS,0,Math.PI*2);
+    CTX.fillStyle='rgba(255,255,255,0.9)';CTX.fill();
     // Quantity label
     if(camS>0.3){
       CTX.textAlign='center';CTX.textBaseline='bottom';
@@ -893,10 +1207,7 @@ function drawFleetMissions(ts){
     // Check arrival
     if(prog>=1){
       m.done=true;
-      if(m.type==='attack'){
-        // Trigger attack on arrival
-        toast('Fleet arrived at '+m.targetPlanet.type+'!','ok');
-      }
+      if(m.onArrival) m.onArrival();
     }
   }
 }
