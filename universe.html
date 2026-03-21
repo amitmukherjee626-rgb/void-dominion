@@ -327,6 +327,7 @@ function centerOnHome(){
 // ════ DRAW ════
 function draw(ts){
   if(!CTX)return;
+  CTX.setTransform(1,0,0,1,0,0);
   CTX.clearRect(0,0,W,H);
   CTX.fillStyle='#00010a';
   CTX.fillRect(0,0,W,H);
