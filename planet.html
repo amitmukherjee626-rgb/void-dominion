@@ -287,7 +287,11 @@ const BUILDINGS = [
     upkeepPerLevel: 0,
     genPerLevel:(lv, planetType)=>{
       const base = PLANET_RES[planetType]||PLANET_RES.Terran;
-      return { cr: base.cr * lv * 4, mn: 0, en: 0 };
+      return {
+        cr: base.cr * lv * 4,
+        mn: base.mn * lv * 2,
+        en: base.en * lv * 1,
+      };
     },
     barColor:'#ffc400',
     unlockMsg: null,
@@ -791,7 +795,11 @@ async function init(){
 
   setLoad(30,'Loading profile...');await delay(100);
   const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
-  resources={cr:prof?.credits||0, mn:prof?.minerals||0, en:prof?.energy||0};
+  resources={
+    cr: prof?.credits||0,
+    mn: prof?.minerals||500,  // Start with 500 minerals
+    en: prof?.energy||200,    // Start with 200 energy
+  };
 
   setLoad(55,'Loading planet...');await delay(100);
   const pRaw=sessionStorage.getItem('vd_planet');
