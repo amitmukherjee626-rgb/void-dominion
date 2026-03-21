@@ -937,7 +937,22 @@ async function init(){
   if(pRaw){
     planetData=JSON.parse(pRaw);
   } else {
-    planetData={id:0,name:'Planet 1',type:'Terran',icon:'&#127758;',col:[60,160,80],isHome:true,crYield:4,mnYield:3,enYield:3};
+    // No sessionStorage — load from localStorage or generate
+    const savedHP = localStorage.getItem('vd_home_planet_data_'+userId);
+    if(savedHP){
+      planetData=JSON.parse(savedHP);
+    } else {
+      function mkrp(s){let v=Math.abs(s)%2147483647||1;return()=>{v=v*16807%2147483647;return(v-1)/2147483646;};}
+      function hsp(str){let h=5381;for(let i=0;i<str.length;i++)h=(h*33^str.charCodeAt(i))>>>0;return h;}
+      const rp=mkrp(hsp(userId));
+      const T=['Rocky','Gas Giant','Ice','Lava','Ocean','Desert','Toxic','Terran'];
+      const I=['&#10052;','&#127756;','&#10052;','&#127755;','&#127754;','&#127757;','&#9763;','&#127758;'];
+      const C=[[180,140,100],[220,160,80],[160,210,255],[255,80,30],[40,120,220],[210,180,100],[120,200,60],[60,160,80]];
+      const ti=Math.floor(rp()*T.length);
+      planetData={id:0,name:'Planet 1',type:T[ti],icon:I[ti],col:C[ti],isHome:true,crYield:4,mnYield:3,enYield:3,moons:Math.floor(rp()*4),atm:'Breathable',temp:'Mild',grav:'1.0g',systemName:'Home System',galaxyName:'Home Galaxy'};
+      localStorage.setItem('vd_home_planet_data_'+userId,JSON.stringify(planetData));
+    }
+    sessionStorage.setItem('vd_planet',JSON.stringify(planetData));
   }
 
   // Load buildings from localStorage
