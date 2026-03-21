@@ -532,6 +532,14 @@ function planetAt(wx,wy){
   return best;
 }
 
+// ════ COORD GENERATOR ════
+function genPlanetCoord(sysId, planetId){
+  const h = Math.abs((sysId*31+planetId)*2654435761)>>>0;
+  const x = (h%900)+100;
+  const y = ((h>>10)%900)+100;
+  return x+':'+y;
+}
+
 // ════ PLANET STATUS SYSTEM ════
 // planetStatus stored in localStorage: {planetKey: 'home'|'mine'|'neutral'|'conquered'}
 function getPlanetKey(p){ return 'vd_ps_'+userId+'_'+systemData?.id+'_'+p.id; }
@@ -546,17 +554,19 @@ function setPlanetStatus(p, status){
 
 // ════ PLANET PANEL ════
 window.openPanel = function openPanel(p){
-  selPlanet=p;
+  selPlanet = p;
   const status = getPlanetStatus(p);
+  const scoutKey = 'vd_scout_'+userId+'_sys'+systemData?.id+'_p'+p.id;
+  const scoutData = JSON.parse(localStorage.getItem(scoutKey)||'null');
 
-  $('pp-icon').innerHTML=p.icon;
-  $('pp-name').textContent='Planet '+(p.id+1)+': '+p.type;
-  $('pp-type').textContent=p.type+' Planet';
-  $('pp-home-badge').style.display=p.isHome?'inline-flex':'none';
+  $('pp-icon').innerHTML = p.icon;
+  $('pp-name').textContent = 'Planet '+(p.id+1)+': '+p.type;
+  $('pp-type').textContent = p.type+' Planet';
+  $('pp-home-badge').style.display = p.isHome ? 'inline-flex' : 'none';
 
   // Resource bars
-  const ryMax=9;
-  $('pp-res-bars').innerHTML=
+  const ryMax = 9;
+  $('pp-res-bars').innerHTML =
     `<div style="font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:6px;">Resources / tick</div>`+
     [['CR',p.crYield,'#ffc400'],['MIN',p.mnYield,'#78909c'],['ENE',p.enYield,'#80cbc4']].map(([lbl,val,col])=>
     `<div class="pp-res-row">
@@ -565,51 +575,85 @@ window.openPanel = function openPanel(p){
       <span class="pp-res-val" style="color:${col}">+${val}</span>
     </div>`).join('');
 
-  $('pp-atm').textContent=p.atm;
-  $('pp-temp').textContent=p.temp;
-  $('pp-grav').textContent=p.grav;
-  $('pp-moons').textContent=p.moons;
+  $('pp-atm').textContent = p.atm;
+  $('pp-temp').textContent = p.temp;
+  $('pp-grav').textContent = p.grav;
+  $('pp-moons').textContent = p.moons;
 
-  // Status labels
-  const statusLabels={home:'HOME PLANET',mine:'COLONIZED',neutral:'NEUTRAL',conquered:'CONQUERED — Send Colonizer'};
-  $('pp-status').textContent=statusLabels[status]||status.toUpperCase();
+  // Status text
+  const statusMap = {home:'HOME PLANET', mine:'YOUR PLANET', neutral:'NEUTRAL', conquered:'CONQUERED', enemy:'ENEMY'};
+  $('pp-status').textContent = statusMap[status] || status.toUpperCase();
 
-  // Build action section based on status
-  const sec=$('pp-action-section');
-  
-  if(status==='home'||status==='mine'){
-    // OUR planet - land directly
-    sec.innerHTML=`
-      <div class="pp-status-badge ${status==='home'?'home':'mine'}">
-        ${status==='home'?'&#11088; HOME PLANET':'&#10003; YOUR PLANET'}
-      </div>
+  // ═══ ACTION SECTION ═══
+  const sec = $('pp-action-section');
+
+  if(status === 'home' || status === 'mine'){
+    // OUR planet
+    const badge = status==='home'
+      ? `<div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;background:rgba(255,196,0,.1);border:1px solid rgba(255,196,0,.3);color:#ffc400;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;margin:6px 14px 0;">&#11088; HOME PLANET</div>`
+      : `<div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;margin:6px 14px 0;">&#10003; YOUR PLANET</div>`;
+    sec.innerHTML = badge + `
       <div class="pp-action-wrap">
-        <button class="pp-act-btn land" onclick="enterPlanet()">LAND ON PLANET</button>
+        <button class="pp-act-btn land" onclick="enterPlanet()">&#127968; LAND ON PLANET</button>
       </div>`;
-  } else if(status==='conquered'){
-    // Won battle, need colonizer
-    sec.innerHTML=`
-      <div class="pp-status-badge mine">&#9876;&#65039; CONQUERED</div>
+
+  } else if(status === 'conquered'){
+    sec.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;background:rgba(0,230,118,.1);border:1px solid rgba(0,230,118,.3);color:#00e676;font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;margin:6px 14px 0;">&#9876; CONQUERED</div>
       <div class="pp-action-wrap">
-        <button class="pp-act-btn colonize" onclick="doColonize()">SEND COLONIZER</button>
-        <div style="font-size:8px;color:rgba(255,255,255,.3);padding:0 2px;">Colonizer ship required</div>
+        <button class="pp-act-btn colonize" onclick="doColonize()">&#128640; SEND COLONIZER</button>
+        <div style="font-size:8px;color:rgba(255,196,0,.6);padding:2px 0;font-family:'Orbitron',monospace;">Colonizer ship required</div>
       </div>`;
+
   } else {
-    // NEUTRAL or ENEMY — show defense estimate + scout/attack
-    const defStr = status==='enemy'?'STRONG (scouting recommended)':'WEAK (auto-defense only)';
-    const defVal = status==='enemy'?'200-600':'10-60';
-    sec.innerHTML=`
-      <div class="pp-status-badge ${status==='enemy'?'enemy':'neutral'}">
-        ${status==='enemy'?'&#9888; ENEMY PLANET':'&#9711; NEUTRAL PLANET'}
-      </div>
-      <div class="pp-def-info">
-        <div class="pp-def-row"><span>Defense</span><span style="color:${status==='enemy'?'#ff4466':'#00e676'}">${defStr}</span></div>
-        <div class="pp-def-row"><span>Est. Power</span><span style="color:${status==='enemy'?'#ff4466':'#ffc400'}">${defVal}</span></div>
-        <div class="pp-def-row"><span>Fleet</span><span>${status==='enemy'?'Present':'None'}</span></div>
-      </div>
-      <div class="pp-action-wrap">
+    // NEUTRAL or ENEMY - show defense info + scout/attack
+    const isEnemy = status === 'enemy';
+    const defColor = isEnemy ? '#ff4466' : '#ffc400';
+    const defPow = scoutData ? scoutData.defPower : (isEnemy ? '200-600' : '10-60');
+    const defLabel = scoutData ? 'CONFIRMED' : 'ESTIMATED';
+    
+    // Planet ID + Coord
+    const coord = genPlanetCoord(systemData?.id||0, p.id);
+    
+    let scoutInfoHtml = '';
+    if(scoutData){
+      scoutInfoHtml = `
+        <div style="margin:6px 14px 0;padding:8px 10px;background:rgba(255,23,68,.06);border:1px solid rgba(255,23,68,.15);border-radius:2px;">
+          <div style="font-family:'Orbitron',monospace;font-size:7px;letter-spacing:1px;color:rgba(0,229,255,.4);text-transform:uppercase;margin-bottom:4px;">Scout Intelligence</div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.5);padding:2px 0;">
+            <span>Defense Power</span><span style="color:#ffc400;font-family:'Orbitron',monospace;">${scoutData.defPower}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.5);padding:2px 0;">
+            <span>Enemy Fleet</span><span style="font-family:'Orbitron',monospace;">${scoutData.enemyFleet||'None'}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.5);padding:2px 0;">
+            <span>Buildings</span><span style="font-family:'Orbitron',monospace;">${scoutData.buildings||'None'}</span>
+          </div>
+        </div>`;
+    } else {
+      scoutInfoHtml = `
+        <div style="margin:6px 14px 0;padding:8px 10px;background:rgba(0,5,20,.6);border:1px solid rgba(0,229,255,.1);border-radius:2px;">
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.35);padding:2px 0;">
+            <span>Est. Defense</span><span style="color:${defColor};font-family:'Orbitron',monospace;">${defPow} (${defLabel})</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.35);padding:2px 0;">
+            <span>Intel</span><span style="font-family:'Orbitron',monospace;color:rgba(0,229,255,.5);">Scout to reveal details</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;font-size:8px;color:rgba(255,255,255,.35);padding:2px 0;">
+            <span>Coord</span><span style="font-family:'Orbitron',monospace;color:rgba(0,229,255,.6);">${coord}</span>
+          </div>
+        </div>`;
+    }
+
+    const statusBadgeColor = isEnemy ? 'rgba(255,23,68,.1);border:1px solid rgba(255,23,68,.3);color:#ff4466' : 'rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5)';
+    const statusLabel = isEnemy ? '⚠ ENEMY PLANET' : '○ NEUTRAL PLANET';
+    
+    sec.innerHTML = `
+      <div style="display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:2px;background:${statusBadgeColor};font-family:'Orbitron',monospace;font-size:8px;letter-spacing:1px;margin:6px 14px 0;">${statusLabel}</div>
+      ${scoutInfoHtml}
+      <div class="pp-action-wrap" style="margin-top:8px;">
         <button class="pp-act-btn scout" onclick="doScout()">&#128065; SCOUT FIRST</button>
-        <button class="pp-act-btn attack" onclick="doAttack()">&#9876;&#65039; LAUNCH ATTACK</button>
+        <button class="pp-act-btn attack" onclick="doAttack()">&#9876; LAUNCH ATTACK</button>
       </div>`;
   }
 
@@ -652,33 +696,57 @@ window.enterPlanet=function(){
 };
 
 window.doScout=function(){
-  if(!selPlanet)return;
-  // Check if probe available
+  if(!selPlanet) return;
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
-  const fleet=fleetRaw?JSON.parse(fleetRaw).fleet||{}:{};
+  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  const fleet=fleetData.fleet||{};
+
   if(!(fleet.probe>0)){
-    toast('No Probe available! Build one in Shipyard.','err');
+    toast('No Probe! Build one in Shipyard (Lv1 needed).','err');
     return;
   }
-  // Deduct probe
-  fleet.probe=Math.max(0,(fleet.probe||1)-1);
-  const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
+  // Consume 1 probe
+  fleet.probe=Math.max(0,(fleet.probe)-1);
   fleetData.fleet=fleet;
   localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
-  
+
   const status=getPlanetStatus(selPlanet);
-  const defVal=status==='enemy'?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50);
-  toast('Scout launched! Intel incoming...','inf');
+  const isEnemy=status==='enemy';
+  const defVal=isEnemy?Math.floor(200+Math.random()*400):Math.floor(10+Math.random()*50);
+  const shipCount=isEnemy?Math.floor(defVal/8)+Math.floor(Math.random()*6):0;
+
+  toast('Probe launched! Gathering intel...','inf');
+  closePanel();
+
   setTimeout(()=>{
-    toast('Scout report: Defense Power ~'+defVal,'ok');
-    if(status==='enemy') toast('WARNING: Enemy notified of scouting!','inf');
-    // Update panel with real defense info
-    const defInfo=document.querySelector('.pp-def-info');
-    if(defInfo) defInfo.innerHTML=`
-      <div class="pp-def-row"><span>Defense Power</span><span style="color:#ffc400">${defVal} (CONFIRMED)</span></div>
-      <div class="pp-def-row"><span>Fleet</span><span>${status==='enemy'?'~'+Math.floor(defVal/10)+' ships':'None'}</span></div>
-      <div class="pp-def-row"><span>Buildings</span><span>${status==='enemy'?'Fortified':'None'}</span></div>`;
-  },2000);
+    // Save permanent scout intel for this planet
+    const scoutKey='vd_scout_'+userId+'_sys'+(systemData?.id||0)+'_p'+selPlanet.id;
+    const scoutInfo={
+      defPower:defVal,
+      enemyFleet:shipCount>0?'~'+shipCount+' ships':'None detected',
+      buildings:isEnemy?'Fortified (CC + Turrets)':'None',
+      resources:isEnemy?'~'+Math.floor(defVal*12)+' CR estimated':'Low',
+      scoutedAt:new Date().toISOString(),
+    };
+    localStorage.setItem(scoutKey,JSON.stringify(scoutInfo));
+
+    toast('Intel received: Defense Power '+defVal,'ok');
+    if(isEnemy) toast('Enemy notified of scouting!','inf');
+
+    saveReport({
+      type:'scout',
+      targetName:'Planet '+(selPlanet.id+1)+': '+selPlanet.type,
+      systemName:systemData?.name||'',
+      defPower:defVal,
+      enemyFleet:scoutInfo.enemyFleet,
+      buildings:scoutInfo.buildings,
+      resources:scoutInfo.resources,
+      planetType:selPlanet?.type||'Unknown',
+      targetStatus:status,
+    });
+    // Reopen panel — now shows confirmed intel
+    openPanel(selPlanet);
+  },2500);
 };
 
 window.doAttack=function(){
@@ -944,16 +1012,30 @@ async function init(){
   const planetCount=systemData.planets||7;
   planets=buildPlanets(sysSeed,planetCount);
 
-  // Set home planet (first planet for home system)
-  // HOME PLANET: ONLY planet 0 of the home system
-  // All other systems have NO home planet
-  const isHomeSystem = systemData?.isHome === true;
+  // ═══ HOME PLANET FIX ═══
+  // Home planet = ONLY the planet saved in vd_home_planet_{userId}
+  // Set ONCE when player first logs in - never changes
+  const savedHomePlanet = JSON.parse(localStorage.getItem('vd_home_planet_'+userId)||'null');
+  const savedHomeSysId = localStorage.getItem('vd_home_sysid_'+userId);
+  
+  // Is this the home system?
+  const isHomeSystem = savedHomeSysId 
+    ? (systemData?.id?.toString() === savedHomeSysId || systemData?.name === savedHomeSysId)
+    : systemData?.isHome === true; // fallback for first visit
+  
+  // First time setup - save home system ID permanently
+  if(systemData?.isHome && !savedHomeSysId){
+    const sysKey = systemData.id?.toString() || systemData.name;
+    localStorage.setItem('vd_home_sysid_'+userId, sysKey);
+  }
+  
+  // Mark home planet ONLY in home system, ONLY planet index 0
+  planets.forEach(p => p.isHome = false);
+  homePlanetIdx = -1;
+  
   if(isHomeSystem){
-    planets[0].isHome=true;
-    homePlanetIdx=0;
-  } else {
-    // No home planet in this system
-    homePlanetIdx=-1;
+    planets[0].isHome = true;
+    homePlanetIdx = 0;
   }
 
   // Sun position = center of canvas world
