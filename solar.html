@@ -983,70 +983,75 @@ function closeAtkModal(){
 
 // ══ EXECUTE ATTACK (multi-ship) ══
 function executeAtk(defVal){
-  if(!Object.keys(atkSelected).length||!selPlanet){toast('Select ships first!','err');return;}
+  // Step 1: Validate
+  const keys=Object.keys(atkSelected);
+  if(!keys.length){toast('Tick karo ships pehle!','err');return;}
+  if(!selPlanet){toast('No target planet!','err');return;}
+
   const fleetRaw=localStorage.getItem('vd_fleet_'+userId);
   const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
   const fleet=fleetData.fleet||{};
 
-  // Validate
   for(const [id,qty] of Object.entries(atkSelected)){
-    if((fleet[id]||0)<qty){toast('Not enough '+SHIP_DEFS.find(s=>s.id===id)?.n+'!','err');return;}
+    if((fleet[id]||0)<qty){
+      toast('Not enough '+SHIP_DEFS.find(s=>s.id===id)?.n+'!','err');
+      return;
+    }
   }
 
-  // CRITICAL: Save deep copy BEFORE closing modal (which clears atkSelected)
-  const shipsCopy={...atkSelected};
-  const myAtk=calcTotalAtk();
+  // Step 2: Snapshot everything needed
+  const shipsCopy=JSON.parse(JSON.stringify(atkSelected));
+  const myAtk=Object.entries(shipsCopy).reduce((tot,[id,qty])=>{
+    return tot+(SHIP_DEFS.find(s=>s.id===id)?.atk||0)*qty;
+  },0);
   const totalShips=Object.values(shipsCopy).reduce((a,b)=>a+b,0);
-  const targetPlanet=selPlanet; // save ref before panel close
+  const tp=selPlanet; // target planet ref
 
-  // Deduct ships from fleet
+  // Step 3: Deduct ships
   for(const [id,qty] of Object.entries(shipsCopy)){
     fleet[id]=Math.max(0,(fleet[id]||0)-qty);
   }
   fleetData.fleet=fleet;
   localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
 
-  // Close modal AFTER saving copies
-  closeAtkModal();
+  // Step 4: Close UI
+  $('atk-modal').classList.remove('open');
+  atkSelected={};
   closePanel();
 
-  // Dominant ship for animation color
-  let dominantShip=SHIP_DEFS[0];
-  let maxAtk=0;
+  // Step 5: Dominant ship color
+  let domCol=[255,60,60];
+  let maxA=0;
   for(const [id] of Object.entries(shipsCopy)){
     const s=SHIP_DEFS.find(x=>x.id===id);
-    if(s&&s.atk>maxAtk){maxAtk=s.atk;dominantShip=s;}
+    if(s&&s.atk>maxA){maxA=s.atk;domCol=s.col||[255,60,60];}
   }
 
-  // Source planet position
-  const homePlanet=planets.find(p=>p.isHome)||planets[0];
+  // Step 6: Fleet travel animation
+  // screenX/Y are world coords — use them directly (drawFleetMissions runs in world space)
+  const hp=planets.find(p=>p.isHome)||planets[0];
+  const fx=hp?.screenX||0;
+  const fy=hp?.screenY||0;
+  const tx2=tp?.screenX||100;
+  const ty2=tp?.screenY||100;
+  const dist=Math.hypot(tx2-fx,ty2-fy);
+  const dur=Math.max(2000,dist*30);
 
-  // Need screen positions — get them from current draw
-  const fromX=homePlanet?.screenX||W/2;
-  const fromY=homePlanet?.screenY||H/2;
-  const toX=targetPlanet?.screenX||W/2+100;
-  const toY=targetPlanet?.screenY||H/2;
+  toast('Fleet launched! '+totalShips+' ships en route...','inf');
 
-  // Calculate travel time based on distance
-  const dist=Math.hypot(toX-fromX,toY-fromY);
-  const duration=Math.max(1800,dist*25); // min 1.8s, scales with distance
-
-  toast('&#128640; Fleet launched! '+totalShips+' ships en route...','inf');
-
-  // Add fleet mission — uses saved shipsCopy in closure
   fleetMissions.push({
     id:Date.now(),
-    fromX,fromY,toX,toY,
+    fromX:fx,fromY:fy,
+    toX:tx2,toY:ty2,
     startTime:Date.now(),
-    duration,
+    duration:dur,
     qty:totalShips,
     type:'attack',
-    shipCol:dominantShip.col||[255,60,60],
+    shipCol:domCol,
     done:false,
-    targetPlanet,
-    onArrival:()=>{
-      // Use shipsCopy — safely captured before modal close
-      resolveBattle(myAtk,defVal,shipsCopy,targetPlanet);
+    targetPlanet:tp,
+    onArrival:function(){
+      resolveBattle(myAtk,defVal,shipsCopy,tp);
     },
   });
 }
