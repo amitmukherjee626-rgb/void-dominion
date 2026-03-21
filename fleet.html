@@ -1071,10 +1071,25 @@ async function init(){
   const saved=localStorage.getItem('vd_fleet_'+userId);
   if(saved){const d=JSON.parse(saved);fleet=d.fleet||{};buildQueue=d.buildQueue||[];}
 
+  // Get shipyard level from home planet buildings
+  const homeBldKey = 'vd_bld_'+userId+'_home';
+  const homeBld = localStorage.getItem(homeBldKey);
+  if(homeBld){
+    const b = JSON.parse(homeBld);
+    shipyardLevel = b.shipyard||0;
+  }
+  // Also check current planet buildings
   const pRaw=sessionStorage.getItem('vd_planet');
-  const bldKey='vd_bld_'+userId+'_'+(pRaw?JSON.parse(pRaw).id:0);
-  const bldSaved=localStorage.getItem(bldKey);
-  if(bldSaved){const b=JSON.parse(bldSaved);shipyardLevel=b.shipyard||0;}
+  if(pRaw){
+    const pd = JSON.parse(pRaw);
+    const sysName = (pd.systemName||'unk').replace(/\s+/g,'_');
+    const pBldKey = pd.isHome ? homeBldKey : 'vd_bld_'+userId+'_'+sysName+'_p'+pd.id;
+    const pBld = localStorage.getItem(pBldKey);
+    if(pBld){
+      const b2 = JSON.parse(pBld);
+      shipyardLevel = Math.max(shipyardLevel, b2.shipyard||0);
+    }
+  }
 
   setLoad(85,'Ready...');await delay(100);
   updateHudRes();renderShips();startQueueTimer();updateQueueBadge();
