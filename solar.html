@@ -988,53 +988,67 @@ function executeAtk(defVal){
   const fleetData=fleetRaw?JSON.parse(fleetRaw):{fleet:{},buildQueue:[],resources:{}};
   const fleet=fleetData.fleet||{};
 
-  // Validate all selected ships
+  // Validate
   for(const [id,qty] of Object.entries(atkSelected)){
     if((fleet[id]||0)<qty){toast('Not enough '+SHIP_DEFS.find(s=>s.id===id)?.n+'!','err');return;}
   }
 
-  closeAtkModal();
-
+  // CRITICAL: Save deep copy BEFORE closing modal (which clears atkSelected)
+  const shipsCopy={...atkSelected};
   const myAtk=calcTotalAtk();
-  const totalShips=Object.values(atkSelected).reduce((a,b)=>a+b,0);
+  const totalShips=Object.values(shipsCopy).reduce((a,b)=>a+b,0);
+  const targetPlanet=selPlanet; // save ref before panel close
 
-  // Deduct all selected ships immediately
-  for(const [id,qty] of Object.entries(atkSelected)){
+  // Deduct ships from fleet
+  for(const [id,qty] of Object.entries(shipsCopy)){
     fleet[id]=Math.max(0,(fleet[id]||0)-qty);
   }
   fleetData.fleet=fleet;
   localStorage.setItem('vd_fleet_'+userId,JSON.stringify(fleetData));
 
-  // Dominant ship color for animation
+  // Close modal AFTER saving copies
+  closeAtkModal();
+  closePanel();
+
+  // Dominant ship for animation color
   let dominantShip=SHIP_DEFS[0];
   let maxAtk=0;
-  for(const [id] of Object.entries(atkSelected)){
+  for(const [id] of Object.entries(shipsCopy)){
     const s=SHIP_DEFS.find(x=>x.id===id);
     if(s&&s.atk>maxAtk){maxAtk=s.atk;dominantShip=s;}
   }
 
-  // Fleet travel animation
+  // Source planet position
   const homePlanet=planets.find(p=>p.isHome)||planets[0];
-  const targetPlanet=selPlanet;
 
-  if(homePlanet?.screenX&&targetPlanet?.screenX){
-    const dist=Math.hypot(targetPlanet.screenX-homePlanet.screenX,targetPlanet.screenY-homePlanet.screenY);
-    const duration=Math.max(2000,dist/0.06);
-    fleetMissions.push({
-      id:Date.now(),
-      fromX:homePlanet.screenX,fromY:homePlanet.screenY,
-      toX:targetPlanet.screenX,toY:targetPlanet.screenY,
-      startTime:Date.now(),duration,
-      qty:totalShips,type:'attack',
-      shipCol:dominantShip.col||[255,60,60],
-      done:false,targetPlanet,
-      onArrival:()=>resolveBattle(myAtk,defVal,atkSelected,targetPlanet),
-    });
-    toast('Fleet launched! '+totalShips+' ships en route...','inf');
-  } else {
-    setTimeout(()=>resolveBattle(myAtk,defVal,atkSelected,targetPlanet),1500);
-    toast('Fleet deployed!','inf');
-  }
+  // Need screen positions — get them from current draw
+  const fromX=homePlanet?.screenX||W/2;
+  const fromY=homePlanet?.screenY||H/2;
+  const toX=targetPlanet?.screenX||W/2+100;
+  const toY=targetPlanet?.screenY||H/2;
+
+  // Calculate travel time based on distance
+  const dist=Math.hypot(toX-fromX,toY-fromY);
+  const duration=Math.max(1800,dist*25); // min 1.8s, scales with distance
+
+  toast('&#128640; Fleet launched! '+totalShips+' ships en route...','inf');
+
+  // Add fleet mission — uses saved shipsCopy in closure
+  fleetMissions.push({
+    id:Date.now(),
+    fromX,fromY,toX,toY,
+    startTime:Date.now(),
+    duration,
+    qty:totalShips,
+    type:'attack',
+    shipCol:dominantShip.col||[255,60,60],
+    done:false,
+    targetPlanet,
+    onArrival:()=>{
+      // Use shipsCopy — safely captured before modal close
+      resolveBattle(myAtk,defVal,shipsCopy,targetPlanet);
+    },
+  });
 }
 
 // ══ RESOLVE BATTLE (multi-ship) ══
@@ -1202,38 +1216,61 @@ function addFleetMission(fromPlanet, toPlanet, qty, type){
 
 function drawFleetMissions(ts){
   const now=Date.now();
-  fleetMissions=fleetMissions.filter(m=>!m.done);
-  for(const m of fleetMissions){
+  for(let i=fleetMissions.length-1;i>=0;i--){
+    const m=fleetMissions[i];
+    if(m.done){fleetMissions.splice(i,1);continue;}
+    
     const prog=Math.min(1,(now-m.startTime)/m.duration);
     const x=m.fromX+(m.toX-m.fromX)*prog;
     const y=m.fromY+(m.toY-m.fromY)*prog;
-    // Draw fleet dot
-    CTX.save();CTX.translate(x,y);
-    // Trail
-    CTX.beginPath();
-    CTX.moveTo(m.fromX-x+(m.toX-m.fromX)*Math.max(0,prog-.1), m.fromY-y+(m.toY-m.fromY)*Math.max(0,prog-.1));
-    CTX.lineTo(0,0);
-    CTX.strokeStyle=m.type==='attack'?'rgba(255,68,68,0.4)':'rgba(0,229,255,0.4)';
-    CTX.lineWidth=1/camS;CTX.stroke();
-    // Ship icon dot
     const sc=m.shipCol||[0,229,255];
+    const isAtk=m.type==='attack';
+    
+    // ── TRAIL (multiple dots fading) ──
+    for(let t=0;t<6;t++){
+      const tp=Math.max(0,prog-(t*0.025));
+      const tx=m.fromX+(m.toX-m.fromX)*tp;
+      const ty=m.fromY+(m.toY-m.fromY)*tp;
+      const alpha=(1-t/6)*0.35;
+      const r=(5-t*0.5)/camS;
+      CTX.beginPath();CTX.arc(tx,ty,r,0,Math.PI*2);
+      CTX.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},${alpha})`;
+      CTX.fill();
+    }
+    
+    // ── MAIN SHIP DOT ──
+    CTX.save();CTX.translate(x,y);
+    
+    // Outer glow
+    CTX.beginPath();CTX.arc(0,0,7/camS,0,Math.PI*2);
+    CTX.fillStyle=`rgba(${sc[0]},${sc[1]},${sc[2]},0.15)`;CTX.fill();
+    
+    // Main dot
     CTX.beginPath();CTX.arc(0,0,4/camS,0,Math.PI*2);
     CTX.fillStyle=`rgb(${sc[0]},${sc[1]},${sc[2]})`;CTX.fill();
-    // Inner bright
+    
+    // Bright center
     CTX.beginPath();CTX.arc(0,0,2/camS,0,Math.PI*2);
-    CTX.fillStyle='rgba(255,255,255,0.9)';CTX.fill();
+    CTX.fillStyle='rgba(255,255,255,0.95)';CTX.fill();
+    
     // Quantity label
-    if(camS>0.3){
-      CTX.textAlign='center';CTX.textBaseline='bottom';
-      CTX.font=`bold ${8/camS}px Orbitron,monospace`;
-      CTX.fillStyle='rgba(255,255,255,0.8)';
-      CTX.fillText('x'+m.qty,0,-6/camS);
-    }
+    CTX.textAlign='center';CTX.textBaseline='bottom';
+    CTX.font=`bold ${9/camS}px sans-serif`;
+    // Shadow
+    CTX.fillStyle='rgba(0,0,0,0.8)';
+    CTX.fillText('x'+m.qty,1/camS,(-7/camS)+1/camS);
+    // Text
+    CTX.fillStyle='#ffffff';
+    CTX.fillText('x'+m.qty,0,-7/camS);
+    
     CTX.restore();
-    // Check arrival
+    
+    // ── CHECK ARRIVAL ──
     if(prog>=1){
       m.done=true;
-      if(m.onArrival) m.onArrival();
+      if(m.onArrival){
+        try{m.onArrival();}catch(e){console.error('onArrival error:',e);}
+      }
     }
   }
 }
