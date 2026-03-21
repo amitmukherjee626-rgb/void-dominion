@@ -874,31 +874,44 @@ window.buildFromModal=function(){
 function startQueueTimer(){
   if(queueTimer)clearInterval(queueTimer);
   
-  // On load: restore startTime for first item if missing
-  if(buildQueue.length>0 && !buildQueue[0].startTime){
-    buildQueue[0].startTime = Date.now() - (buildQueue[0].elapsed||0)*1000;
+  // CRITICAL: Ensure first item has a valid startTime
+  if(buildQueue.length>0){
+    if(!buildQueue[0].startTime){
+      // No startTime saved - set it now based on elapsed
+      const prevElapsed = buildQueue[0].elapsed||0;
+      buildQueue[0].startTime = Date.now() - (prevElapsed * 1000);
+    }
+    // Verify startTime is reasonable (not in future)
+    if(buildQueue[0].startTime > Date.now()){
+      buildQueue[0].startTime = Date.now();
+    }
   }
   
   queueTimer=setInterval(()=>{
     if(!buildQueue.length)return;
     const q=buildQueue[0];
     
-    // Calculate elapsed from timestamp (survives page reload)
-    const realElapsed = q.startTime ? Math.floor((Date.now()-q.startTime)/1000) : (q.elapsed||0);
-    q.elapsed = realElapsed;
+    // Always calculate from startTime — this is the key fix
+    // startTime is a real timestamp that doesn't reset on page reload
+    if(!q.startTime) q.startTime = Date.now();
+    const realElapsed = Math.floor((Date.now() - q.startTime) / 1000);
+    q.elapsed = realElapsed; // keep in sync for save/restore
     
     if(realElapsed >= q.totalTime){
       buildQueue.shift();
-      // Give startTime to next item
-      if(buildQueue.length>0) buildQueue[0].startTime=Date.now();
       fleet[q.shipId]=(fleet[q.shipId]||0)+q.qty;
-      toast(`${q.qty}x ${q.name} ready!`,'ok');
+      toast(q.qty+'x '+q.name+' ready!','ok');
+      // Give startTime to next queued item
+      if(buildQueue.length>0){
+        buildQueue[0].startTime = Date.now();
+        buildQueue[0].elapsed = 0;
+      }
       saveFleet();renderShips();
     }
     const qt=$('tab-queue');
     if(qt&&qt.style.display!=='none')renderQueue();
     updateQueueBadge();
-  },1000);
+  },500); // check every 0.5s for accuracy
 }
 
 function renderQueue(){
@@ -1098,16 +1111,28 @@ async function init(){
     const d=JSON.parse(saved);
     fleet=d.fleet||{};
     resources=d.resources||resources;
+    // Restore queue with startTimes intact
+    // startTime is a real Unix timestamp — it persists correctly
     buildQueue=(d.buildQueue||[]).map((q,i)=>{
-      // If first item has startTime, elapsed is already accurate on reload
-      // For queued items (i>0), calculate cumulative start times
+      // First item: startTime should already be correct from save
+      // Just verify it's a valid past timestamp
       if(i===0 && q.startTime){
-        // Recalculate elapsed based on real time passed
-        q.elapsed = Math.floor((Date.now()-q.startTime)/1000);
-        // If already done, it will be handled by timer
+        const elapsed=Math.floor((Date.now()-q.startTime)/1000);
+        q.elapsed=elapsed;
+        // If it was done while page was closed, mark as elapsed=totalTime
+        if(elapsed>=q.totalTime) q.elapsed=q.totalTime;
       }
       return q;
     });
+    
+    // Process any ships that finished while page was closed
+    while(buildQueue.length>0 && buildQueue[0].elapsed>=buildQueue[0].totalTime){
+      const done=buildQueue.shift();
+      fleet[done.shipId]=(fleet[done.shipId]||0)+done.qty;
+      // Give startTime to next
+      if(buildQueue.length>0) buildQueue[0].startTime=Date.now();
+      console.log('Completed while offline:',done.name,'x'+done.qty);
+    }
   }
 
   // Get shipyard level from home planet buildings
@@ -1137,6 +1162,15 @@ async function init(){
   const ls=$('loadscr');ls.style.transition='opacity .4s';ls.style.opacity='0';
   setTimeout(()=>ls.style.display='none',450);
   toast('Fleet Command ready','ok');
+
+  // Auto-save every 10s
+  setInterval(saveFleet, 10000);
+
+  // Save IMMEDIATELY when leaving page (key fix!)
+  document.addEventListener('visibilitychange',()=>{
+    if(document.visibilityState==='hidden') saveFleet();
+  });
+  window.addEventListener('pagehide', saveFleet);
 }
 init();
 </script>
