@@ -713,6 +713,8 @@ async function save(){
   if(!userId) return;
   try{
     localStorage.setItem(bldKey, JSON.stringify(buildings));
+    // Also save resources to localStorage for quick restore
+    localStorage.setItem('vd_res_'+userId, JSON.stringify(resources));
     await SB.from('players').update({
       credits: Math.floor(resources.cr),
       minerals: Math.floor(resources.mn),
@@ -795,11 +797,17 @@ async function init(){
 
   setLoad(30,'Loading profile...');await delay(100);
   const {data:prof}=await SB.from('players').select('*').eq('id',session.user.id).maybeSingle();
-  resources={
-    cr: prof?.credits||0,
-    mn: prof?.minerals||500,  // Start with 500 minerals
-    en: prof?.energy||200,    // Start with 200 energy
-  };
+  // Load from localStorage first (more recent), fallback to Supabase
+  const savedRes = localStorage.getItem('vd_res_'+session.user.id);
+  if(savedRes){
+    resources = JSON.parse(savedRes);
+  } else {
+    resources={
+      cr: prof?.credits||0,
+      mn: prof?.minerals||500,
+      en: prof?.energy||200,
+    };
+  }
 
   setLoad(55,'Loading planet...');await delay(100);
   const pRaw=sessionStorage.getItem('vd_planet');
@@ -848,8 +856,12 @@ async function init(){
   updateHUD();
   startTick();
 
-  // Auto-save every 30s
-  setInterval(save, 30000);
+  // Auto-save every 15s
+  setInterval(save, 15000);
+  // Save resources to localStorage every 5s (lightweight)
+  setInterval(()=>{
+    if(userId) localStorage.setItem('vd_res_'+userId, JSON.stringify(resources));
+  }, 5000);
 
   setLoad(100,'Ready!');await delay(300);
   const ls=$('loadscr');ls.style.transition='opacity .4s';ls.style.opacity='0';
